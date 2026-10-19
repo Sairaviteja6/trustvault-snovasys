@@ -28,4 +28,25 @@ This log tracks interactions with AI coding assistants throughout the developmen
 
 ---
 
-*(Additional entries will be logged progressively as controllers, cryptographic audit chaining, and file streaming are built.)*
+### Entry 2: Authorization Failure Status Codes & Information Leakage
+* **Date**: 2026-10-19
+* **Topic**: Authorization, HTTP Status Codes, and Metadata/Existence Enumeration Oracles
+* **Prompt Summary**:
+  > *"How should our DocumentAuthorizationService and DocumentsController handle requests when a user attempts to access or download a document they are not authorized to view?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested returning `404 Not Found` if `document == null`, and returning `403 Forbidden` if `document != null && !hasPermission`. It also suggested throwing an `UnauthorizedAccessException` handled by a global filter returning `{ error: "You do not have permission to view this document." }`.
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Existence Oracle / Metadata Enumeration Leak**: If the server returns `403 Forbidden` for existing private documents and `404 Not Found` for invalid IDs, an attacker can enumerate document GUIDs or sequential identifiers to map out confidential corporate documents (e.g., verifying that a salary review or pending merger agreement exists).
+  2. **Violates Defense-in-Depth Principle**: A secure document repository must give zero information to an unauthorized probe. The presence of the document should remain invisible to anyone without an active permission grant.
+
+* **What We Did Instead**:
+  > 1. In `DocumentAuthorizationService.cs`, both non-existent documents and unauthorized access attempts return `IsAuthorized = false` and trigger a uniform `404 Not Found` response with a generic message `"Document not found."`.
+  > 2. The server-side code differentiates internally: every unauthorized attempt immediately logs an immutable `AuditAction.AccessRefused` entry with `AuditStatus.Refused`, recording the caller's IP, User ID, attempted document ID, and timestamp into the cryptographically chained audit log.
+  > 3. Verified by automated tests `THREAT01_UserB_CannotDownload_UserA_PrivateDocument_Returns404` and `THREAT09_FailedAccessAttempts_AreRecordedInAuditTrail`.
+* **Commit**: `feat(api): implement Auth, Documents, Permissions, Admin controllers and adversarial access control tests`
+
+---
+
+*(Additional entries will be logged progressively as frontend integration and deployment proceed.)*
