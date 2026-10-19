@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrustVault.Core", "TrustVault.Core\TrustVault.Core.csproj", "{77DA4720-5F30-4A41-9196-8C2545547C95}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrustVault.Infrastructure", "TrustVault.Infrastructure\TrustVault.Infrastructure.csproj", "{06C74D77-C4C0-4ECB-9ABE-FD6D3F18767C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrustVault.Api", "TrustVault.Api\TrustVault.Api.csproj", "{2514C12F-7C77-4644-AFEB-BD923C751A0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TrustVault.Tests", "TrustVault.Tests\TrustVault.Tests.csproj", "{48EABF85-6D00-4E08-8515-4DF74E546972}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77DA4720-5F30-4A41-9196-8C2545547C95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77DA4720-5F30-4A41-9196-8C2545547C95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77DA4720-5F30-4A41-9196-8C2545547C95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77DA4720-5F30-4A41-9196-8C2545547C95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06C74D77-C4C0-4ECB-9ABE-FD6D3F18767C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06C74D77-C4C0-4ECB-9ABE-FD6D3F18767C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06C74D77-C4C0-4ECB-9ABE-FD6D3F18767C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06C74D77-C4C0-4ECB-9ABE-FD6D3F18767C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2514C12F-7C77-4644-AFEB-BD923C751A0B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2514C12F-7C77-4644-AFEB-BD923C751A0B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2514C12F-7C77-4644-AFEB-BD923C751A0B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2514C12F-7C77-4644-AFEB-BD923C751A0B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{48EABF85-6D00-4E08-8515-4DF74E546972}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48EABF85-6D00-4E08-8515-4DF74E546972}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48EABF85-6D00-4E08-8515-4DF74E546972}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48EABF85-6D00-4E08-8515-4DF74E546972}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
