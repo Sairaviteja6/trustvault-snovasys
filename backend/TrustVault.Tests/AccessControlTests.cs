@@ -199,4 +199,65 @@ public class AccessControlTests : IClassFixture<WebApplicationFactory<Program>>
         responseContent.Should().Contain("Refused");
         responseContent.Should().Contain(randomDocId.ToString());
     }
+
+    [Fact]
+    public async Task ChecklistItem08_OwnerB_CannotAccess_OwnerA_PrivateDocument_Or_ModifyGrants()
+    {
+        // Arrange - Owner A uploads private document
+        var (ownerAClient, _, _) = await CreateAuthenticatedClientAsync("owner@trustvault.com", "Owner@12345!");
+
+        // Register a second distinct Owner B
+        var anonymousClient = _factory.CreateClient();
+        var registerRes = await anonymousClient.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest("admin@trustvault.com", "Admin@12345!"));
+        var adminAuth = await registerRes.Content.ReadFromJsonAsync<AuthResponse>();
+        var adminClient = _factory.CreateClient();
+        adminClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", adminAuth!.Token);
+
+        var createOwnerB = await adminClient.PostAsJsonAsync("/api/v1/admin/users/owners", new CreateOwnerRequest("owner_b", "owner_b@trustvault.com", "OwnerB@12345!", "Sales"));
+        createOwnerB.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var (ownerBClient, _, ownerBId) = await CreateAuthenticatedClientAsync("owner_b@trustvault.com", "OwnerB@12345!");
+
+        // Owner A uploads document
+        var content = new MultipartFormDataContent();
+        var fileBytes = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34 };
+        var byteContent = new ByteArrayContent(fileBytes);
+        byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        content.Add(byteContent, "file", "OwnerA_Secret.pdf");
+        content.Add(new StringContent("Owner A Secret"), "title");
+        var uploadRes = await ownerAClient.PostAsync("/api/v1/documents/upload", content);
+        var createdDoc = await uploadRes.Content.ReadFromJsonAsync<DocumentResponse>();
+
+        // Act 1: Owner B attempts to download Owner A's document
+        var downloadRes = await ownerBClient.GetAsync($"/api/v1/documents/{createdDoc!.Id}/download");
+        downloadRes.StatusCode.Should().Be(HttpStatusCode.NotFound); // Cross-owner isolation
+
+        // Act 2: Owner B attempts to modify grants on Owner A's document
+        var grantRes = await ownerBClient.PostAsJsonAsync(
+            $"/api/v1/documents/{createdDoc.Id}/permissions/grant",
+            new GrantPermissionRequest(ownerBId, new List<PermissionType> { PermissionType.Read }));
+        grantRes.StatusCode.Should().Be(HttpStatusCode.NotFound); // Cannot modify another owner's grants
+    }
+
+    [Fact]
+    public async Task ChecklistItem03_DeactivatedUser_TokenRejectedImmediately()
+    {
+        // Arrange - Alice logs in and gets an active JWT
+        var (aliceClient, token, aliceId) = await CreateAuthenticatedClientAsync("alice@trustvault.com", "Viewer@12345!");
+        
+        // Alice can access documents before deactivation
+        var initialRes = await aliceClient.GetAsync("/api/v1/documents");
+        initialRes.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Admin deactivates Alice's account in database
+        var (adminClient, _, _) = await CreateAuthenticatedClientAsync("admin@trustvault.com", "Admin@12345!");
+        var toggleRes = await adminClient.PatchAsync($"/api/v1/admin/users/{aliceId}/toggle-status", null);
+        toggleRes.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Act - Alice tries to make a request using her existing JWT
+        var postDeactivationRes = await aliceClient.GetAsync("/api/v1/documents");
+
+        // Assert - Inactive user is rejected on protected request immediately (401 Unauthorized)
+        postDeactivationRes.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+    }
 }

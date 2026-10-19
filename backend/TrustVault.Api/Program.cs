@@ -1,5 +1,10 @@
+using System.Net;
+using System.Security.Claims;
 using System.Text;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using TrustVault.Api.Services;
@@ -34,7 +39,24 @@ builder.Services.AddScoped<IFileStorageService, LocalEncryptedFileStorageService
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<DocumentAuthorizationService>();
 
-// 3. JWT Authentication Setup
+// 3. Rate Limiter Configuration (Item 1 on Verification Checklist)
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    // Strict fixed window limiter for login endpoint
+    options.AddPolicy("LoginRateLimit", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0
+            }));
+});
+
+// 4. JWT Authentication Setup (Item 2 & 3 on Verification Checklist)
 var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "SuperSecretTrustVaultProductionGradeKey2026!#$StrictCryptoEnforcement";
 var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "TrustVault.Api";
 var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "TrustVault.Client";
@@ -59,11 +81,33 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero // Zero tolerance for token expiry
     };
+
+    // Checklist Item 3: Validate that user account has not been deactivated or revoked in database
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var db = context.HttpContext.RequestServices.GetRequiredService<TrustVaultDbContext>();
+            var userIdClaim = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (Guid.TryParse(userIdClaim, out var userId))
+            {
+                var user = await db.Users.FindAsync(userId);
+                if (user == null || !user.IsActive || user.IsRevoked)
+                {
+                    context.Fail("User account is deactivated or session has been revoked.");
+                }
+            }
+            else
+            {
+                context.Fail("Invalid user token payload.");
+            }
+        }
+    };
 });
 
 builder.Services.AddAuthorization();
 
-// 4. CORS Setup for Frontend
+// 5. CORS Setup for Frontend (Item 4 on Verification Checklist)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("TrustVaultCorsPolicy", policy =>
@@ -77,7 +121,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
-// 5. Swagger / OpenAPI Documentation with JWT Support
+// 6. Swagger / OpenAPI Documentation with JWT Support
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
@@ -116,6 +160,32 @@ builder.Services.AddSwaggerGen(c =>
 
 var app = builder.Build();
 
+// 7. Global Exception Handling - Checklist Item 5: Unhandled errors return sanitized responses
+app.UseExceptionHandler(exceptionApp =>
+{
+    exceptionApp.Run(async context =>
+    {
+        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        context.Response.ContentType = "application/json";
+
+        var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+        var ex = exceptionHandlerPathFeature?.Error;
+
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Unhandled server exception intercepted.");
+
+        // Sanitized JSON response - NEVER leak stack trace, SQL query, or file paths
+        var responsePayload = new
+        {
+            status = 500,
+            error = "An internal server error occurred.",
+            correlationId = context.TraceIdentifier
+        };
+
+        await context.Response.WriteAsJsonAsync(responsePayload);
+    });
+});
+
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
@@ -123,7 +193,7 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// 6. Automatic Migration & Seeding
+// 8. Automatic Migration & Seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -153,20 +223,19 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 6. Security Headers Middleware
+// 9. Security Headers Middleware (Checklist Item 4)
 app.Use(async (context, next) =>
 {
     context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
     context.Response.Headers.Append("X-Frame-Options", "DENY");
     context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
     context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline';");
     await next();
 });
 
 app.UseCors("TrustVaultCorsPolicy");
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
