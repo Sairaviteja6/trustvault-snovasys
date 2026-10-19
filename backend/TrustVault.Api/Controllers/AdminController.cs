@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TrustVault.Api.DTOs;
+using TrustVault.Core.Entities;
 using TrustVault.Core.Enums;
 using TrustVault.Core.Interfaces;
 using TrustVault.Infrastructure.Data;
@@ -10,7 +12,7 @@ namespace TrustVault.Api.Controllers;
 
 [Authorize(Roles = "Admin")]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class AdminController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
@@ -116,8 +118,9 @@ public class AdminController : ControllerBase
     [HttpGet("metrics")]
     public async Task<IActionResult> GetSecurityMetrics()
     {
+        var totalActiveOwners = await _dbContext.Users.CountAsync(u => u.Role == UserRole.Owner && u.IsActive);
+        var totalActiveViewers = await _dbContext.Users.CountAsync(u => u.Role == UserRole.Viewer && u.IsActive);
         var totalDocuments = await _dbContext.Documents.CountAsync(d => !d.IsDeleted);
-        var totalUsers = await _dbContext.Users.CountAsync();
         var totalAuditLogs = await _dbContext.AuditLogs.CountAsync();
 
         var refusedAttempts = await _dbContext.AuditLogs
@@ -144,14 +147,13 @@ public class AdminController : ControllerBase
                 a.CurrentHash))
             .ToListAsync();
 
-        return Ok(new
-        {
+        return Ok(new AdminMetricsResponse(
+            totalActiveOwners,
+            totalActiveViewers,
             totalDocuments,
-            totalUsers,
             totalAuditLogs,
-            totalRefusedAttempts = refusedAttempts,
-            recentRefusedAttempts = recentRefused
-        });
+            refusedAttempts,
+            recentRefused));
     }
 
     [HttpGet("users")]
@@ -160,9 +162,99 @@ public class AdminController : ControllerBase
         var users = await _dbContext.Users
             .OrderBy(u => u.Role)
             .ThenBy(u => u.Email)
-            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department))
+            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt))
             .ToListAsync();
 
         return Ok(users);
     }
+
+    /// <summary>
+    /// Administrator provisions an Owner account.
+    /// </summary>
+    [HttpPost("users/owners")]
+    public async Task<IActionResult> CreateOwner([FromBody] CreateOwnerRequest request)
+    {
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var exists = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail);
+        if (exists)
+        {
+            return Conflict(new { message = "User with this email already exists." });
+        }
+
+        var owner = new User
+        {
+            Username = request.Username.Trim(),
+            Email = normalizedEmail,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = UserRole.Owner,
+            Department = request.Department,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _dbContext.Users.Add(owner);
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            AuditAction.UserRegistered,
+            AuditStatus.Allowed,
+            GetCurrentUserId(),
+            User.FindFirstValue(ClaimTypes.Email),
+            "Admin",
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            $"Administrator provisioned new Document Owner: {owner.Email}");
+
+        return CreatedAtAction(nameof(GetUsers), new { id = owner.Id }, new UserDto(
+            owner.Id, owner.Username, owner.Email, owner.Role.ToString(), owner.Department, owner.IsActive, owner.CreatedAt));
+    }
+
+    /// <summary>
+    /// Administrator activates or deactivates an account.
+    /// </summary>
+    [HttpPatch("users/{userId}/toggle-status")]
+    public async Task<IActionResult> ToggleUserStatus(Guid userId)
+    {
+        var user = await _dbContext.Users.FindAsync(userId);
+        if (user == null)
+        {
+            return NotFound(new { message = "User not found." });
+        }
+
+        user.IsActive = !user.IsActive;
+        if (!user.IsActive)
+        {
+            user.RefreshToken = null;
+            user.IsRevoked = true;
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            user.IsActive ? AuditAction.UserRegistered : AuditAction.UserLogout,
+            AuditStatus.Allowed,
+            GetCurrentUserId(),
+            User.FindFirstValue(ClaimTypes.Email),
+            "Admin",
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            $"User {user.Email} status updated: IsActive = {user.IsActive}");
+
+        return Ok(new { message = $"User status updated. IsActive = {user.IsActive}", isActive = user.IsActive });
+    }
+
+    private Guid GetCurrentUserId()
+    {
+        var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(claim, out var id) ? id : Guid.Empty;
+    }
+
+    private string GetIpAddress() =>
+        HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
+
+    private string GetUserAgent() =>
+        Request.Headers.UserAgent.ToString();
 }

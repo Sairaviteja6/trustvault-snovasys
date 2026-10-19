@@ -2,7 +2,7 @@ using TrustVault.Core.Enums;
 
 namespace TrustVault.Core.Entities;
 
-public class DocumentPermission
+public class DocumentGrant
 {
     public Guid Id { get; set; } = Guid.NewGuid();
 
@@ -12,10 +12,14 @@ public class DocumentPermission
     public Guid UserId { get; set; }
     public User? User { get; set; }
 
-    public PermissionLevel Level { get; set; } = PermissionLevel.Read;
-
     public Guid GrantedByUserId { get; set; }
     public User? GrantedByUser { get; set; }
 
-    public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
+    public PermissionType PermissionType { get; set; }
+
+    public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+    public DateTime? UpdatedAtUtc { get; set; }
+    public DateTime? RevokedAtUtc { get; set; }
+
+    public bool IsActive => RevokedAtUtc == null;
 }

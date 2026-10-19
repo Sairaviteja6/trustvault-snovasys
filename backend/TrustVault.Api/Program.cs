@@ -77,7 +77,51 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddControllers();
 
+// 5. Swagger / OpenAPI Documentation with JWT Support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "TrustVault Secure Document API",
+        Version = "v1",
+        Description = "Zero-trust document sharing platform with cryptographic audit trail and discrete permissions."
+    });
+
+    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter JWT Bearer token."
+    });
+
+    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "TrustVault API v1");
+    c.RoutePrefix = "swagger";
+});
 
 // 5. Automatic Migration & Seeding
 using (var scope = app.Services.CreateScope())
@@ -97,7 +141,9 @@ using (var scope = app.Services.CreateScope())
 
         var auditService = services.GetRequiredService<IAuditService>();
         var encryptionService = services.GetRequiredService<IEncryptionService>();
-        await DbSeeder.SeedAsync(db, auditService, encryptionService);
+        var env = services.GetRequiredService<IWebHostEnvironment>();
+        var storageDir = Path.Combine(env.ContentRootPath, "..", "Storage", "encrypted_blobs");
+        await DbSeeder.SeedAsync(db, auditService, encryptionService, storageDir);
     }
     catch (Exception ex)
     {
@@ -117,6 +163,9 @@ app.Use(async (context, next) =>
 });
 
 app.UseCors("TrustVaultCorsPolicy");
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseAuthentication();
 app.UseAuthorization();

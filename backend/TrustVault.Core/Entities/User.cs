@@ -20,7 +20,7 @@ public class User
 
     // Navigation
     public ICollection<Document> OwnedDocuments { get; set; } = new List<Document>();
-    public ICollection<DocumentPermission> ReceivedPermissions { get; set; } = new List<DocumentPermission>();
-    public ICollection<DocumentPermission> GrantedPermissions { get; set; } = new List<DocumentPermission>();
+    public ICollection<DocumentGrant> ReceivedGrants { get; set; } = new List<DocumentGrant>();
+    public ICollection<DocumentGrant> GrantedGrants { get; set; } = new List<DocumentGrant>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 }

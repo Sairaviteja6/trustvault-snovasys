@@ -26,6 +26,6 @@ public class Document
     public bool IsDeleted { get; set; } = false;
 
     // Navigation
-    public ICollection<DocumentPermission> Permissions { get; set; } = new List<DocumentPermission>();
+    public ICollection<DocumentGrant> Grants { get; set; } = new List<DocumentGrant>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 }

@@ -6,11 +6,16 @@ namespace TrustVault.Infrastructure.Data;
 
 public static class DbSeeder
 {
-    public static async Task SeedAsync(TrustVaultDbContext context, IAuditService auditService, IEncryptionService encryptionService)
+    public static async Task SeedAsync(TrustVaultDbContext context, IAuditService auditService, IEncryptionService encryptionService, string storageDirectory)
     {
         if (context.Users.Any())
         {
             return; // Already seeded
+        }
+
+        if (!Directory.Exists(storageDirectory))
+        {
+            Directory.CreateDirectory(storageDirectory);
         }
 
         // 1. Seed Default Users
@@ -62,35 +67,55 @@ public static class DbSeeder
         var tagDev = new UserTag { OwnerId = owner.Id, UserId = bob.Id, TagName = "Developer" };
         context.UserTags.AddRange(tagFinance, tagDev);
 
-        // 3. Seed Sample Documents
+        // 3. Helper to create encrypted mock documents on disk
+        async Task<(string storageName, byte[] iv, byte[] tag, string hash, long size)> CreateEncryptedMockFileAsync(string contentText)
+        {
+            var rawBytes = System.Text.Encoding.UTF8.GetBytes(contentText);
+            using var rawStream = new MemoryStream(rawBytes);
+            var hash = await encryptionService.ComputeSha256Async(rawStream);
+
+            rawStream.Position = 0;
+            var storageFileName = $"{Guid.NewGuid():N}.blob";
+            var filePath = Path.Combine(storageDirectory, storageFileName);
+
+            using var fileStream = new FileStream(filePath, FileMode.CreateNew, FileAccess.Write);
+            var (iv, tag) = await encryptionService.EncryptAsync(rawStream, fileStream);
+
+            return (storageFileName, iv, tag, hash, rawBytes.Length);
+        }
+
+        // Mock Document 1: Highly confidential salary schedule (Owner only)
+        var file1 = await CreateEncryptedMockFileAsync("%PDF-1.4 Confidential 2026 Executive Compensation Schedule. Base, Stock Grants & Executive Bonus Metrics.");
         var doc1 = new Document
         {
             Title = "2026 Executive Compensation & Salary Matrix",
             Description = "Highly confidential compensation data for executive leadership.",
             Category = "Salary",
             OriginalFileName = "Executive_Comp_2026.pdf",
-            StorageFileName = $"{Guid.NewGuid():N}.blob",
+            StorageFileName = file1.storageName,
             ContentType = "application/pdf",
-            FileSizeBytes = 1024 * 45,
-            FileHashSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            EncryptionIv = new byte[12],
-            EncryptionTag = new byte[16],
+            FileSizeBytes = file1.size,
+            FileHashSha256 = file1.hash,
+            EncryptionIv = file1.iv,
+            EncryptionTag = file1.tag,
             OwnerId = owner.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-2)
         };
 
+        // Mock Document 2: Master Service Agreement (Owner grants Alice READ and DOWNLOAD)
+        var file2 = await CreateEncryptedMockFileAsync("%PDF-1.4 Enterprise Master Services Agreement with Acme Corp. Legal Terms, SLA and Payment Schedules.");
         var doc2 = new Document
         {
             Title = "Enterprise Master Services Agreement — Acme Corp",
             Description = "Standard commercial terms and NDA for Acme Corp.",
             Category = "Contracts",
             OriginalFileName = "AcmeCorp_MSA_Final.pdf",
-            StorageFileName = $"{Guid.NewGuid():N}.blob",
+            StorageFileName = file2.storageName,
             ContentType = "application/pdf",
-            FileSizeBytes = 1024 * 128,
-            FileHashSha256 = "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
-            EncryptionIv = new byte[12],
-            EncryptionTag = new byte[16],
+            FileSizeBytes = file2.size,
+            FileHashSha256 = file2.hash,
+            EncryptionIv = file2.iv,
+            EncryptionTag = file2.tag,
             OwnerId = owner.Id,
             CreatedAt = DateTime.UtcNow.AddDays(-1)
         };
@@ -98,17 +123,26 @@ public static class DbSeeder
         context.Documents.AddRange(doc1, doc2);
         await context.SaveChangesAsync();
 
-        // 4. Seed Permissions: Grant Alice READ on doc2 (MSA)
-        var permAlice = new DocumentPermission
+        // 4. Seed Grants: Grant Alice READ and DOWNLOAD on doc2
+        var grantRead = new DocumentGrant
         {
             DocumentId = doc2.Id,
             UserId = alice.Id,
-            Level = PermissionLevel.Read,
+            PermissionType = PermissionType.Read,
             GrantedByUserId = owner.Id,
-            GrantedAt = DateTime.UtcNow.AddDays(-1)
+            CreatedAtUtc = DateTime.UtcNow.AddDays(-1)
         };
 
-        context.DocumentPermissions.Add(permAlice);
+        var grantDownload = new DocumentGrant
+        {
+            DocumentId = doc2.Id,
+            UserId = alice.Id,
+            PermissionType = PermissionType.Download,
+            GrantedByUserId = owner.Id,
+            CreatedAtUtc = DateTime.UtcNow.AddDays(-1)
+        };
+
+        context.DocumentGrants.AddRange(grantRead, grantDownload);
         await context.SaveChangesAsync();
 
         // 5. Seed Initial Audit Logs with Cryptographic Hash Chain
@@ -121,8 +155,8 @@ public static class DbSeeder
             null,
             null,
             "127.0.0.1",
-            "SeedService",
-            "Initial system administrator seeded");
+            "SystemSeeder",
+            "Initial administrator provisioned");
 
         await auditService.LogAsync(
             AuditAction.DocumentUpload,
@@ -133,8 +167,8 @@ public static class DbSeeder
             doc1.Id,
             doc1.Title,
             "127.0.0.1",
-            "SeedService",
-            "Confidential document uploaded by owner");
+            "SystemSeeder",
+            "Confidential salary matrix uploaded and encrypted with AES-256-GCM");
 
         await auditService.LogAsync(
             AuditAction.PermissionGranted,
@@ -145,7 +179,7 @@ public static class DbSeeder
             doc2.Id,
             doc2.Title,
             "127.0.0.1",
-            "SeedService",
-            $"Granted READ access to {alice.Email}");
+            "SystemSeeder",
+            $"Granted READ and DOWNLOAD access to {alice.Email}");
     }
 }

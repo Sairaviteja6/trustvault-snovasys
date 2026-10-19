@@ -43,7 +43,8 @@ public class AccessControlTests : IClassFixture<WebApplicationFactory<Program>>
                 var audit = scope.ServiceProvider.GetRequiredService<IAuditService>();
                 var enc = scope.ServiceProvider.GetRequiredService<IEncryptionService>();
                 db.Database.EnsureCreated();
-                DbSeeder.SeedAsync(db, audit, enc).GetAwaiter().GetResult();
+                var testStorage = Path.Combine(Path.GetTempPath(), "TrustVaultAccessControlTestStorage");
+                DbSeeder.SeedAsync(db, audit, enc, testStorage).GetAwaiter().GetResult();
             });
         });
     }
@@ -51,7 +52,7 @@ public class AccessControlTests : IClassFixture<WebApplicationFactory<Program>>
     private async Task<(HttpClient client, string token, Guid userId)> CreateAuthenticatedClientAsync(string email, string password)
     {
         var client = _factory.CreateClient();
-        var loginResponse = await client.PostAsJsonAsync("/api/auth/login", new LoginRequest(email, password));
+        var loginResponse = await client.PostAsJsonAsync("/api/v1/auth/login", new LoginRequest(email, password));
         loginResponse.StatusCode.Should().Be(HttpStatusCode.OK);
 
         var auth = await loginResponse.Content.ReadFromJsonAsync<AuthResponse>();
@@ -64,113 +65,138 @@ public class AccessControlTests : IClassFixture<WebApplicationFactory<Program>>
     [Fact]
     public async Task THREAT01_UserB_CannotDownload_UserA_PrivateDocument_Returns404()
     {
-        // Arrange - Owner client and Viewer client (Bob has NO access to doc1)
         var (ownerClient, _, _) = await CreateAuthenticatedClientAsync("owner@trustvault.com", "Owner@12345!");
         var (bobClient, _, _) = await CreateAuthenticatedClientAsync("bob@trustvault.com", "Viewer@12345!");
 
-        // Upload a confidential document by Owner
         var content = new MultipartFormDataContent();
         var fileBytes = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34 }; // %PDF
-        content.Add(new ByteArrayContent(fileBytes), "file", "SecretSalaryMatrix.pdf");
+        var byteContent = new ByteArrayContent(fileBytes);
+        byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        content.Add(byteContent, "file", "SecretSalaryMatrix.pdf");
         content.Add(new StringContent("Executive Salaries"), "title");
         content.Add(new StringContent("Salary"), "category");
 
-        var uploadRes = await ownerClient.PostAsync("/api/documents/upload", content);
+        var uploadRes = await ownerClient.PostAsync("/api/v1/documents/upload", content);
         uploadRes.StatusCode.Should().Be(HttpStatusCode.Created);
         var createdDoc = await uploadRes.Content.ReadFromJsonAsync<DocumentResponse>();
         createdDoc.Should().NotBeNull();
 
-        // Act - Bob attempts to download the document without permission
-        var downloadRes = await bobClient.GetAsync($"/api/documents/{createdDoc!.Id}/download");
+        // Act - Bob attempts download without permission
+        var downloadRes = await bobClient.GetAsync($"/api/v1/documents/{createdDoc!.Id}/download");
 
-        // Assert - Invariant: Server returns 404 (does NOT leak existence via 403, does NOT stream file)
+        // Assert - Server returns 404
         downloadRes.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task THREAT06_Admin_CannotDownload_PrivateUserDocument_Returns404()
     {
-        // Arrange - Owner uploads private document; Admin attempts download
         var (ownerClient, _, _) = await CreateAuthenticatedClientAsync("owner@trustvault.com", "Owner@12345!");
         var (adminClient, _, _) = await CreateAuthenticatedClientAsync("admin@trustvault.com", "Admin@12345!");
 
         var content = new MultipartFormDataContent();
         var fileBytes = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34 };
-        content.Add(new ByteArrayContent(fileBytes), "file", "PrivateContract.pdf");
+        var byteContent = new ByteArrayContent(fileBytes);
+        byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        content.Add(byteContent, "file", "PrivateContract.pdf");
         content.Add(new StringContent("Acme Private Agreement"), "title");
 
-        var uploadRes = await ownerClient.PostAsync("/api/documents/upload", content);
+        var uploadRes = await ownerClient.PostAsync("/api/v1/documents/upload", content);
         var createdDoc = await uploadRes.Content.ReadFromJsonAsync<DocumentResponse>();
 
-        // Act - Admin attempts to download Owner's confidential document
-        var downloadRes = await adminClient.GetAsync($"/api/documents/{createdDoc!.Id}/download");
-
-        // Assert - Admin role does NOT bypass authorization; returns 404
+        var downloadRes = await adminClient.GetAsync($"/api/v1/documents/{createdDoc!.Id}/download");
         downloadRes.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task THREAT03_RevokedAccess_TakesEffect_Immediately()
     {
-        // Arrange
         var (ownerClient, _, _) = await CreateAuthenticatedClientAsync("owner@trustvault.com", "Owner@12345!");
         var (bobClient, _, bobId) = await CreateAuthenticatedClientAsync("bob@trustvault.com", "Viewer@12345!");
 
-        // 1. Owner uploads document
+        // 1. Owner uploads
         var content = new MultipartFormDataContent();
         var fileBytes = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34 };
-        content.Add(new ByteArrayContent(fileBytes), "file", "ProjectDesign.pdf");
+        var byteContent = new ByteArrayContent(fileBytes);
+        byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        content.Add(byteContent, "file", "ProjectDesign.pdf");
         content.Add(new StringContent("Project Design"), "title");
-        var uploadRes = await ownerClient.PostAsync("/api/documents/upload", content);
+        var uploadRes = await ownerClient.PostAsync("/api/v1/documents/upload", content);
         var createdDoc = await uploadRes.Content.ReadFromJsonAsync<DocumentResponse>();
 
-        // 2. Owner grants Bob READ access
+        // 2. Owner grants Bob READ and DOWNLOAD
         var grantRes = await ownerClient.PostAsJsonAsync(
-            $"/api/documents/{createdDoc!.Id}/permissions/grant",
-            new GrantPermissionRequest(bobId, PermissionLevel.Read));
+            $"/api/v1/documents/{createdDoc!.Id}/permissions/grant",
+            new GrantPermissionRequest(bobId, new List<PermissionType> { PermissionType.Read, PermissionType.Download }));
         grantRes.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // 3. Bob downloads successfully
-        var initialDownload = await bobClient.GetAsync($"/api/documents/{createdDoc.Id}/download");
+        var initialDownload = await bobClient.GetAsync($"/api/v1/documents/{createdDoc.Id}/download");
         initialDownload.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        // 4. Owner revokes Bob's access
-        var revokeRes = await ownerClient.DeleteAsync($"/api/documents/{createdDoc.Id}/permissions/revoke/{bobId}");
+        // 4. Owner revokes Bob
+        var revokeRes = await ownerClient.DeleteAsync($"/api/v1/documents/{createdDoc.Id}/permissions/revoke/{bobId}");
         revokeRes.StatusCode.Should().Be(HttpStatusCode.OK);
 
         // 5. Bob tries downloading immediately after revocation
-        var postRevocationDownload = await bobClient.GetAsync($"/api/documents/{createdDoc.Id}/download");
+        var postRevocationDownload = await bobClient.GetAsync($"/api/v1/documents/{createdDoc.Id}/download");
 
-        // Assert - Access is cut off immediately on the very next request
+        // Assert - Immediate 404 Cutoff
         postRevocationDownload.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task DiscretePermissions_ViewerWithReadOnly_CannotDownload()
+    {
+        var (ownerClient, _, _) = await CreateAuthenticatedClientAsync("owner@trustvault.com", "Owner@12345!");
+        var (bobClient, _, bobId) = await CreateAuthenticatedClientAsync("bob@trustvault.com", "Viewer@12345!");
+
+        var content = new MultipartFormDataContent();
+        var fileBytes = new byte[] { 0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34 };
+        var byteContent = new ByteArrayContent(fileBytes);
+        byteContent.Headers.ContentType = new MediaTypeHeaderValue("application/pdf");
+        content.Add(byteContent, "file", "ReadStrict.pdf");
+        content.Add(new StringContent("Read Only Specification"), "title");
+        var uploadRes = await ownerClient.PostAsync("/api/v1/documents/upload", content);
+        var createdDoc = await uploadRes.Content.ReadFromJsonAsync<DocumentResponse>();
+
+        // Grant Bob READ only (NO Download)
+        await ownerClient.PostAsJsonAsync(
+            $"/api/v1/documents/{createdDoc!.Id}/permissions/grant",
+            new GrantPermissionRequest(bobId, new List<PermissionType> { PermissionType.Read }));
+
+        // Reading metadata succeeds
+        var readRes = await bobClient.GetAsync($"/api/v1/documents/{createdDoc.Id}");
+        readRes.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Downloading fails because DOWNLOAD permission was not granted
+        var downloadRes = await bobClient.GetAsync($"/api/v1/documents/{createdDoc.Id}/download");
+        downloadRes.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 
     [Fact]
     public async Task AnonymousRequest_WithoutToken_Returns401Unauthorized()
     {
         var anonymousClient = _factory.CreateClient();
-        var res = await anonymousClient.GetAsync("/api/documents");
+        var res = await anonymousClient.GetAsync("/api/v1/documents");
         res.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
     }
 
     [Fact]
     public async Task THREAT09_FailedAccessAttempts_AreRecordedInAuditTrail()
     {
-        // Arrange
         var (adminClient, _, _) = await CreateAuthenticatedClientAsync("admin@trustvault.com", "Admin@12345!");
         var (bobClient, _, _) = await CreateAuthenticatedClientAsync("bob@trustvault.com", "Viewer@12345!");
 
-        // Bob attempts to download a random non-existent or forbidden document
         var randomDocId = Guid.NewGuid();
-        var downloadRes = await bobClient.GetAsync($"/api/documents/{randomDocId}/download");
+        var downloadRes = await bobClient.GetAsync($"/api/v1/documents/{randomDocId}/download");
         downloadRes.StatusCode.Should().Be(HttpStatusCode.NotFound);
 
-        // Act - Admin checks audit logs
-        var auditRes = await adminClient.GetAsync("/api/admin/audit-logs?status=Refused");
+        var auditRes = await adminClient.GetAsync("/api/v1/admin/audit-logs?status=Refused");
         auditRes.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var content = await auditRes.Content.ReadAsStringAsync();
-        content.Should().Contain("Refused");
-        content.Should().Contain(randomDocId.ToString());
+        var responseContent = await auditRes.Content.ReadAsStringAsync();
+        responseContent.Should().Contain("Refused");
+        responseContent.Should().Contain(randomDocId.ToString());
     }
 }

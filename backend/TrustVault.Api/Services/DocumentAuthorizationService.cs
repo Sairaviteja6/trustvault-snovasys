@@ -17,34 +17,34 @@ public class DocumentAuthorizationService
         _auditService = auditService;
     }
 
-    public record AccessEvaluationResult(bool IsAuthorized, Document? Document, PermissionLevel? GrantedLevel);
+    public record AccessEvaluationResult(bool IsAuthorized, Document? Document, List<PermissionType> ActivePermissions);
 
     /// <summary>
     /// Evaluates access strictly server-side on every single request.
     /// Non-negotiable invariant:
-    /// 1. Document Owner always has Full (Edit/Read) access.
-    /// 2. Admin role DOES NOT bypass document content access.
-    /// 3. Viewer must have an explicit, active DocumentPermission entry.
-    /// 4. Unauthorized requests are logged to the tamper-evident audit trail as AccessRefused.
+    /// 1. Document Owner always has full access (Read, Download, Edit, Delete).
+    /// 2. Admin role DOES NOT bypass document content access (Least Privilege).
+    /// 3. Viewer must have an explicit, active DocumentGrant matching the required permission.
+    /// 4. EDIT permission does NOT automatically permit DOWNLOAD.
+    /// 5. Unauthorized requests are logged to the tamper-evident audit trail as AccessRefused.
     /// </summary>
     public async Task<AccessEvaluationResult> EvaluateAccessAsync(
         Guid documentId,
         Guid currentUserId,
         UserRole currentUserRole,
         string currentUserEmail,
-        PermissionLevel requiredLevel,
+        PermissionType requiredPermission,
         string ipAddress,
         string userAgent,
         string requestedAction)
     {
         // 1. Fetch document from database (re-evaluated on every request, no cached permissions)
         var document = await _dbContext.Documents
-            .Include(d => d.Permissions)
+            .Include(d => d.Grants)
             .FirstOrDefaultAsync(d => d.Id == documentId && !d.IsDeleted);
 
         if (document == null)
         {
-            // Do not leak existence or non-existence to caller
             await _auditService.LogAsync(
                 AuditAction.AccessRefused,
                 AuditStatus.Refused,
@@ -57,22 +57,33 @@ public class DocumentAuthorizationService
                 userAgent,
                 $"Attempted {requestedAction} on non-existent or deleted document {documentId}");
 
-            return new AccessEvaluationResult(false, null, null);
+            return new AccessEvaluationResult(false, null, new List<PermissionType>());
         }
 
         // 2. Document Owner check
         if (document.OwnerId == currentUserId)
         {
-            return new AccessEvaluationResult(true, document, PermissionLevel.Edit);
+            var ownerPermissions = new List<PermissionType>
+            {
+                PermissionType.Read,
+                PermissionType.Download,
+                PermissionType.Edit,
+                PermissionType.Delete
+            };
+            return new AccessEvaluationResult(true, document, ownerPermissions);
         }
 
         // 3. Admin least-privilege enforcement
-        // Admins CANNOT read document content unless explicitly granted like any other user
-        var activePermission = document.Permissions.FirstOrDefault(p => p.UserId == currentUserId);
+        // Admins CANNOT read/download/edit document content unless explicitly granted
+        var activeGrants = document.Grants
+            .Where(g => g.UserId == currentUserId && g.RevokedAtUtc == null)
+            .Select(g => g.PermissionType)
+            .ToList();
 
-        if (activePermission == null)
+        var hasRequiredPermission = activeGrants.Contains(requiredPermission);
+
+        if (!hasRequiredPermission)
         {
-            // REFUSED: No grant exists
             await _auditService.LogAsync(
                 AuditAction.AccessRefused,
                 AuditStatus.Refused,
@@ -83,30 +94,11 @@ public class DocumentAuthorizationService
                 document.Title,
                 ipAddress,
                 userAgent,
-                $"Refused {requestedAction}: User has no active permission grant on document {document.Title}");
+                $"Refused {requestedAction}: User lacks explicit '{requiredPermission}' grant on document {document.Title}");
 
-            return new AccessEvaluationResult(false, null, null);
+            return new AccessEvaluationResult(false, null, activeGrants);
         }
 
-        // 4. Permission Level check (Read vs Edit)
-        if (requiredLevel == PermissionLevel.Edit && activePermission.Level < PermissionLevel.Edit)
-        {
-            // REFUSED: Insufficient privilege level
-            await _auditService.LogAsync(
-                AuditAction.AccessRefused,
-                AuditStatus.Refused,
-                currentUserId,
-                currentUserEmail,
-                currentUserRole.ToString(),
-                document.Id,
-                document.Title,
-                ipAddress,
-                userAgent,
-                $"Refused {requestedAction}: User has {activePermission.Level} but requires {requiredLevel}");
-
-            return new AccessEvaluationResult(false, null, null);
-        }
-
-        return new AccessEvaluationResult(true, document, activePermission.Level);
+        return new AccessEvaluationResult(true, document, activeGrants);
     }
 }

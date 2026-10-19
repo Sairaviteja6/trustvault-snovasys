@@ -10,9 +10,9 @@ using TrustVault.Infrastructure.Data;
 
 namespace TrustVault.Api.Controllers;
 
-[Authorize]
+[Authorize(Roles = "Owner")]
 [ApiController]
-[Route("api/documents/{documentId}/[controller]")]
+[Route("api/v1/documents/{documentId}/[controller]")]
 public class PermissionsController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
@@ -30,8 +30,8 @@ public class PermissionsController : ControllerBase
         var (userId, userRole, _) = GetCurrentUser();
 
         var document = await _dbContext.Documents
-            .Include(d => d.Permissions)
-            .ThenInclude(p => p.User)
+            .Include(d => d.Grants)
+            .ThenInclude(g => g.User)
             .FirstOrDefaultAsync(d => d.Id == documentId && !d.IsDeleted);
 
         if (document == null || document.OwnerId != userId)
@@ -39,19 +39,21 @@ public class PermissionsController : ControllerBase
             return NotFound(new { message = "Document not found or you are not the owner." });
         }
 
-        var list = document.Permissions.Select(p => new PermissionResponse(
-            p.Id,
-            p.UserId,
-            p.User?.Username ?? "Unknown",
-            p.User?.Email ?? "Unknown",
-            p.Level.ToString(),
-            p.GrantedAt));
+        var list = document.Grants
+            .Where(g => g.RevokedAtUtc == null)
+            .Select(g => new PermissionResponse(
+                g.Id,
+                g.UserId,
+                g.User?.Username ?? "Unknown",
+                g.User?.Email ?? "Unknown",
+                g.PermissionType.ToString(),
+                g.CreatedAtUtc));
 
         return Ok(list);
     }
 
     [HttpPost("grant")]
-    public async Task<IActionResult> GrantPermission(Guid documentId, [FromBody] GrantPermissionRequest request)
+    public async Task<IActionResult> GrantPermissions(Guid documentId, [FromBody] GrantPermissionRequest request)
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
@@ -72,31 +74,41 @@ public class PermissionsController : ControllerBase
             return BadRequest(new { message = "Owner already has full access to the document." });
         }
 
-        // Upsert permission
-        var existing = await _dbContext.DocumentPermissions
-            .FirstOrDefaultAsync(p => p.DocumentId == documentId && p.UserId == request.UserId);
-
-        if (existing != null)
+        if (request.Permissions == null || request.Permissions.Count == 0)
         {
-            existing.Level = request.Level;
-            existing.GrantedAt = DateTime.UtcNow;
-            existing.GrantedByUserId = userId;
+            return BadRequest(new { message = "At least one permission must be specified." });
         }
-        else
+
+        var grantedTypes = new List<string>();
+
+        foreach (var permType in request.Permissions.Distinct())
         {
-            var perm = new DocumentPermission
+            var existing = await _dbContext.DocumentGrants
+                .FirstOrDefaultAsync(g => g.DocumentId == documentId && g.UserId == request.UserId && g.PermissionType == permType);
+
+            if (existing != null)
             {
-                DocumentId = documentId,
-                UserId = request.UserId,
-                Level = request.Level,
-                GrantedByUserId = userId,
-                GrantedAt = DateTime.UtcNow
-            };
-            _dbContext.DocumentPermissions.Add(perm);
+                existing.RevokedAtUtc = null;
+                existing.UpdatedAtUtc = DateTime.UtcNow;
+                existing.GrantedByUserId = userId;
+            }
+            else
+            {
+                _dbContext.DocumentGrants.Add(new DocumentGrant
+                {
+                    DocumentId = documentId,
+                    UserId = request.UserId,
+                    PermissionType = permType,
+                    GrantedByUserId = userId,
+                    CreatedAtUtc = DateTime.UtcNow
+                });
+            }
+            grantedTypes.Add(permType.ToString());
         }
 
         await _dbContext.SaveChangesAsync();
 
+        var permSummary = string.Join(", ", grantedTypes);
         await _auditService.LogAsync(
             AuditAction.PermissionGranted,
             AuditStatus.Allowed,
@@ -107,9 +119,9 @@ public class PermissionsController : ControllerBase
             document.Title,
             GetIpAddress(),
             GetUserAgent(),
-            $"Granted {request.Level} access to named user {targetUser.Email}");
+            $"Granted [{permSummary}] to named user {targetUser.Email}");
 
-        return Ok(new { message = $"Access {request.Level} successfully granted to {targetUser.Email}." });
+        return Ok(new { message = $"Permissions [{permSummary}] successfully granted to {targetUser.Email}." });
     }
 
     [HttpPost("grant-by-tag")]
@@ -123,7 +135,6 @@ public class PermissionsController : ControllerBase
             return NotFound(new { message = "Document not found or you are not the owner." });
         }
 
-        // Find all named users tagged with this tag name by this owner
         var taggedUsers = await _dbContext.UserTags
             .Include(t => t.User)
             .Where(t => t.OwnerId == userId && t.TagName.ToLower() == request.TagName.Trim().ToLower())
@@ -135,35 +146,39 @@ public class PermissionsController : ControllerBase
             return BadRequest(new { message = $"No users found associated with tag '{request.TagName}'." });
         }
 
-        int grantedCount = 0;
+        int userCount = 0;
         foreach (var user in taggedUsers)
         {
             if (user.Id == userId) continue;
 
-            var existing = await _dbContext.DocumentPermissions
-                .FirstOrDefaultAsync(p => p.DocumentId == documentId && p.UserId == user.Id);
+            foreach (var permType in request.Permissions.Distinct())
+            {
+                var existing = await _dbContext.DocumentGrants
+                    .FirstOrDefaultAsync(g => g.DocumentId == documentId && g.UserId == user.Id && g.PermissionType == permType);
 
-            if (existing != null)
-            {
-                existing.Level = request.Level;
-                existing.GrantedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                _dbContext.DocumentPermissions.Add(new DocumentPermission
+                if (existing != null)
                 {
-                    DocumentId = documentId,
-                    UserId = user.Id,
-                    Level = request.Level,
-                    GrantedByUserId = userId,
-                    GrantedAt = DateTime.UtcNow
-                });
+                    existing.RevokedAtUtc = null;
+                    existing.UpdatedAtUtc = DateTime.UtcNow;
+                }
+                else
+                {
+                    _dbContext.DocumentGrants.Add(new DocumentGrant
+                    {
+                        DocumentId = documentId,
+                        UserId = user.Id,
+                        PermissionType = permType,
+                        GrantedByUserId = userId,
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+                }
             }
-            grantedCount++;
+            userCount++;
         }
 
         await _dbContext.SaveChangesAsync();
 
+        var permSummary = string.Join(", ", request.Permissions);
         await _auditService.LogAsync(
             AuditAction.PermissionGranted,
             AuditStatus.Allowed,
@@ -174,13 +189,13 @@ public class PermissionsController : ControllerBase
             document.Title,
             GetIpAddress(),
             GetUserAgent(),
-            $"Bulk-expanded tag '{request.TagName}': granted {request.Level} to {grantedCount} named individuals.");
+            $"Bulk-expanded tag '{request.TagName}': granted [{permSummary}] to {userCount} named individuals.");
 
-        return Ok(new { message = $"Successfully granted {request.Level} to {grantedCount} users from tag '{request.TagName}'." });
+        return Ok(new { message = $"Successfully granted [{permSummary}] to {userCount} users from tag '{request.TagName}'." });
     }
 
     [HttpDelete("revoke/{targetUserId}")]
-    public async Task<IActionResult> RevokePermission(Guid documentId, Guid targetUserId)
+    public async Task<IActionResult> RevokeAllPermissionsForUser(Guid documentId, Guid targetUserId)
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
@@ -190,22 +205,26 @@ public class PermissionsController : ControllerBase
             return NotFound(new { message = "Document not found or you are not the owner." });
         }
 
-        var permission = await _dbContext.DocumentPermissions
-            .Include(p => p.User)
-            .FirstOrDefaultAsync(p => p.DocumentId == documentId && p.UserId == targetUserId);
+        var activeGrants = await _dbContext.DocumentGrants
+            .Include(g => g.User)
+            .Where(g => g.DocumentId == documentId && g.UserId == targetUserId && g.RevokedAtUtc == null)
+            .ToListAsync();
 
-        if (permission == null)
+        if (activeGrants.Count == 0)
         {
-            return NotFound(new { message = "Permission not found for this user." });
+            return NotFound(new { message = "No active permissions found for this user on this document." });
         }
 
-        var targetEmail = permission.User?.Email ?? targetUserId.ToString();
+        var targetEmail = activeGrants.First().User?.Email ?? targetUserId.ToString();
 
-        // Immediate revocation: Remove from DB
-        _dbContext.DocumentPermissions.Remove(permission);
+        // Immediate revocation: Mark RevokedAtUtc = UtcNow
+        foreach (var grant in activeGrants)
+        {
+            grant.RevokedAtUtc = DateTime.UtcNow;
+        }
+
         await _dbContext.SaveChangesAsync();
 
-        // Log immediately to audit trail
         await _auditService.LogAsync(
             AuditAction.PermissionRevoked,
             AuditStatus.Allowed,
@@ -216,7 +235,7 @@ public class PermissionsController : ControllerBase
             document.Title,
             GetIpAddress(),
             GetUserAgent(),
-            $"Revoked access from named user {targetEmail}");
+            $"Revoked all access from named user {targetEmail}");
 
         return Ok(new { message = $"Access revoked immediately for user {targetEmail}." });
     }

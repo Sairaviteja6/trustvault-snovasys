@@ -13,7 +13,7 @@ namespace TrustVault.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class DocumentsController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
@@ -46,9 +46,21 @@ public class DocumentsController : ControllerBase
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
-        // Enforce role: Admin or Viewer cannot upload documents if Owner role is distinct
-        if (userRole != UserRole.Owner && userRole != UserRole.Admin)
+        // Enforce role: Document Owner only
+        if (userRole != UserRole.Owner)
         {
+            await _auditService.LogAsync(
+                AuditAction.AccessRefused,
+                AuditStatus.Refused,
+                userId,
+                userEmail,
+                userRole.ToString(),
+                null,
+                title,
+                GetIpAddress(),
+                GetUserAgent(),
+                $"Refused Upload: Role {userRole} is not authorized to upload documents.");
+
             return Forbid();
         }
 
@@ -90,7 +102,7 @@ public class DocumentsController : ControllerBase
             Category = string.IsNullOrWhiteSpace(category) ? "General" : category.Trim(),
             OriginalFileName = sanitizedFileName,
             StorageFileName = storageFileName,
-            ContentType = file.ContentType,
+            ContentType = string.IsNullOrWhiteSpace(file.ContentType) ? "application/octet-stream" : file.ContentType,
             FileSizeBytes = file.Length,
             FileHashSha256 = sha256,
             EncryptionIv = iv,
@@ -115,44 +127,55 @@ public class DocumentsController : ControllerBase
             GetUserAgent(),
             $"Document uploaded ({sanitizedFileName}, {file.Length} bytes, SHA-256: {sha256[..12]}...)");
 
-        return CreatedAtAction(nameof(GetById), new { id = document.Id }, MapToResponse(document, userId, "Owner", userEmail));
+        return CreatedAtAction(nameof(GetById), new { id = document.Id }, MapToResponse(document, userId, new List<string> { "Read", "Download", "Edit", "Delete" }, userEmail));
     }
 
     [HttpGet]
     public async Task<IActionResult> List()
     {
-        var (userId, userRole, userEmail) = GetCurrentUser();
+        var (userId, userRole, _) = GetCurrentUser();
 
-        // Admin: by design does not list private documents unless explicitly granted
-        // Owner: lists their owned documents + any granted to them
-        // Viewer: lists only explicitly granted documents
+        // Non-negotiable: Server filters by permissions
         var query = _dbContext.Documents
             .Include(d => d.Owner)
-            .Include(d => d.Permissions)
+            .Include(d => d.Grants)
             .Where(d => !d.IsDeleted);
 
         if (userRole == UserRole.Owner)
         {
-            query = query.Where(d => d.OwnerId == userId || d.Permissions.Any(p => p.UserId == userId));
+            // Owner sees their owned documents + any documents explicitly granted to them
+            query = query.Where(d => d.OwnerId == userId || d.Grants.Any(g => g.UserId == userId && g.RevokedAtUtc == null));
         }
         else if (userRole == UserRole.Viewer)
         {
-            query = query.Where(d => d.Permissions.Any(p => p.UserId == userId));
+            // Viewer sees strictly documents with active grants
+            query = query.Where(d => d.Grants.Any(g => g.UserId == userId && g.RevokedAtUtc == null));
         }
         else if (userRole == UserRole.Admin)
         {
-            // Least privilege: Admins see only documents they were personally granted
-            query = query.Where(d => d.OwnerId == userId || d.Permissions.Any(p => p.UserId == userId));
+            // Least privilege: Admins see only documents they were explicitly granted as a user
+            query = query.Where(d => d.Grants.Any(g => g.UserId == userId && g.RevokedAtUtc == null));
         }
 
         var docs = await query.OrderByDescending(d => d.CreatedAt).ToListAsync();
 
         var response = docs.Select(d =>
         {
-            var userPerm = d.OwnerId == userId 
-                ? "Owner" 
-                : d.Permissions.FirstOrDefault(p => p.UserId == userId)?.Level.ToString() ?? "None";
-            return MapToResponse(d, userId, userPerm, d.Owner?.Email ?? "Unknown");
+            List<string> permittedActions;
+            if (d.OwnerId == userId)
+            {
+                permittedActions = new List<string> { "Read", "Download", "Edit", "Delete" };
+            }
+            else
+            {
+                permittedActions = d.Grants
+                    .Where(g => g.UserId == userId && g.RevokedAtUtc == null)
+                    .Select(g => g.PermissionType.ToString())
+                    .Distinct()
+                    .ToList();
+            }
+
+            return MapToResponse(d, userId, permittedActions, d.Owner?.Email ?? "Unknown");
         });
 
         return Ok(response);
@@ -168,22 +191,20 @@ public class DocumentsController : ControllerBase
     {
         var (userId, userRole, _) = GetCurrentUser();
 
-        // Base query with access control invariant
         var baseQuery = _dbContext.Documents
             .Include(d => d.Owner)
-            .Include(d => d.Permissions)
+            .Include(d => d.Grants)
             .Where(d => !d.IsDeleted);
 
         if (userRole == UserRole.Owner)
         {
-            baseQuery = baseQuery.Where(d => d.OwnerId == userId || d.Permissions.Any(p => p.UserId == userId));
+            baseQuery = baseQuery.Where(d => d.OwnerId == userId || d.Grants.Any(g => g.UserId == userId && g.RevokedAtUtc == null));
         }
         else
         {
-            baseQuery = baseQuery.Where(d => d.Permissions.Any(p => p.UserId == userId));
+            baseQuery = baseQuery.Where(d => d.Grants.Any(g => g.UserId == userId && g.RevokedAtUtc == null));
         }
 
-        // Apply filters
         if (!string.IsNullOrWhiteSpace(query))
         {
             var search = query.Trim().ToLower();
@@ -215,10 +236,21 @@ public class DocumentsController : ControllerBase
 
         var response = results.Select(d =>
         {
-            var userPerm = d.OwnerId == userId 
-                ? "Owner" 
-                : d.Permissions.FirstOrDefault(p => p.UserId == userId)?.Level.ToString() ?? "None";
-            return MapToResponse(d, userId, userPerm, d.Owner?.Email ?? "Unknown");
+            List<string> permittedActions;
+            if (d.OwnerId == userId)
+            {
+                permittedActions = new List<string> { "Read", "Download", "Edit", "Delete" };
+            }
+            else
+            {
+                permittedActions = d.Grants
+                    .Where(g => g.UserId == userId && g.RevokedAtUtc == null)
+                    .Select(g => g.PermissionType.ToString())
+                    .Distinct()
+                    .ToList();
+            }
+
+            return MapToResponse(d, userId, permittedActions, d.Owner?.Email ?? "Unknown");
         });
 
         return Ok(response);
@@ -229,13 +261,11 @@ public class DocumentsController : ControllerBase
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
-        // Server decides every time via DocumentAuthorizationService
         var authResult = await _authorizationService.EvaluateAccessAsync(
-            id, userId, userRole, userEmail, PermissionLevel.Read, GetIpAddress(), GetUserAgent(), "ReadMetadata");
+            id, userId, userRole, userEmail, PermissionType.Read, GetIpAddress(), GetUserAgent(), "ReadMetadata");
 
         if (!authResult.IsAuthorized || authResult.Document == null)
         {
-            // Invariant: Return 404 to avoid leaking document existence
             return NotFound(new { message = "Document not found." });
         }
 
@@ -254,7 +284,8 @@ public class DocumentsController : ControllerBase
             GetUserAgent(),
             "Document metadata viewed");
 
-        return Ok(MapToResponse(doc, userId, authResult.GrantedLevel?.ToString() ?? "Read", owner?.Email ?? "Unknown"));
+        var actions = authResult.ActivePermissions.Select(p => p.ToString()).ToList();
+        return Ok(MapToResponse(doc, userId, actions, owner?.Email ?? "Unknown"));
     }
 
     [HttpGet("{id}/download")]
@@ -262,9 +293,9 @@ public class DocumentsController : ControllerBase
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
-        // Server decides every time
+        // Enforce discrete DOWNLOAD permission
         var authResult = await _authorizationService.EvaluateAccessAsync(
-            id, userId, userRole, userEmail, PermissionLevel.Read, GetIpAddress(), GetUserAgent(), "DownloadContent");
+            id, userId, userRole, userEmail, PermissionType.Download, GetIpAddress(), GetUserAgent(), "DownloadContent");
 
         if (!authResult.IsAuthorized || authResult.Document == null)
         {
@@ -272,11 +303,8 @@ public class DocumentsController : ControllerBase
         }
 
         var doc = authResult.Document;
-
-        // Decrypt in memory and stream
         var decryptedStream = await _storageService.GetDecryptedStreamAsync(doc.StorageFileName, doc.EncryptionIv, doc.EncryptionTag);
 
-        // Record successful download to audit trail
         await _auditService.LogAsync(
             AuditAction.DocumentDownload,
             AuditStatus.Allowed,
@@ -294,12 +322,13 @@ public class DocumentsController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UploadDocumentRequest request)
+    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateDocumentRequest request)
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
+        // Enforce discrete EDIT permission
         var authResult = await _authorizationService.EvaluateAccessAsync(
-            id, userId, userRole, userEmail, PermissionLevel.Edit, GetIpAddress(), GetUserAgent(), "EditDocument");
+            id, userId, userRole, userEmail, PermissionType.Edit, GetIpAddress(), GetUserAgent(), "EditDocument");
 
         if (!authResult.IsAuthorized || authResult.Document == null)
         {
@@ -334,25 +363,15 @@ public class DocumentsController : ControllerBase
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
-        var doc = await _dbContext.Documents.FirstOrDefaultAsync(d => d.Id == id && !d.IsDeleted);
-        if (doc == null || doc.OwnerId != userId)
-        {
-            // Only Owner can delete document
-            await _auditService.LogAsync(
-                AuditAction.AccessRefused,
-                AuditStatus.Refused,
-                userId,
-                userEmail,
-                userRole.ToString(),
-                id,
-                doc?.Title,
-                GetIpAddress(),
-                GetUserAgent(),
-                "Refused DeleteDocument: Only the document owner can delete.");
+        var authResult = await _authorizationService.EvaluateAccessAsync(
+            id, userId, userRole, userEmail, PermissionType.Delete, GetIpAddress(), GetUserAgent(), "DeleteDocument");
 
+        if (!authResult.IsAuthorized || authResult.Document == null)
+        {
             return NotFound(new { message = "Document not found." });
         }
 
+        var doc = authResult.Document;
         doc.IsDeleted = true;
         doc.UpdatedAt = DateTime.UtcNow;
         await _dbContext.SaveChangesAsync();
@@ -367,12 +386,12 @@ public class DocumentsController : ControllerBase
             doc.Title,
             GetIpAddress(),
             GetUserAgent(),
-            "Document marked as deleted by owner.");
+            "Document marked as deleted.");
 
         return Ok(new { message = "Document deleted successfully." });
     }
 
-    private static DocumentResponse MapToResponse(Document d, Guid currentUserId, string permission, string ownerEmail)
+    private static DocumentResponse MapToResponse(Document d, Guid currentUserId, List<string> permissions, string ownerEmail)
     {
         return new DocumentResponse(
             d.Id,
@@ -386,7 +405,7 @@ public class DocumentsController : ControllerBase
             d.OwnerId,
             ownerEmail,
             d.CreatedAt,
-            permission);
+            permissions);
     }
 
     private (Guid userId, UserRole role, string email) GetCurrentUser()

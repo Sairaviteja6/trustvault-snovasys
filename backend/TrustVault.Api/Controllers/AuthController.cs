@@ -12,7 +12,7 @@ using TrustVault.Infrastructure.Data;
 namespace TrustVault.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
@@ -26,53 +26,14 @@ public class AuthController : ControllerBase
         _auditService = auditService;
     }
 
-    [HttpPost("register")]
-    public async Task<IActionResult> Register([FromBody] RegisterRequest request)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
         {
             return BadRequest(new { message = "Email and Password are required." });
         }
 
-        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-        var exists = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail || u.Username == request.Username);
-        if (exists)
-        {
-            return Conflict(new { message = "User with this email or username already exists." });
-        }
-
-        var passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password);
-
-        var user = new User
-        {
-            Username = request.Username.Trim(),
-            Email = normalizedEmail,
-            PasswordHash = passwordHash,
-            Role = request.Role,
-            Department = request.Department
-        };
-
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync();
-
-        await _auditService.LogAsync(
-            AuditAction.UserRegistered,
-            AuditStatus.Allowed,
-            user.Id,
-            user.Email,
-            user.Role.ToString(),
-            null,
-            null,
-            GetIpAddress(),
-            GetUserAgent(),
-            $"User registered with role {user.Role}");
-
-        return CreatedAtAction(nameof(GetMe), new { id = user.Id }, new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department));
-    }
-
-    [HttpPost("login")]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
 
@@ -111,13 +72,13 @@ public class AuthController : ControllerBase
             null,
             GetIpAddress(),
             GetUserAgent(),
-            "User successfully logged in.");
+            "User successfully authenticated.");
 
         var response = new AuthResponse(
             accessToken,
             refreshToken,
             expiration,
-            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department));
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt));
 
         return Ok(response);
     }
@@ -143,7 +104,7 @@ public class AuthController : ControllerBase
             newAccessToken,
             newRefreshToken,
             expiration,
-            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department)));
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt)));
     }
 
     [Authorize]
@@ -168,7 +129,7 @@ public class AuthController : ControllerBase
                 null,
                 GetIpAddress(),
                 GetUserAgent(),
-                "User logged out, session revoked.");
+                "User logged out, session terminated.");
         }
 
         return Ok(new { message = "Logged out successfully." });
@@ -185,7 +146,7 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department));
+        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt));
     }
 
     private Guid GetCurrentUserId()

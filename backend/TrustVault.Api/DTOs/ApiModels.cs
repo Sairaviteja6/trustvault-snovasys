@@ -6,9 +6,15 @@ public record RegisterRequest(string Username, string Email, string Password, Us
 public record LoginRequest(string Email, string Password);
 public record AuthResponse(string Token, string RefreshToken, DateTime Expiration, UserDto User);
 public record RefreshTokenRequest(string RefreshToken);
-public record UserDto(Guid Id, string Username, string Email, string Role, string? Department);
+public record UserDto(Guid Id, string Username, string Email, string Role, string? Department, bool IsActive, DateTime CreatedAt);
+
+// Provisioning
+public record CreateOwnerRequest(string Username, string Email, string Password, string? Department);
+public record CreateViewerRequest(string Username, string Email, string Password, string? Department, List<string>? InitialTags);
 
 public record UploadDocumentRequest(string Title, string Description, string Category);
+public record UpdateDocumentRequest(string Title, string Description, string Category);
+
 public record DocumentResponse(
     Guid Id,
     string Title,
@@ -21,11 +27,11 @@ public record DocumentResponse(
     Guid OwnerId,
     string OwnerEmail,
     DateTime CreatedAt,
-    string CurrentUserPermission);
+    List<string> PermittedActions);
 
-public record GrantPermissionRequest(Guid UserId, PermissionLevel Level);
-public record GrantByTagRequest(string TagName, PermissionLevel Level);
-public record PermissionResponse(Guid PermissionId, Guid UserId, string Username, string Email, string Level, DateTime GrantedAt);
+public record GrantPermissionRequest(Guid UserId, List<PermissionType> Permissions);
+public record GrantByTagRequest(string TagName, List<PermissionType> Permissions);
+public record PermissionResponse(Guid GrantId, Guid UserId, string Username, string Email, string PermissionType, DateTime GrantedAtUtc);
 
 public record AuditLogDto(
     long Id,
@@ -45,3 +51,11 @@ public record AuditLogDto(
 
 public record AssignTagRequest(Guid UserId, string TagName);
 public record UserTagDto(Guid Id, Guid UserId, string Username, string Email, string TagName);
+
+public record AdminMetricsResponse(
+    int TotalActiveOwners,
+    int TotalActiveViewers,
+    int TotalDocuments,
+    int TotalAuditLogs,
+    int TotalRefusedAttempts,
+    List<AuditLogDto> RecentRefusedAttempts);

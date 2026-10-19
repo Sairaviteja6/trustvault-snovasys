@@ -11,7 +11,7 @@ public class TrustVaultDbContext : DbContext
 
     public DbSet<User> Users => Set<User>();
     public DbSet<Document> Documents => Set<Document>();
-    public DbSet<DocumentPermission> DocumentPermissions => Set<DocumentPermission>();
+    public DbSet<DocumentGrant> DocumentGrants => Set<DocumentGrant>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<UserTag> UserTags => Set<UserTag>();
 
@@ -47,26 +47,26 @@ public class TrustVaultDbContext : DbContext
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // DocumentPermission Configuration (Enforces 1 permission entry per document per user)
-        modelBuilder.Entity<DocumentPermission>(entity =>
+        // DocumentGrant Configuration (Discrete permissions: Read, Download, Edit, Delete)
+        modelBuilder.Entity<DocumentGrant>(entity =>
         {
-            entity.HasKey(p => p.Id);
-            entity.HasIndex(p => new { p.DocumentId, p.UserId }).IsUnique();
-            entity.Property(p => p.Level).HasConversion<int>();
+            entity.HasKey(g => g.Id);
+            entity.HasIndex(g => new { g.DocumentId, g.UserId, g.PermissionType });
+            entity.Property(g => g.PermissionType).HasConversion<int>();
 
-            entity.HasOne(p => p.Document)
-                .WithMany(d => d.Permissions)
-                .HasForeignKey(p => p.DocumentId)
+            entity.HasOne(g => g.Document)
+                .WithMany(d => d.Grants)
+                .HasForeignKey(g => g.DocumentId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            entity.HasOne(p => p.User)
-                .WithMany(u => u.ReceivedPermissions)
-                .HasForeignKey(p => p.UserId)
+            entity.HasOne(g => g.User)
+                .WithMany(u => u.ReceivedGrants)
+                .HasForeignKey(g => g.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(p => p.GrantedByUser)
-                .WithMany(u => u.GrantedPermissions)
-                .HasForeignKey(p => p.GrantedByUserId)
+            entity.HasOne(g => g.GrantedByUser)
+                .WithMany(u => u.GrantedGrants)
+                .HasForeignKey(g => g.GrantedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
