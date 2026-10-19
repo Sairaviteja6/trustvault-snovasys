@@ -1,0 +1,32 @@
+## Build & Binaries
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+dist/
+node_modules/
+.angular/
+
+## Secrets & Local Config
+appsettings.Development.json
+appsettings.Local.json
+*.env
+*.env.local
+*.key
+*.pfx
+
+## Storage / Uploads (never commit uploaded files)
+Storage/
+uploads/
+temp/
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.swp
+*~
+Thumbs.db
+[Dd]esktop.ini
