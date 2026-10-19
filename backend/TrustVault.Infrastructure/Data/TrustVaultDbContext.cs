@@ -82,6 +82,9 @@ public class TrustVaultDbContext : DbContext
             entity.Property(a => a.Status).HasConversion<int>();
             entity.Property(a => a.PreviousHash).HasMaxLength(64).IsRequired();
             entity.Property(a => a.CurrentHash).HasMaxLength(64).IsRequired();
+            entity.Property(a => a.Timestamp).HasConversion(
+                v => v,
+                v => DateTime.SpecifyKind(v, DateTimeKind.Utc));
 
             entity.HasOne(a => a.User)
                 .WithMany(u => u.AuditLogs)

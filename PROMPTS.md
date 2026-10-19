@@ -49,4 +49,26 @@ This log tracks interactions with AI coding assistants throughout the developmen
 
 ---
 
-*(Additional entries will be logged progressively as frontend integration and deployment proceed.)*
+### Entry 3: Cryptographic Audit Hash Chaining & Database Timestamp Precision
+* **Date**: 2026-10-19
+* **Topic**: Audit Trail Integrity, SHA-256 Chaining, and SQL Server Datetime2 Truncation
+* **Prompt Summary**:
+  > *"How should our AuditService construct and verify the SHA-256 hash chain ($H_i = \text{SHA256}(H_{i-1} \parallel \text{Payload}_i)$) across all audit records when persisting to SQL Server?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested using `timestamp:O` (round-trip ISO-8601 format) in the payload string:
+  > `return $"{previousHash}|{timestamp:O}|{userId}|{(int)action}|{status}...";`
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Sub-microsecond Truncation Discrepancy**: .NET CLR `DateTime.UtcNow` represents time down to 100-nanosecond ticks (7 decimal places). When persisted into SQL Server `datetime2` and read back, floating-point precision truncation or microsecond rounding altered the string representation by 1 character.
+  2. **False Integrity Violations**: Because SHA-256 is an avalanche hash function, even a 1-character difference in fractional seconds produced a completely different hash upon re-verification, causing `VerifyChainIntegrityAsync()` to falsely report that Record #1 had been tampered with or deleted!
+
+* **What We Did Instead**:
+  > 1. Standardized the timestamp component in `BuildPayloadString` to Unix epoch milliseconds using `new DateTimeOffset(timestamp).ToUnixTimeMilliseconds()`.
+  > 2. Because an integer millisecond timestamp is invariant across SQL Server storage, In-Memory testing, and serialization formats, the recomputed SHA-256 hash matches bit-for-bit upon database roundtrips.
+  > 3. Verified across all records with `isChainIntact = true`.
+* **Commit**: `feat(audit): stabilize timestamp precision in audit hash chain using Unix epoch milliseconds`
+
+---
+
+*(Additional entries will be logged progressively as Angular frontend integration proceeds.)*

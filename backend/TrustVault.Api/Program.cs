@@ -123,15 +123,16 @@ app.UseSwaggerUI(c =>
     c.RoutePrefix = "swagger";
 });
 
-// 5. Automatic Migration & Seeding
+// 6. Automatic Migration & Seeding
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var db = services.GetRequiredService<TrustVaultDbContext>();
-        if (db.Database.IsRelational())
+        if (app.Environment.IsDevelopment())
         {
+            await db.Database.EnsureDeletedAsync();
             await db.Database.EnsureCreatedAsync();
         }
         else

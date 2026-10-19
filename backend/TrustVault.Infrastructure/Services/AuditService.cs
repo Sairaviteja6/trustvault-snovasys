@@ -119,7 +119,9 @@ public class AuditService : IAuditService
         Guid? documentId,
         string? details)
     {
-        return $"{previousHash}|{timestamp:O}|{userId?.ToString() ?? "NONE"}|{(int)action}|{(int)status}|{documentId?.ToString() ?? "NONE"}|{details ?? string.Empty}";
+        var utcTimestamp = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+        var unixMs = new DateTimeOffset(utcTimestamp).ToUnixTimeMilliseconds();
+        return $"{previousHash}|{unixMs}|{userId?.ToString() ?? "NONE"}|{(int)action}|{(int)status}|{documentId?.ToString() ?? "NONE"}|{details ?? string.Empty}";
     }
 
     private static string ComputeSha256(string rawData)
