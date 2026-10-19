@@ -93,11 +93,11 @@ public class OwnerController : ControllerBase
     {
         var ownerId = GetCurrentUserId();
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-
-        var exists = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail);
+        var trimmedUsername = request.Username.Trim();
+        var exists = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail || u.Username == trimmedUsername);
         if (exists)
         {
-            return Conflict(new { message = "User with this email already exists." });
+            return Conflict(new { message = "User with this email or username already exists." });
         }
 
         var viewer = new User
