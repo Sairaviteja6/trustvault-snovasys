@@ -4,7 +4,15 @@
 
 TrustVault is an enterprise document platform built with a **security-first invariant**: the wrong person can never read a document, and every access attempt (allowed or refused) is permanently, tamper-evidently recorded.
 
-Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular**.
+Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular 18**.
+
+---
+
+## 🌐 Live Public Deployment
+
+* **Live Web Application**: [http://54.172.194.89](http://54.172.194.89)
+* **Interactive Swagger OpenAPI**: [http://54.172.194.89/swagger](http://54.172.194.89/swagger)
+* **Hosted on**: AWS EC2 (`TrustVault-Production`, Ubuntu 24.04 LTS, Multi-Container Docker Compose)
 
 ---
 
