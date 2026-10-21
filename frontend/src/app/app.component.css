@@ -1,0 +1,58 @@
+:host {
+  display: block;
+  min-height: 100vh;
+  position: relative;
+  background: transparent;
+}
+
+/* Background Video Layer with Frosted White Glass Overlay */
+.ambient-video-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ambient-video-element {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: auto;
+  height: auto;
+  transform: translate(-50%, -50%);
+  object-fit: cover;
+  opacity: 0.82;
+  filter: saturate(1.15) contrast(1.08);
+  transition: opacity 0.5s ease-in-out;
+}
+
+.ambient-video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.20) 0%, rgba(248, 250, 252, 0.40) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+
+/* Application Shell Content Layer */
+.app-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content {
+  flex: 1;
+}

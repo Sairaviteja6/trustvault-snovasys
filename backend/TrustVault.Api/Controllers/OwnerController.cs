@@ -156,10 +156,50 @@ public class OwnerController : ControllerBase
         var viewers = await _dbContext.Users
             .Where(u => u.Role == UserRole.Viewer)
             .OrderBy(u => u.Email)
-            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt))
+            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt, u.IsMasterAdmin))
             .ToListAsync();
 
         return Ok(viewers);
+    }
+
+    /// <summary>
+    /// Owner deletes / removes a Viewer account and revokes all grants and tags.
+    /// </summary>
+    [HttpDelete("users/viewers/{id}")]
+    public async Task<IActionResult> DeleteViewer(Guid id)
+    {
+        var ownerId = GetCurrentUserId();
+        var viewer = await _dbContext.Users.FindAsync(id);
+        if (viewer == null || viewer.Role != UserRole.Viewer)
+        {
+            return NotFound(new { message = "Viewer account not found." });
+        }
+
+        // Remove all grants for this viewer
+        var grants = await _dbContext.DocumentGrants.Where(g => g.UserId == id).ToListAsync();
+        _dbContext.DocumentGrants.RemoveRange(grants);
+
+        // Remove user tags
+        var tags = await _dbContext.UserTags.Where(t => t.UserId == id).ToListAsync();
+        _dbContext.UserTags.RemoveRange(tags);
+
+        // Remove viewer record
+        _dbContext.Users.Remove(viewer);
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            AuditAction.PermissionRevoked,
+            AuditStatus.Allowed,
+            ownerId,
+            User.FindFirstValue(ClaimTypes.Email),
+            "Owner",
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            $"Document Owner removed Viewer account {viewer.Email}");
+
+        return Ok(new { message = $"Viewer {viewer.Email} was successfully removed." });
     }
 
     /// <summary>

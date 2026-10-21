@@ -6,9 +6,10 @@ public record RegisterRequest(string Username, string Email, string Password, Us
 public record LoginRequest(string Email, string Password);
 public record AuthResponse(string Token, string RefreshToken, DateTime Expiration, UserDto User);
 public record RefreshTokenRequest(string RefreshToken);
-public record UserDto(Guid Id, string Username, string Email, string Role, string? Department, bool IsActive, DateTime CreatedAt);
+public record UserDto(Guid Id, string Username, string Email, string Role, string? Department, bool IsActive, DateTime CreatedAt, bool IsMasterAdmin = false);
 
 // Provisioning
+public record CreateAdminRequest(string Username, string Email, string Password, string? Department);
 public record CreateOwnerRequest(string Username, string Email, string Password, string? Department);
 public record CreateViewerRequest(string Username, string Email, string Password, string? Department, List<string>? InitialTags);
 
@@ -59,3 +60,8 @@ public record AdminMetricsResponse(
     int TotalAuditLogs,
     int TotalRefusedAttempts,
     List<AuditLogDto> RecentRefusedAttempts);
+
+public record EditDocumentContentRequest(string Content, string? ChangeSummary);
+public record DocumentSnapshotDto(Guid Id, int VersionNumber, long FileSizeBytes, string EditedByUserEmail, string EditedByRole, string ChangeSummary, DateTime CreatedAt);
+public record DocumentContentResponse(Guid Id, string Title, string ContentType, string TextContent, bool IsBinary, string? Base64Data, int CurrentVersion, List<string> PermittedActions);
+

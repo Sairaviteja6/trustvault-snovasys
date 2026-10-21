@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { 
+  CreateAdminRequest,
   CreateOwnerRequest, 
   CreateViewerRequest, 
   UserDto, 
@@ -27,6 +28,10 @@ export class UserService {
     return this.http.post<UserDto>(`${this.adminUrl}/users/owners`, req);
   }
 
+  createSubAdmin(req: CreateAdminRequest): Observable<UserDto> {
+    return this.http.post<UserDto>(`${this.adminUrl}/users/admins`, req);
+  }
+
   toggleUserStatus(userId: string): Observable<{ message: string; isActive: boolean }> {
     return this.http.patch<{ message: string; isActive: boolean }>(`${this.adminUrl}/users/${userId}/toggle-status`, null);
   }
@@ -38,6 +43,10 @@ export class UserService {
 
   createViewer(req: CreateViewerRequest): Observable<UserDto> {
     return this.http.post<UserDto>(`${this.ownerUrl}/users/viewers`, req);
+  }
+
+  deleteViewer(id: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.ownerUrl}/users/viewers/${id}`);
   }
 
   getTags(): Observable<UserTagDto[]> {

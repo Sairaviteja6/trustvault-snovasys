@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { DocumentResponse } from '../models/api.models';
+import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto, EditDocumentContentRequest } from '../models/api.models';
 
 @Injectable({
   providedIn: 'root'
@@ -28,6 +28,25 @@ export class DocumentService {
     return this.http.get<DocumentResponse>(`${this.baseUrl}/${id}`);
   }
 
+  getContent(id: string): Observable<DocumentContentResponse> {
+    return this.http.get<DocumentContentResponse>(`${this.baseUrl}/${id}/content`);
+  }
+
+  editContent(id: string, content: string, changeSummary?: string): Observable<{ message: string; version: number }> {
+    return this.http.put<{ message: string; version: number }>(`${this.baseUrl}/${id}/content`, {
+      content,
+      changeSummary
+    });
+  }
+
+  getSnapshots(id: string): Observable<DocumentSnapshotDto[]> {
+    return this.http.get<DocumentSnapshotDto[]>(`${this.baseUrl}/${id}/snapshots`);
+  }
+
+  revertSnapshot(id: string, versionNumber: number): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/${id}/revert/${versionNumber}`, {});
+  }
+
   download(id: string): Observable<HttpResponse<Blob>> {
     return this.http.get(`${this.baseUrl}/${id}/download`, {
       responseType: 'blob',
@@ -47,3 +66,4 @@ export class DocumentService {
     return this.http.delete<{ message: string }>(`${this.baseUrl}/${id}`);
   }
 }
+

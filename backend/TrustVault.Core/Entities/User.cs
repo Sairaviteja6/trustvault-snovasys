@@ -11,6 +11,7 @@ public class User
     public UserRole Role { get; set; } = UserRole.Viewer;
     public string? Department { get; set; }
     public bool IsActive { get; set; } = true;
+    public bool IsMasterAdmin { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Refresh token revocation tracking

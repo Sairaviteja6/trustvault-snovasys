@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuditService } from '../../../core/services/audit.service';
 import { UserService } from '../../../core/services/user.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { InquiryService, ClientInquiry } from '../../../core/services/inquiry.service';
 import { 
   AdminMetricsResponse, 
   AuditLogDto, 
@@ -18,14 +20,22 @@ import {
     <div class="container">
       <div class="section-header">
         <div>
-          <h1 class="section-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-            Security Administrator Portal
-          </h1>
+          <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+            <h1 class="section-title" style="margin-bottom: 0;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+              </svg>
+              Workspace Administration
+            </h1>
+            <span class="badge" [ngClass]="isMasterAdmin() ? 'badge-danger' : 'badge-info'">
+              {{ isMasterAdmin() ? 'Root Master Admin' : 'Secondary Administrator' }}
+            </span>
+          </div>
           <p class="section-subtitle">
-            Zero-knowledge administration: user governance, system telemetry, and cryptographic chain verification.
+            User governance, telemetry metrics, and platform audit explorer.
           </p>
         </div>
         <div class="action-buttons">
@@ -36,7 +46,29 @@ import {
             </svg>
             Refresh
           </button>
-          <button class="btn btn-primary" (click)="showNewOwnerModal.set(true)">
+
+          <!-- Master Admin Exclusive Action: Provision Secondary Admin -->
+          <button 
+            *ngIf="isMasterAdmin()" 
+            class="btn btn-secondary" 
+            (click)="showNewAdminModal.set(true)"
+            title="Create a secondary administrator with restricted privileges"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Provision Secondary Admin
+          </button>
+
+          <!-- Master Admin Exclusive Action: Provision Document Owner -->
+          <button 
+            *ngIf="isMasterAdmin()" 
+            class="btn btn-primary" 
+            (click)="showNewOwnerModal.set(true)"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
@@ -46,16 +78,14 @@ import {
         </div>
       </div>
 
-      <!-- Security Notice Banner -->
-      <div class="alert alert-info">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="16" x2="12" y2="12"/>
-          <line x1="12" y1="8" x2="12.01" y2="8"/>
-        </svg>
-        <div>
-          <strong>Least Privilege Enforcement:</strong> As an Administrator, you can audit system actions and manage user lifecycles, but cryptographic isolation prevents downloading or viewing user documents.
-        </div>
+      <!-- Secondary Admin Information Notice -->
+      <div class="alert alert-info" *ngIf="!isMasterAdmin()" style="margin-top: 1rem;">
+        <strong>Secondary Administrator Mode:</strong> You have restricted governance rights (telemetry monitoring and audit log inspection). Account provisioning and owner suspension require Master Administrator privileges.
+      </div>
+
+      <!-- Success Notification Alert -->
+      <div class="alert alert-success" *ngIf="adminSuccessMessage()">
+        {{ adminSuccessMessage() }}
       </div>
 
       <!-- Metrics Cards -->
@@ -110,19 +140,19 @@ import {
           </div>
           <p class="verification-msg">{{ vr.status }}</p>
           <div class="verification-stats">
-            <span>Verified Records: <strong>{{ vr.totalAuditedRecords }}</strong></span>
-            <span>Timestamp: <strong>{{ vr.verificationTimestamp | date:'medium' }}</strong></span>
-            <span *ngIf="vr.compromisedLogId" class="text-danger">Compromised Log ID: <strong>#{{ vr.compromisedLogId }}</strong></span>
+            <span>Audited Records Verified: <strong>{{ vr.totalAuditedRecords }}</strong></span>
+            <span>Verified At: <strong>{{ vr.verificationTimestamp | date:'medium' }}</strong></span>
+            <span *ngIf="vr.compromisedLogId">First Compromised Record: <strong class="text-danger">#{{ vr.compromisedLogId }}</strong></span>
           </div>
         </div>
       </div>
 
-      <!-- User Management Section -->
+      <!-- User Accounts Governance Table -->
       <div class="card" style="margin-top: 1.5rem;">
         <div class="section-header">
           <div>
-            <h2 class="card-title">User Account Governance</h2>
-            <p class="section-subtitle">Manage system users and instantly toggle status to revoke active tokens</p>
+            <h2 class="card-title">User Accounts Governance</h2>
+            <p class="section-subtitle">Provisioned identities, roles, authority levels, and access statuses</p>
           </div>
         </div>
 
@@ -131,11 +161,11 @@ import {
             <thead>
               <tr>
                 <th>Username</th>
-                <th>Email</th>
-                <th>Role</th>
+                <th>Email Address</th>
+                <th>Role &amp; Privilege Level</th>
                 <th>Department</th>
                 <th>Status</th>
-                <th>Created</th>
+                <th>Provisioned Date</th>
                 <th style="text-align: right;">Action</th>
               </tr>
             </thead>
@@ -144,8 +174,18 @@ import {
                 <td style="font-weight: 600;">{{ u.username }}</td>
                 <td class="font-mono">{{ u.email }}</td>
                 <td>
-                  <span class="badge" [ngClass]="u.role === 'Admin' ? 'badge-danger' : (u.role === 'Owner' ? 'badge-warning' : 'badge-info')">
-                    {{ u.role }}
+                  <span 
+                    *ngIf="u.role === 'Admin'" 
+                    class="badge" 
+                    [ngClass]="u.isMasterAdmin ? 'badge-danger' : 'badge-info'"
+                  >
+                    {{ u.isMasterAdmin ? 'Master Admin' : 'Secondary Admin' }}
+                  </span>
+                  <span *ngIf="u.role === 'Owner'" class="badge badge-warning">
+                    Document Owner
+                  </span>
+                  <span *ngIf="u.role === 'Viewer'" class="badge badge-info">
+                    Viewer
                   </span>
                 </td>
                 <td>{{ u.department || '—' }}</td>
@@ -157,13 +197,112 @@ import {
                 <td>{{ u.createdAt | date:'shortDate' }}</td>
                 <td style="text-align: right;">
                   <button 
-                    *ngIf="u.role !== 'Admin'"
+                    *ngIf="canToggleUser(u)"
                     class="btn btn-sm" 
                     [ngClass]="u.isActive ? 'btn-danger' : 'btn-success'"
                     (click)="onToggleStatus(u.id)"
                   >
                     {{ u.isActive ? 'Deactivate (Cut Off)' : 'Activate' }}
                   </button>
+                  <span *ngIf="!canToggleUser(u)" style="font-size: 0.75rem; color: var(--text-muted);">
+                    {{ u.isMasterAdmin ? 'Master Protected' : 'Restricted' }}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Enterprise Client Onboarding Inquiries (From Landing Page) -->
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem;">
+              <h2 class="card-title">Client Onboarding Inquiries</h2>
+              <span class="badge badge-info">{{ inquiryService.inquiries().length }} Total</span>
+            </div>
+            <p class="section-subtitle">
+              Public enterprise inquiries submitted via the TrustVault landing page. Review requirements and provision dedicated Document Owner credentials.
+            </p>
+          </div>
+          <button 
+            class="btn btn-sm btn-secondary" 
+            (click)="inquiryService.refreshInquiries()" 
+            title="Refresh inquiries list from server"
+            style="display: flex; align-items: center; gap: 0.4rem;"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+            </svg>
+            <span>Refresh List</span>
+          </button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Reference</th>
+                <th>Organization &amp; Contact</th>
+                <th>Corporate Email</th>
+                <th>Requested Role</th>
+                <th>Security Requirement</th>
+                <th>Received</th>
+                <th>Status</th>
+                <th style="text-align: right;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let inq of inquiryService.inquiries()">
+                <td class="font-mono"><strong>{{ inq.id }}</strong></td>
+                <td>
+                  <div style="font-weight: 700; color: #0f172a;">{{ inq.organization }}</div>
+                  <div style="font-size: 0.775rem; color: var(--text-muted);">{{ inq.fullName }} ({{ inq.department || 'General' }})</div>
+                </td>
+                <td class="font-mono">{{ inq.email }}</td>
+                <td>
+                  <span class="badge" [ngClass]="inq.requestedRole === 'Admin' ? 'badge-danger' : 'badge-info'">
+                    {{ inq.requestedRole || 'Owner' }}
+                  </span>
+                </td>
+                <td><span style="font-size: 0.8rem; color: #475569;">{{ inq.useCase }}</span></td>
+                <td>{{ inq.createdAt | date:'short' }}</td>
+                <td>
+                  <span class="badge" [ngClass]="inq.status === 'Approved' ? 'badge-success' : 'badge-warning'">
+                    {{ inq.status }}
+                  </span>
+                </td>
+                <td style="text-align: right;">
+                  <button 
+                    *ngIf="isMasterAdmin() && inq.status !== 'Approved'" 
+                    class="btn btn-sm btn-primary"
+                    (click)="approveAndDispatch(inq)"
+                    title="Approve organization request and dispatch security credentials email"
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Approve &amp; Dispatch Mail</span>
+                  </button>
+                  <div *ngIf="inq.status === 'Approved'" style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem;">
+                    <span style="font-size: 0.8rem; color: #10b981; font-weight: 700;">
+                      ✓ Approved
+                    </span>
+                    <button 
+                      class="btn btn-sm btn-secondary" 
+                      (click)="showCredentialsDetails(inq)"
+                      title="View provisioned credentials and email content"
+                      style="font-size: 0.75rem; padding: 0.25rem 0.5rem;"
+                    >
+                      View Credentials
+                    </button>
+                  </div>
+                </td>
+              </tr>
+              <tr *ngIf="inquiryService.inquiries().length === 0">
+                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+                  No client onboarding inquiries received yet.
                 </td>
               </tr>
             </tbody>
@@ -207,16 +346,15 @@ import {
                 <th>Status</th>
                 <th>Document</th>
                 <th>Details</th>
-                <th>Cryptographic Chain Hashes</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let log of auditLogs()">
                 <td class="font-mono">#{{ log.id }}</td>
-                <td>{{ log.timestamp | date:'short' }}</td>
+                <td class="font-mono" style="font-size: 0.8rem;">{{ log.timestamp | date:'short' }}</td>
                 <td>
-                  <div style="font-weight: 600;">{{ log.userEmail || 'Anonymous' }}</div>
-                  <div style="font-size: 0.725rem; color: var(--text-muted);">{{ log.ipAddress }}</div>
+                  <div style="font-weight: 600;">{{ log.userEmail || 'System / Anonymous' }}</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted);">{{ log.userRole || 'N/A' }}</div>
                 </td>
                 <td>
                   <span class="badge badge-info">{{ log.action }}</span>
@@ -227,14 +365,53 @@ import {
                   </span>
                 </td>
                 <td>{{ log.documentTitle || '—' }}</td>
-                <td style="max-width: 280px; font-size: 0.8rem;">{{ log.details }}</td>
-                <td class="font-mono hash-cell">
-                  <div><span class="hash-tag">Prev:</span> {{ log.previousHash.slice(0, 16) }}...</div>
-                  <div><span class="hash-tag">Curr:</span> {{ log.currentHash.slice(0, 16) }}...</div>
+                <td style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.details }}</td>
+              </tr>
+              <tr *ngIf="auditLogs().length === 0">
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  No audit logs matching query.
                 </td>
               </tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Provision Secondary Administrator -->
+    <div class="modal-overlay" *ngIf="showNewAdminModal()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Provision Secondary Administrator</h3>
+          <button class="modal-close" (click)="showNewAdminModal.set(false)">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <strong>Restricted Admin Role:</strong> Secondary Administrators are granted access to system telemetry and audit inspection, but cannot provision additional administrators or document owners.
+          </div>
+          <div class="alert alert-danger" *ngIf="subAdminError()">
+            {{ subAdminError() }}
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username *</label>
+            <input type="text" class="form-input" [(ngModel)]="newSubAdmin.username" placeholder="e.g. sec_auditor" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email Address *</label>
+            <input type="email" class="form-input" [(ngModel)]="newSubAdmin.email" placeholder="e.g. auditor@trustvault.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Temporary Password *</label>
+            <input type="password" class="form-input" [(ngModel)]="newSubAdmin.password" placeholder="Min 8 chars, uppercase, digit, special" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Department / Unit</label>
+            <input type="text" class="form-input" [(ngModel)]="newSubAdmin.department" placeholder="e.g. Security Operations (SOC)" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showNewAdminModal.set(false)">Cancel</button>
+          <button class="btn btn-primary" (click)="onCreateSubAdmin()">Provision Secondary Admin</button>
         </div>
       </div>
     </div>
@@ -251,16 +428,16 @@ import {
             {{ ownerError() }}
           </div>
           <div class="form-group">
-            <label class="form-label">Username</label>
-            <input type="text" class="form-input" [(ngModel)]="newOwner.username" placeholder="e.g. legal_owner" />
+            <label class="form-label">Username *</label>
+            <input type="text" class="form-input" [(ngModel)]="newOwner.username" placeholder="e.g. hr_director" />
           </div>
           <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <input type="email" class="form-input" [(ngModel)]="newOwner.email" placeholder="owner@company.com" />
+            <label class="form-label">Email Address *</label>
+            <input type="email" class="form-input" [(ngModel)]="newOwner.email" placeholder="e.g. owner@trustvault.com" />
           </div>
           <div class="form-group">
-            <label class="form-label">Temporary Password</label>
-            <input type="password" class="form-input" [(ngModel)]="newOwner.password" placeholder="••••••••••••" />
+            <label class="form-label">Temporary Password *</label>
+            <input type="password" class="form-input" [(ngModel)]="newOwner.password" placeholder="Min 8 chars, uppercase, digit, special" />
           </div>
           <div class="form-group">
             <label class="form-label">Department / Unit</label>
@@ -273,9 +450,66 @@ import {
         </div>
       </div>
     </div>
+
+    <!-- Modal: View Provisioned Credentials & Email Details -->
+    <div class="modal-overlay" *ngIf="selectedCredentialsInquiry()">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h3 class="modal-title">Provisioned Credentials &amp; Access Details</h3>
+          <button class="modal-close" (click)="selectedCredentialsInquiry.set(null)">&times;</button>
+        </div>
+        <div class="modal-body" *ngIf="selectedCredentialsInquiry() as inq">
+          <div class="alert alert-success">
+            <strong>Account Provisioned:</strong> Client request approved. Credentials generated &amp; email recorded.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Client Name &amp; Organization</label>
+            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.12);">
+              {{ inq.fullName }} &bull; {{ inq.organization }} ({{ inq.department || 'General' }})
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Corporate Email Address (Destination)</label>
+            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.12);">
+              {{ inq.email }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Assigned Role</label>
+            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; font-weight: 700; border: 1px solid rgba(15, 23, 42, 0.12);">
+              {{ inq.requestedRole || 'Owner' }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Provisioned Username</label>
+            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; font-weight: 700; border: 1px solid rgba(15, 23, 42, 0.12);">
+              {{ inq.email.split('@')[0] }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Temporary Security Password</label>
+            <div class="form-input font-mono" style="background: #f8fafc; color: #059669; font-weight: 800; border: 1px solid rgba(15, 23, 42, 0.12);">
+              {{ inq.requestedRole === 'Admin' ? 'Admin@2026!' : 'Owner@2026!' }}
+            </div>
+          </div>
+
+          <div style="margin-top: 1rem; padding: 0.75rem; background: #f8fafc; border: 1px solid rgba(15, 23, 42, 0.1); border-radius: 8px; font-size: 0.775rem; color: #475569; line-height: 1.5;">
+            <strong>Email Dispatch Status:</strong> An HTML credentials notification email has been rendered and archived on the server outbox. If SMTP server credentials (e.g. Gmail App Password or AWS SES) are configured in <code>appsettings.json</code>, it is transmitted over the internet to the recipient's mail inbox.
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" (click)="selectedCredentialsInquiry.set(null)">Close</button>
+        </div>
+      </div>
+    </div>
   `,
   styles: [`
-    .action-buttons { display: flex; gap: 0.75rem; }
+    .action-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
     .card-title { font-size: 1.15rem; font-weight: 700; }
     .metric-card {
       display: flex;
@@ -292,7 +526,7 @@ import {
     .metric-value {
       font-size: 2rem;
       font-weight: 800;
-      color: #f8fafc;
+      color: #0f172a;
       line-height: 1.2;
     }
     .metric-note {
@@ -300,13 +534,14 @@ import {
       color: var(--text-secondary);
     }
     .alert-metric {
-      border-color: rgba(239, 68, 68, 0.3);
-      background: rgba(239, 68, 68, 0.05);
+      border-color: rgba(220, 38, 38, 0.2);
+      background: #fef2f2;
     }
-    .text-danger { color: #f87171 !important; }
+    .text-danger { color: #dc2626 !important; }
     .verification-card {
-      border: 1px solid rgba(16, 185, 129, 0.25);
-      background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(17, 24, 39, 0.9) 100%);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05);
     }
     .verification-header {
       display: flex;
@@ -318,6 +553,7 @@ import {
     .verification-title {
       font-size: 1.2rem;
       font-weight: 700;
+      color: #0f172a;
       display: flex;
       align-items: center;
       gap: 0.5rem;
@@ -333,12 +569,12 @@ import {
       border-radius: 8px;
     }
     .verification-result.intact {
-      background: rgba(16, 185, 129, 0.1);
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
     }
     .verification-result.broken {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+      background: #fef2f2;
+      border: 1px solid #fecaca;
     }
     .status-indicator {
       display: flex;
@@ -346,10 +582,10 @@ import {
       gap: 0.5rem;
       font-size: 0.9rem;
       font-weight: 700;
-      color: #34d399;
+      color: #059669;
     }
     .verification-result.broken .status-indicator {
-      color: #f87171;
+      color: #dc2626;
     }
     .indicator-dot {
       width: 10px;
@@ -361,7 +597,7 @@ import {
     .verification-msg {
       font-size: 0.85rem;
       margin: 0.5rem 0;
-      color: #e2e8f0;
+      color: #334155;
     }
     .verification-stats {
       display: flex;
@@ -375,19 +611,15 @@ import {
       gap: 0.5rem;
       align-items: center;
     }
-    .hash-cell {
-      font-size: 0.7rem;
-      color: var(--text-muted);
-    }
-    .hash-tag {
-      color: #38bdf8;
-      font-weight: 600;
-    }
   `]
 })
 export class AdminDashboardComponent implements OnInit {
   private auditService = inject(AuditService);
   private userService = inject(UserService);
+  private authService = inject(AuthService);
+  readonly inquiryService = inject(InquiryService);
+
+  readonly isMasterAdmin = this.authService.isMasterAdmin;
 
   metrics = signal<AdminMetricsResponse | null>(null);
   users = signal<UserDto[]>([]);
@@ -398,9 +630,20 @@ export class AdminDashboardComponent implements OnInit {
   searchQuery = '';
   statusFilter = '';
 
+  adminSuccessMessage = signal<string | null>(null);
+
+  // New Owner modal state
   showNewOwnerModal = signal(false);
   newOwner = { username: '', email: '', password: '', department: '' };
   ownerError = signal<string | null>(null);
+
+  // New Secondary Admin modal state
+  showNewAdminModal = signal(false);
+  newSubAdmin = { username: '', email: '', password: '', department: '' };
+  subAdminError = signal<string | null>(null);
+
+  // Inquiries Credentials Inspection modal state
+  selectedCredentialsInquiry = signal<ClientInquiry | null>(null);
 
   ngOnInit(): void {
     this.loadAll();
@@ -410,6 +653,11 @@ export class AdminDashboardComponent implements OnInit {
     this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
     this.userService.getAdminUsers().subscribe(u => this.users.set(u));
     this.loadAuditLogs();
+    this.inquiryService.refreshInquiries();
+  }
+
+  showCredentialsDetails(inq: ClientInquiry): void {
+    this.selectedCredentialsInquiry.set(inq);
   }
 
   loadAuditLogs(): void {
@@ -436,10 +684,44 @@ export class AdminDashboardComponent implements OnInit {
     });
   }
 
+  canToggleUser(targetUser: UserDto): boolean {
+    if (targetUser.isMasterAdmin) return false; // Master admin is protected
+    if (!this.isMasterAdmin() && targetUser.role === 'Owner') return false; // Secondary admin cannot alter owners
+    if (!this.isMasterAdmin() && targetUser.role === 'Admin') return false; // Secondary admin cannot alter admins
+    return true;
+  }
+
   onToggleStatus(userId: string): void {
-    this.userService.toggleUserStatus(userId).subscribe(() => {
-      this.userService.getAdminUsers().subscribe(u => this.users.set(u));
-      this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
+    this.userService.toggleUserStatus(userId).subscribe({
+      next: () => {
+        this.userService.getAdminUsers().subscribe(u => this.users.set(u));
+        this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Failed to update user status.');
+      }
+    });
+  }
+
+  onCreateSubAdmin(): void {
+    if (!this.newSubAdmin.username || !this.newSubAdmin.email || !this.newSubAdmin.password) {
+      this.subAdminError.set('Please fill out all required fields.');
+      return;
+    }
+
+    this.subAdminError.set(null);
+    this.userService.createSubAdmin(this.newSubAdmin).subscribe({
+      next: () => {
+        this.showNewAdminModal.set(false);
+        this.newSubAdmin = { username: '', email: '', password: '', department: '' };
+        this.adminSuccessMessage.set('Secondary Administrator provisioned successfully with restricted governance privileges.');
+        setTimeout(() => this.adminSuccessMessage.set(null), 5000);
+        this.userService.getAdminUsers().subscribe(u => this.users.set(u));
+        this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
+      },
+      error: (err) => {
+        this.subAdminError.set(err.error?.message || 'Failed to provision Secondary Administrator.');
+      }
     });
   }
 
@@ -454,6 +736,8 @@ export class AdminDashboardComponent implements OnInit {
       next: () => {
         this.showNewOwnerModal.set(false);
         this.newOwner = { username: '', email: '', password: '', department: '' };
+        this.adminSuccessMessage.set('Document Owner provisioned successfully.');
+        setTimeout(() => this.adminSuccessMessage.set(null), 5000);
         this.userService.getAdminUsers().subscribe(u => this.users.set(u));
         this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
       },
@@ -461,5 +745,25 @@ export class AdminDashboardComponent implements OnInit {
         this.ownerError.set(err.error?.message || 'Failed to provision Owner account.');
       }
     });
+  }
+
+  approveAndDispatch(inq: ClientInquiry): void {
+    const roleToAssign = inq.requestedRole || 'Owner';
+    const tempPassword = roleToAssign === 'Admin' ? 'Admin@2026!' : 'Owner@2026!';
+
+    this.inquiryService.approveInquiry(inq.id, roleToAssign, tempPassword).subscribe({
+      next: (res) => {
+        this.adminSuccessMessage.set(`Successfully approved inquiry ${inq.id} and dispatched ${roleToAssign} credentials email to ${inq.email}!`);
+        setTimeout(() => this.adminSuccessMessage.set(null), 7000);
+        this.loadAll();
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Failed to approve inquiry and dispatch email.');
+      }
+    });
+  }
+
+  prefillAndOpenOwnerModal(inq: ClientInquiry): void {
+    this.approveAndDispatch(inq);
   }
 }

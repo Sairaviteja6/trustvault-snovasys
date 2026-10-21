@@ -36,6 +36,7 @@ builder.Services.AddSingleton<IEncryptionService, AesGcmEncryptionService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<IFileValidatorService, FileValidatorService>();
 builder.Services.AddScoped<IFileStorageService, LocalEncryptedFileStorageService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<DocumentAuthorizationService>();
 
@@ -200,15 +201,29 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var db = services.GetRequiredService<TrustVaultDbContext>();
-        if (app.Environment.IsDevelopment())
-        {
-            await db.Database.EnsureDeletedAsync();
-            await db.Database.EnsureCreatedAsync();
-        }
-        else
-        {
-            await db.Database.EnsureCreatedAsync();
-        }
+        // Preserve existing data across restarts and updates
+        await db.Database.EnsureCreatedAsync();
+
+        // Ensure newly added ClientInquiries table exists in SQL Server
+        await db.Database.ExecuteSqlRawAsync(@"
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ClientInquiries')
+BEGIN
+    CREATE TABLE [ClientInquiries] (
+        [Id] nvarchar(50) NOT NULL PRIMARY KEY,
+        [FullName] nvarchar(256) NOT NULL,
+        [Email] nvarchar(256) NOT NULL,
+        [Organization] nvarchar(256) NOT NULL,
+        [Department] nvarchar(256) NULL,
+        [RequestedRole] nvarchar(50) NOT NULL DEFAULT 'Owner',
+        [UseCase] nvarchar(256) NOT NULL,
+        [TeamSize] nvarchar(100) NOT NULL,
+        [Message] nvarchar(max) NULL,
+        [CreatedAt] datetime2 NOT NULL,
+        [Status] nvarchar(50) NOT NULL DEFAULT 'Pending',
+        [ProvisionedUserId] uniqueidentifier NULL,
+        [ProvisionedAt] datetime2 NULL
+    );
+END");
 
         var auditService = services.GetRequiredService<IAuditService>();
         var encryptionService = services.GetRequiredService<IEncryptionService>();

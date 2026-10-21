@@ -14,10 +14,23 @@ public class TrustVaultDbContext : DbContext
     public DbSet<DocumentGrant> DocumentGrants => Set<DocumentGrant>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<UserTag> UserTags => Set<UserTag>();
+    public DbSet<DocumentSnapshot> DocumentSnapshots => Set<DocumentSnapshot>();
+    public DbSet<ClientInquiry> ClientInquiries => Set<ClientInquiry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // DocumentSnapshot Configuration
+        modelBuilder.Entity<DocumentSnapshot>(entity =>
+        {
+            entity.HasKey(s => s.Id);
+            entity.HasIndex(s => new { s.DocumentId, s.VersionNumber });
+            entity.HasOne(s => s.Document)
+                .WithMany(d => d.Snapshots)
+                .HasForeignKey(s => s.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
 
         // User Configuration
         modelBuilder.Entity<User>(entity =>

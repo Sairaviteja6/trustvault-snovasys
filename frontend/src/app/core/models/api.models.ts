@@ -1,10 +1,10 @@
 export type UserRole = 'Admin' | 'Owner' | 'Viewer';
 
 export enum PermissionType {
-  Read = 0,
-  Download = 1,
-  Edit = 2,
-  Delete = 3
+  Read = 1,
+  Download = 2,
+  Edit = 3,
+  Delete = 4
 }
 
 export interface UserDto {
@@ -14,7 +14,15 @@ export interface UserDto {
   role: UserRole;
   department?: string;
   isActive: boolean;
+  isMasterAdmin?: boolean;
   createdAt: string;
+}
+
+export interface CreateAdminRequest {
+  username: string;
+  email: string;
+  password: string;
+  department?: string;
 }
 
 export interface AuthResponse {
@@ -120,4 +128,30 @@ export interface CreateViewerRequest {
   password: string;
   department?: string;
   initialTags?: string[];
+}
+
+export interface DocumentSnapshotDto {
+  id: string;
+  versionNumber: number;
+  fileSizeBytes: number;
+  editedByUserEmail: string;
+  editedByRole: string;
+  changeSummary: string;
+  createdAt: string;
+}
+
+export interface DocumentContentResponse {
+  id: string;
+  title: string;
+  contentType: string;
+  textContent: string;
+  isBinary: boolean;
+  base64Data?: string | null;
+  currentVersion: number;
+  permittedActions: string[];
+}
+
+export interface EditDocumentContentRequest {
+  content: string;
+  changeSummary?: string;
 }

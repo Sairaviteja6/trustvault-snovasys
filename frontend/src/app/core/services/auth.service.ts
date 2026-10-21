@@ -21,6 +21,7 @@ export class AuthService {
   readonly currentUser = signal<UserDto | null>(this.getStoredUser());
   readonly isAuthenticated = computed(() => this.currentUser() !== null && !!this.getToken());
   readonly userRole = computed<UserRole | null>(() => this.currentUser()?.role ?? null);
+  readonly isMasterAdmin = computed(() => this.currentUser()?.isMasterAdmin === true);
 
   login(email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, { email, password }).pipe(
