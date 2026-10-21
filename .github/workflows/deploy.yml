@@ -2,7 +2,7 @@ name: Deploy TrustVault to AWS EC2
 
 on:
   push:
-    branches: [ main ]
+    branches: [ aws-cloud ]
   workflow_dispatch:
 
 jobs:
@@ -29,7 +29,7 @@ jobs:
     name: Deploy to Production EC2
     needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/aws-cloud'
 
     steps:
     - name: Checkout Code
