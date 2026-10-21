@@ -36,6 +36,16 @@ services:
     volumes:
       - encrypted-blobs:/app/Storage/encrypted_blobs
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: trustvault-web
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
 volumes:
   sqlserver-data:
   encrypted-blobs:

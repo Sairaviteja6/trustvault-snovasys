@@ -71,4 +71,61 @@ This log tracks interactions with AI coding assistants throughout the developmen
 
 ---
 
-*(Additional entries will be logged progressively as Angular frontend integration proceeds.)*
+### Entry 4: Client-Side Route Guards vs Server-Side Revocation
+* **Date**: 2026-10-20
+* **Topic**: Frontend Authorization, Token Expiration vs Instant Administrative Deactivation
+* **Prompt Summary**:
+  > *"How should our Angular client enforce user role authorization on routes, and what should happen if an administrator deactivates an owner or viewer while they are actively navigating the app?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested decoding the JWT payload in Angular route guards to inspect the `role` claim (`jwt_decode(token).role`), and caching the permissions in `localStorage`. For deactivation, it suggested relying on the JWT expiration (`exp` claim after 60 minutes).
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Violation of Challenge Invariant #3**: The specification requires: *"Taking access away works immediately. Whatever you have issued to that person before that moment stops working."* If deactivation relies on token expiry, a revoked employee retains full access for up to 60 minutes!
+  2. **Client-Side Role Spoofing**: Decoding untrusted JWT strings on the client without cryptographic verification allows an adversary to tamper with `localStorage` and view UI elements.
+  3. **Stale Permission State**: Caching document permissions on the client hides the reality of server-side revocation.
+
+* **What We Did Instead**:
+  > 1. In `role.guard.ts`, route activation checks an in-memory Angular `AuthService` state signal synchronized via `sessionStorage` (cleared on tab close).
+  > 2. On every single API request, the server executes `DocumentAuthorizationFilter` and user status checks directly against the database `IsActive` flag.
+  > 3. An HTTP Interceptor (`auth.interceptor.ts`) intercepts `401 Unauthorized` responses and immediately calls `AuthService.logout()`, invalidating the session, wiping `sessionStorage`, and redirecting to `/login`.
+  > 4. If an administrator deactivates an account, their very next API call (or download attempt) fails immediately, and the client UI locks out on the spot.
+* **Commit**: `9fc6eef feat(security): complete 19-point verification checklist with automated tests for cross-owner isolation and instant deactivation rejection`
+
+---
+
+### Entry 5: The Discrete Permission Inheritance Trap (Edit vs Download)
+* **Date**: 2026-10-21
+* **Topic**: Granular Access Control, Discrete Permissions vs Hierarchical Implication
+* **Prompt Summary**:
+  > *"When defining DocumentGrant permissions (Read, Download, Edit), should 'Edit' permission automatically imply 'Download' permission so that an editor can always fetch the raw binary?"*
+
+* **What the AI Initially Suggested**:
+  > The AI strongly argued for a hierarchical model: `None < Read < Download < Edit < Delete`, where having `Edit` automatically grants `Download` and `Read` via bitwise flags or numeric comparison (`permission >= PermissionType.Download`).
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Violates Principle of Least Privilege**: In regulated industries (e.g., medical records, intellectual property, contract metadata review), an external editor or reviewer may be permitted to update metadata, change categories, or replace approval notes *without* having permission to extract the underlying proprietary binary file.
+  2. **Hidden Exfiltration Channel**: Conflating `Edit` with `Download` allows an unauthorized actor granted metadata editing rights to siphon confidential binaries.
+  3. **Requirement Clarity**: The challenge rubric highlights: *"Permissions per document, at least read and edit, granted to named people... The permission model... We will spend much of the interview here."*
+
+* **What We Did Instead**:
+  > 1. Made each capability completely discrete: `READ`, `DOWNLOAD`, `EDIT` are evaluated independently on the server.
+  > 2. `DocumentsController.Download` requires an explicit `DOWNLOAD` grant or ownership. Having only `EDIT` does NOT allow binary streaming.
+  > 3. The frontend displays discrete checkboxes for each capability during the grant workflow, allowing owners to fine-tune access with surgical precision.
+  > 4. Verified via automated test `AccessControlTests.EditPermission_DoesNotGrant_DownloadAccess`.
+* **Commit**: `0b3bff7 feat(backend): complete versioned v1 REST API, discrete permissions (READ, DOWNLOAD, EDIT), owner-scoped audit logs, Swagger OpenAPI, and docs`
+
+---
+
+## 4. Reused Prompts & Engineering Directives Across the Project
+
+The following standardized prompt context directives were used repeatedly across development sessions to guide AI tools:
+
+```markdown
+Rule 1 (The Server Invariant): The server decides authorization on EVERY request. Never trust UI checks, hidden buttons, or client-decoded JWT claims.
+Rule 2 (No Document Existence Leaks): Return 404 Not Found uniformly for unauthorized and non-existent documents. Refused attempts must be logged to the audit chain.
+Rule 3 (Instant Revocation): Revocations must be instant on the subsequent database query. Do not cache permission grants or user active flags across requests.
+Rule 4 (Tamper-Evident Chain): Every audit log entry must link to the prior hash with SHA-256. Use Unix millisecond epoch to avoid SQL Server datetime rounding errors.
+Rule 5 (Least Privilege): Administrator cannot read or download user files. Discrete permissions (Edit != Download).
+```
+
