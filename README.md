@@ -10,8 +10,9 @@ Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular 18**.
 
 ## 🌐 Live Public Deployment
 
-* **Live Web Application**: [http://54.172.194.89](http://54.172.194.89)
-* **Interactive Swagger OpenAPI**: [http://54.172.194.89/swagger](http://54.172.194.89/swagger)
+* **Live Web Application**: [http://ec2-54-172-194-89.compute-1.amazonaws.com](http://ec2-54-172-194-89.compute-1.amazonaws.com)
+* **Interactive Swagger OpenAPI**: [http://ec2-54-172-194-89.compute-1.amazonaws.com/swagger](http://ec2-54-172-194-89.compute-1.amazonaws.com/swagger)
+* **Direct Public URL**: [http://54.172.194.89](http://54.172.194.89)
 * **Hosted on**: AWS EC2 (`TrustVault-Production`, Ubuntu 24.04 LTS, Multi-Container Docker Compose)
 
 ---
