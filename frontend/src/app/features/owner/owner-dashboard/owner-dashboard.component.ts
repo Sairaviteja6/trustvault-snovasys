@@ -1,13 +1,16 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { DocumentService } from '../../../core/services/document.service';
 import { PermissionService } from '../../../core/services/permission.service';
 import { AuditService } from '../../../core/services/audit.service';
 import { UserService } from '../../../core/services/user.service';
 import { 
   AuditLogDto, 
+  DocumentContentResponse,
   DocumentResponse, 
+  DocumentSnapshotDto,
   OwnerMetricsResponse, 
   PermissionResponse, 
   PermissionType, 
@@ -24,16 +27,16 @@ import {
       <div class="section-header">
         <div>
           <h1 class="section-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
               <line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
-            Document Owner Control Center
+            Document Workspace
           </h1>
           <p class="section-subtitle">
-            Upload AES-256-GCM confidential documents, manage discrete caller grants, and inspect access logs.
+            Manage confidential files, discrete caller grants, version snapshots, and access activity.
           </p>
         </div>
         <div class="action-buttons">
@@ -59,7 +62,7 @@ import {
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            Upload Encrypted Document
+            Upload Document
           </button>
         </div>
       </div>
@@ -69,35 +72,38 @@ import {
         <div class="card metric-card">
           <span class="metric-label">Owned Documents</span>
           <span class="metric-value">{{ m.totalOwnedDocs }}</span>
-          <span class="metric-note">Stored in AES-256 encrypted blobs</span>
+          <span class="metric-note">Stored securely</span>
         </div>
         <div class="card metric-card">
           <span class="metric-label">Active Caller Grants</span>
           <span class="metric-value text-primary">{{ m.activeGrantsCount }}</span>
-          <span class="metric-note">Dynamic per-user permissions</span>
+          <span class="metric-note">Dynamic permissions</span>
         </div>
         <div class="card metric-card">
-          <span class="metric-label">Available Viewers</span>
+          <span class="metric-label">Provisioned Viewers</span>
           <span class="metric-value">{{ m.totalViewers }}</span>
-          <span class="metric-note">Eligible named individuals</span>
+          <span class="metric-note">Authorized accounts</span>
         </div>
         <div class="card metric-card">
-          <span class="metric-label">Tag Groups</span>
+          <span class="metric-label">User Tags</span>
           <span class="metric-value">{{ m.totalTags }}</span>
-          <span class="metric-note">For bulk ACL assignment</span>
+          <span class="metric-note">For bulk assignments</span>
         </div>
       </div>
 
       <!-- Navigation Tabs -->
       <div class="tabs-bar">
         <button class="tab-btn" [class.active]="activeTab() === 'documents'" (click)="activeTab.set('documents')">
-          Documents Catalog ({{ documents().length }})
+          Documents ({{ documents().length }})
         </button>
-        <button class="tab-btn" [class.active]="activeTab() === 'audit'" (click)="activeTab.set('audit')">
-          Owner-Scoped Audit Trail
+        <button class="tab-btn" [class.active]="activeTab() === 'viewers'" (click)="activeTab.set('viewers')">
+          Viewers ({{ viewers().length }})
         </button>
         <button class="tab-btn" [class.active]="activeTab() === 'tags'" (click)="activeTab.set('tags')">
-          User Tags &amp; Groups
+          Tags &amp; Groups
+        </button>
+        <button class="tab-btn" [class.active]="activeTab() === 'audit'" (click)="activeTab.set('audit')">
+          Audit Activity
         </button>
       </div>
 
@@ -109,7 +115,7 @@ import {
               type="text" 
               class="form-input" 
               style="width: 280px;" 
-              placeholder="Search by title, description or filename..." 
+              placeholder="Search documents..." 
               [(ngModel)]="searchQuery" 
               (keyup.enter)="onSearch()"
             />
@@ -132,15 +138,14 @@ import {
               <tr>
                 <th>Title &amp; Category</th>
                 <th>File Metadata</th>
-                <th>SHA-256 Digest</th>
                 <th>Upload Date</th>
-                <th style="text-align: right;">Security Actions</th>
+                <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let doc of documents()">
                 <td>
-                  <div style="font-weight: 700; color: #f8fafc;">{{ doc.title }}</div>
+                  <div style="font-weight: 700; color: #0f172a;">{{ doc.title }}</div>
                   <div style="font-size: 0.775rem; color: var(--text-secondary);">{{ doc.description || 'No description' }}</div>
                   <span class="badge badge-info" style="margin-top: 4px;">{{ doc.category }}</span>
                 </td>
@@ -148,27 +153,27 @@ import {
                   <div class="font-mono" style="font-size: 0.8rem;">{{ doc.originalFileName }}</div>
                   <div style="font-size: 0.725rem; color: var(--text-muted);">{{ (doc.fileSizeBytes / 1024).toFixed(1) }} KB &bull; {{ doc.contentType }}</div>
                 </td>
-                <td class="font-mono" style="font-size: 0.75rem; color: #38bdf8;">
-                  {{ doc.fileHashSha256.slice(0, 16) }}...
-                </td>
                 <td>{{ doc.createdAt | date:'short' }}</td>
                 <td style="text-align: right;">
-                  <div style="display: inline-flex; gap: 0.4rem;">
-                    <button class="btn btn-secondary btn-sm" (click)="openGrantModal(doc)">
+                  <div style="display: inline-flex; gap: 0.35rem; flex-wrap: wrap; justify-content: flex-end;">
+                    <button class="btn btn-secondary btn-sm" (click)="onViewDocument(doc)" title="Open in secure inspection panel">
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                        <circle cx="9" cy="7" r="4"/>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
                       </svg>
+                      View
+                    </button>
+                    <button class="btn btn-secondary btn-sm" (click)="openSnapshotsModal(doc)" title="View snapshot history and revert changes">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 14 14"/>
+                      </svg>
+                      Snapshots
+                    </button>
+                    <button class="btn btn-secondary btn-sm" (click)="openGrantModal(doc)" title="Manage discrete grants">
                       Grants
                     </button>
                     <button class="btn btn-primary btn-sm" (click)="onDownload(doc.id, doc.originalFileName)">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                        <polyline points="7 10 12 15 17 10"/>
-                        <line x1="12" y1="15" x2="12" y2="3"/>
-                      </svg>
                       Download
                     </button>
                     <button class="btn btn-danger btn-sm" (click)="onDeleteDocument(doc.id)">
@@ -178,8 +183,8 @@ import {
                 </td>
               </tr>
               <tr *ngIf="documents().length === 0">
-                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  No documents found. Upload your first encrypted document above.
+                <td colspan="4" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  No documents found. Upload your first document above.
                 </td>
               </tr>
             </tbody>
@@ -187,56 +192,44 @@ import {
         </div>
       </div>
 
-      <!-- TAB 2: Owner Audit Trail -->
-      <div *ngIf="activeTab() === 'audit'" class="card" style="margin-top: 1rem;">
+      <!-- TAB 2: Viewers Management -->
+      <div *ngIf="activeTab() === 'viewers'" class="card" style="margin-top: 1rem;">
         <div class="section-header">
           <div>
-            <h2 class="card-title">Activity on Your Documents</h2>
-            <p class="section-subtitle">Real-time log of every read, download, grant, and refused attempt on files you own.</p>
+            <h2 class="card-title">Authorized Viewers</h2>
+            <p class="section-subtitle">Manage viewers eligible for receiving document access grants.</p>
           </div>
-          <input 
-            type="text" 
-            class="form-input" 
-            style="width: 260px;" 
-            placeholder="Search audit events..." 
-            [(ngModel)]="auditSearchQuery" 
-            (keyup.enter)="loadOwnerAudit()"
-          />
+          <button class="btn btn-primary btn-sm" (click)="showNewViewerModal.set(true)">
+            Provision Viewer
+          </button>
         </div>
 
         <div class="table-responsive">
           <table class="table">
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Timestamp</th>
-                <th>Caller</th>
-                <th>Action</th>
-                <th>Status</th>
-                <th>Document</th>
-                <th>Details</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Department</th>
+                <th>Created</th>
+                <th style="text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let log of ownerAuditLogs()">
-                <td class="font-mono">#{{ log.id }}</td>
-                <td>{{ log.timestamp | date:'short' }}</td>
-                <td>
-                  <div style="font-weight: 600;">{{ log.userEmail || 'Anonymous' }}</div>
-                  <div style="font-size: 0.725rem; color: var(--text-muted);">{{ log.ipAddress }}</div>
+              <tr *ngFor="let v of viewers()">
+                <td style="font-weight: 600;">{{ v.username }}</td>
+                <td class="font-mono">{{ v.email }}</td>
+                <td>{{ v.department || '—' }}</td>
+                <td>{{ v.createdAt | date:'shortDate' }}</td>
+                <td style="text-align: right;">
+                  <button class="btn btn-danger btn-sm" (click)="onDeleteViewer(v)">
+                    Delete Viewer
+                  </button>
                 </td>
-                <td><span class="badge badge-info">{{ log.action }}</span></td>
-                <td>
-                  <span class="badge" [ngClass]="log.status === 'Allowed' ? 'badge-success' : 'badge-danger'">
-                    {{ log.status }}
-                  </span>
-                </td>
-                <td style="font-weight: 600;">{{ log.documentTitle }}</td>
-                <td style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.details }}</td>
               </tr>
-              <tr *ngIf="ownerAuditLogs().length === 0">
-                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
-                  No audit logs recorded for your documents yet.
+              <tr *ngIf="viewers().length === 0">
+                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  No viewers provisioned yet. Click "Provision Viewer" to add one.
                 </td>
               </tr>
             </tbody>
@@ -289,13 +282,216 @@ import {
           </table>
         </div>
       </div>
+
+      <!-- TAB 4: Owner Audit Trail -->
+      <div *ngIf="activeTab() === 'audit'" class="card" style="margin-top: 1rem;">
+        <div class="section-header">
+          <div>
+            <h2 class="card-title">Document Access Activity</h2>
+            <p class="section-subtitle">Real-time log of reads, edits, downloads, and grants on documents you own.</p>
+          </div>
+          <input 
+            type="text" 
+            class="form-input" 
+            style="width: 260px;" 
+            placeholder="Search audit events..." 
+            [(ngModel)]="auditSearchQuery" 
+            (keyup.enter)="loadOwnerAudit()"
+          />
+        </div>
+
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Timestamp</th>
+                <th>Caller</th>
+                <th>Action</th>
+                <th>Status</th>
+                <th>Document</th>
+                <th>Details</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let log of ownerAuditLogs()">
+                <td class="font-mono">#{{ log.id }}</td>
+                <td>{{ log.timestamp | date:'short' }}</td>
+                <td>
+                  <div style="font-weight: 600;">{{ log.userEmail || 'Anonymous' }}</div>
+                  <div style="font-size: 0.725rem; color: var(--text-muted);">{{ log.ipAddress }}</div>
+                </td>
+                <td><span class="badge badge-info">{{ log.action }}</span></td>
+                <td>
+                  <span class="badge" [ngClass]="log.status === 'Allowed' ? 'badge-success' : 'badge-danger'">
+                    {{ log.status }}
+                  </span>
+                </td>
+                <td style="font-weight: 600;">{{ log.documentTitle }}</td>
+                <td style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.details }}</td>
+              </tr>
+              <tr *ngIf="ownerAuditLogs().length === 0">
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                  No audit logs recorded for your documents yet.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Secure View Panel (Read Protection) -->
+    <div class="modal-overlay" *ngIf="viewingDocContent()">
+      <div class="modal-card" style="max-width: 800px;">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Secure Document Viewer</h3>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">
+              {{ viewingDocContent()?.title }} &bull; Version {{ viewingDocContent()?.currentVersion }}
+            </div>
+          </div>
+          <button class="modal-close" (click)="viewingDocContent.set(null)">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="protected-viewer-banner">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span>CONFIDENTIAL SESSION — COPY &amp; CLIPBOARD RESTRICTED</span>
+          </div>
+
+          <!-- View mode switcher for documents with both Visual PDF and Extracted Text -->
+          <div *ngIf="isPdf(viewingDocContent()) && viewingDocContent()?.textContent" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+            <button 
+              type="button" 
+              class="btn btn-sm" 
+              [ngClass]="ownerViewerMode() === 'pdf' ? 'btn-primary' : 'btn-secondary'"
+              (click)="ownerViewerMode.set('pdf')"
+            >
+              📄 Visual PDF Document
+            </button>
+            <button 
+              type="button" 
+              class="btn btn-sm" 
+              [ngClass]="ownerViewerMode() === 'text' ? 'btn-primary' : 'btn-secondary'"
+              (click)="ownerViewerMode.set('text')"
+            >
+              📝 Extracted Plain Text
+            </button>
+          </div>
+
+          <div 
+            class="document-content-area"
+            (contextmenu)="$event.preventDefault()"
+            (copy)="$event.preventDefault()"
+          >
+            <!-- Case 1: PDF Document rendered directly in browser via iframe (Default for PDF) -->
+            <div *ngIf="isPdf(viewingDocContent()) && ownerViewerMode() === 'pdf' && viewingDocContent()?.base64Data" style="width: 100%; height: 600px;">
+              <iframe 
+                [src]="getSafePdfUrl(viewingDocContent()!)" 
+                style="width: 100%; height: 100%; border: none; border-radius: 6px; background: #ffffff;"
+                title="Secure PDF Viewer"
+              ></iframe>
+            </div>
+
+            <!-- Case 2: Plain text / Code / Markdown / JSON / CSV / XML / PDF Extracted Text -->
+            <div *ngIf="viewingDocContent()?.textContent && (!isPdf(viewingDocContent()) || ownerViewerMode() === 'text')">
+              <pre class="secure-text-view">{{ viewingDocContent()?.textContent }}</pre>
+            </div>
+
+
+            <!-- Case 3: Image rendered directly in browser -->
+            <div *ngIf="isImage(viewingDocContent()) && viewingDocContent()?.base64Data" style="text-align: center; padding: 1rem;">
+              <img 
+                [src]="getSafeImageUrl(viewingDocContent()!)" 
+                style="max-width: 100%; max-height: 540px; object-fit: contain; border-radius: 6px; pointer-events: none; border: 1px solid var(--border-color); box-shadow: 0 4px 12px rgba(0,0,0,0.4);" 
+                alt="Secure Document Preview"
+              />
+            </div>
+
+            <!-- Case 4: Other binary (fallback info only) -->
+            <div *ngIf="!viewingDocContent()?.textContent && !isPdf(viewingDocContent()) && !isImage(viewingDocContent())" style="text-align: center; padding: 2.5rem;">
+              <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔒</div>
+              <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.25rem;">
+                Protected Document ({{ viewingDocContent()?.contentType }})
+              </p>
+              <p style="color: var(--text-muted); font-size: 0.85rem;">
+                This document is verified and loaded securely in memory.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="viewingDocContent.set(null)">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Snapshot History & Revert Changes -->
+    <div class="modal-overlay" *ngIf="showSnapshotsModal()">
+      <div class="modal-card" style="max-width: 720px;">
+        <div class="modal-header">
+          <div>
+            <h3 class="modal-title">Document Version History &amp; Snapshots</h3>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">{{ activeSnapshotDoc?.title }}</div>
+          </div>
+          <button class="modal-close" (click)="showSnapshotsModal.set(false)">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.825rem; color: var(--text-secondary); margin-bottom: 1rem;">
+            Every modification creates an immutable snapshot. You can revert any changes made by viewers at any time.
+          </p>
+
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Version</th>
+                  <th>Modified By</th>
+                  <th>Change Summary</th>
+                  <th>Timestamp</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let s of snapshots()">
+                  <td>
+                    <span class="badge badge-info">v{{ s.versionNumber }}</span>
+                  </td>
+                  <td>
+                    <div style="font-weight: 600;">{{ s.editedByUserEmail }}</div>
+                    <div style="font-size: 0.725rem; color: var(--text-muted);">Role: {{ s.editedByRole }}</div>
+                  </td>
+                  <td>{{ s.changeSummary || '—' }}</td>
+                  <td>{{ s.createdAt | date:'short' }}</td>
+                  <td style="text-align: right;">
+                    <button 
+                      class="btn btn-warning btn-sm" 
+                      [disabled]="snapshots().length > 0 && s.versionNumber === snapshots()[0].versionNumber"
+                      (click)="onRevertSnapshot(s.versionNumber)"
+                      title="Undo subsequent edits and restore this version"
+                    >
+                      Revert Here
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="showSnapshotsModal.set(false)">Close</button>
+        </div>
+      </div>
     </div>
 
     <!-- Modal: Upload Document -->
     <div class="modal-overlay" *ngIf="showUploadModal()">
       <div class="modal-card">
         <div class="modal-header">
-          <h3 class="modal-title">Upload Encrypted Document</h3>
+          <h3 class="modal-title">Upload Document</h3>
           <button class="modal-close" (click)="showUploadModal.set(false)">&times;</button>
         </div>
         <div class="modal-body">
@@ -317,16 +513,13 @@ import {
           <div class="form-group">
             <label class="form-label">Select File (PDF, DOCX, XLSX, TXT, PNG, JPG)</label>
             <input type="file" class="form-input" (change)="onFileSelected($event)" />
-            <div style="font-size: 0.725rem; color: var(--text-muted); margin-top: 4px;">
-              Files are inspected for magic bytes, encrypted with AES-256-GCM, and stored outside the web root.
-            </div>
           </div>
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" (click)="showUploadModal.set(false)">Cancel</button>
           <button class="btn btn-primary" (click)="onUploadSubmit()" [disabled]="isUploading() || !selectedFile">
-            <span *ngIf="!isUploading()">Encrypt &amp; Upload</span>
-            <span *ngIf="isUploading()">Encrypting...</span>
+            <span *ngIf="!isUploading()">Upload Document</span>
+            <span *ngIf="isUploading()">Uploading...</span>
           </button>
         </div>
       </div>
@@ -344,7 +537,7 @@ import {
         </div>
         <div class="modal-body">
           <div class="alert alert-info">
-            <strong>Discrete Permission Model:</strong> <code>EDIT</code> does not imply <code>DOWNLOAD</code>. Grant only the exact capabilities required. Revoking immediately takes effect on the very next HTTP request.
+            <strong>Discrete Permissions:</strong> READ allows viewing in secure panel. DOWNLOAD allows saving the file. EDIT allows modifying content. Each permission is independently verified.
           </div>
 
           <div class="alert alert-danger" *ngIf="grantError()">
@@ -476,12 +669,12 @@ import {
   `,
   styles: [`
     .action-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
-    .card-title { font-size: 1.15rem; font-weight: 700; }
+    .card-title { font-size: 1.15rem; font-weight: 700; color: #0f172a; }
     .metric-card { display: flex; flex-direction: column; gap: 0.25rem; }
     .metric-label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
-    .metric-value { font-size: 2rem; font-weight: 800; color: #f8fafc; line-height: 1.2; }
+    .metric-value { font-size: 2rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
     .metric-note { font-size: 0.725rem; color: var(--text-secondary); }
-    .text-primary { color: #60a5fa !important; }
+    .text-primary { color: #0f172a !important; }
     .tabs-bar {
       display: flex;
       gap: 0.5rem;
@@ -491,20 +684,58 @@ import {
     }
     .tab-btn {
       background: transparent;
-      border: none;
+      border: 1px solid transparent;
       color: var(--text-muted);
       font-size: 0.9rem;
       font-weight: 600;
       padding: 0.5rem 1rem;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .tab-btn:hover {
+      color: #0f172a;
+      background: #f1f5f9;
+      transform: translateY(-1px);
     }
     .tab-btn.active {
-      color: #f8fafc;
-      background: var(--bg-surface-elevated);
+      color: #ffffff;
+      background: #0f172a;
+      border-color: #0f172a;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
     }
     .search-bar { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .protected-viewer-banner {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #b45309;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .document-content-area {
+      user-select: none;
+      -webkit-user-select: none;
+      background: #f8fafc;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 10px;
+      padding: 1.25rem;
+      max-height: 480px;
+      overflow-y: auto;
+    }
+    .secure-text-view {
+      font-family: var(--font-sans);
+      font-size: 0.9rem;
+      color: #0f172a;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
   `]
 })
 export class OwnerDashboardComponent implements OnInit {
@@ -512,10 +743,31 @@ export class OwnerDashboardComponent implements OnInit {
   private permissionService = inject(PermissionService);
   private auditService = inject(AuditService);
   private userService = inject(UserService);
+  private sanitizer = inject(DomSanitizer);
 
-  activeTab = signal<'documents' | 'audit' | 'tags'>('documents');
+  isPdf(doc: DocumentContentResponse | null): boolean {
+    if (!doc) return false;
+    return doc.contentType.toLowerCase().includes('pdf') || doc.title.toLowerCase().endsWith('.pdf');
+  }
+
+  isImage(doc: DocumentContentResponse | null): boolean {
+    if (!doc) return false;
+    return doc.contentType.toLowerCase().startsWith('image/');
+  }
+
+  getSafePdfUrl(doc: DocumentContentResponse): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:application/pdf;base64,${doc.base64Data}#toolbar=0`);
+  }
+
+  getSafeImageUrl(doc: DocumentContentResponse): SafeResourceUrl {
+    return this.sanitizer.bypassSecurityTrustResourceUrl(`data:${doc.contentType};base64,${doc.base64Data}`);
+  }
+
+  activeTab = signal<'documents' | 'viewers' | 'tags' | 'audit'>('documents');
+  ownerViewerMode = signal<'pdf' | 'text'>('pdf');
   metrics = signal<OwnerMetricsResponse | null>(null);
   documents = signal<DocumentResponse[]>([]);
+
   ownerAuditLogs = signal<AuditLogDto[]>([]);
   viewers = signal<UserDto[]>([]);
   tags = signal<UserTagDto[]>([]);
@@ -532,6 +784,14 @@ export class OwnerDashboardComponent implements OnInit {
   selectedFile: File | null = null;
   isUploading = signal(false);
   uploadError = signal<string | null>(null);
+
+  // View content modal state
+  viewingDocContent = signal<DocumentContentResponse | null>(null);
+
+  // Snapshots modal state
+  showSnapshotsModal = signal(false);
+  activeSnapshotDoc: DocumentResponse | null = null;
+  snapshots = signal<DocumentSnapshotDto[]>([]);
 
   // Grant modal state
   showGrantModal = signal(false);
@@ -624,7 +884,42 @@ export class OwnerDashboardComponent implements OnInit {
       },
       error: (err) => {
         this.isUploading.set(false);
-        this.uploadError.set(err.error?.message || 'File upload failed. Ensure magic bytes match extension.');
+        this.uploadError.set(err.error?.message || 'File upload failed.');
+      }
+    });
+  }
+
+  onViewDocument(doc: DocumentResponse): void {
+    this.documentService.getContent(doc.id).subscribe({
+      next: (contentRes) => {
+        this.ownerViewerMode.set('pdf');
+        this.viewingDocContent.set(contentRes);
+      },
+      error: () => {
+        alert('Unable to load document content.');
+      }
+    });
+  }
+
+
+  openSnapshotsModal(doc: DocumentResponse): void {
+    this.activeSnapshotDoc = doc;
+    this.documentService.getSnapshots(doc.id).subscribe(s => this.snapshots.set(s));
+    this.showSnapshotsModal.set(true);
+  }
+
+  onRevertSnapshot(versionNumber: number): void {
+    if (!this.activeSnapshotDoc) return;
+    if (!confirm(`Are you sure you want to revert this document to Version ${versionNumber}? This will revoke subsequent edits.`)) return;
+
+    this.documentService.revertSnapshot(this.activeSnapshotDoc.id, versionNumber).subscribe({
+      next: () => {
+        this.documentService.getSnapshots(this.activeSnapshotDoc!.id).subscribe(s => this.snapshots.set(s));
+        this.loadDocuments();
+        this.loadOwnerAudit();
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Failed to revert to snapshot.');
       }
     });
   }
@@ -745,6 +1040,22 @@ export class OwnerDashboardComponent implements OnInit {
       },
       error: (err) => {
         this.viewerError.set(err.error?.message || 'Failed to provision Viewer account.');
+      }
+    });
+  }
+
+  onDeleteViewer(v: UserDto): void {
+    if (!confirm(`Are you sure you want to permanently delete viewer "${v.username}" (${v.email})? All permissions and tags will be revoked immediately.`)) return;
+
+    this.userService.deleteViewer(v.id).subscribe({
+      next: () => {
+        this.userService.getViewers().subscribe(vl => this.viewers.set(vl));
+        this.userService.getTags().subscribe(t => this.tags.set(t));
+        this.auditService.getOwnerMetrics().subscribe(m => this.metrics.set(m));
+        this.loadDocuments();
+      },
+      error: (err) => {
+        alert(err.error?.message || 'Failed to delete viewer.');
       }
     });
   }

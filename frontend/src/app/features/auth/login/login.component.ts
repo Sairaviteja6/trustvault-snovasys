@@ -1,24 +1,23 @@
 import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="login-wrapper">
       <div class="login-card">
         <div class="login-header">
-          <div class="login-shield">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
+          <a routerLink="/" title="Return to TrustVault Home" style="display: inline-block; text-decoration: none;">
+            <img src="/images/trustvault-monogram.png" alt="TrustVault Logo" class="login-logo-img" />
+          </a>
           <h1 class="login-title">TrustVault</h1>
           <p class="login-subtitle">Zero-Trust Cryptographic Document Platform</p>
+          <a routerLink="/" class="back-home-link">← Return to Home</a>
         </div>
 
         <div class="alert alert-danger" *ngIf="errorMessage()">
@@ -38,7 +37,7 @@ import { AuthService } from '../../../core/services/auth.service';
               name="email" 
               type="email" 
               class="form-input" 
-              placeholder="e.g. owner@trustvault.com" 
+              placeholder="e.g. admin@trustvault.com" 
               [(ngModel)]="email" 
               required 
               autocomplete="email"
@@ -73,26 +72,12 @@ import { AuthService } from '../../../core/services/auth.service';
           </button>
         </form>
 
-        <div class="seed-section">
-          <p class="seed-title">Quick Fill Credentials (Demo Accounts)</p>
-          <div class="seed-grid">
-            <button type="button" class="seed-btn admin" (click)="fill('admin@trustvault.com', 'Admin@12345!')">
-              <span class="seed-role">Admin</span>
-              <span class="seed-email">admin&#64;trustvault.com</span>
-            </button>
-            <button type="button" class="seed-btn owner" (click)="fill('owner@trustvault.com', 'Owner@12345!')">
-              <span class="seed-role">Owner</span>
-              <span class="seed-email">owner&#64;trustvault.com</span>
-            </button>
-            <button type="button" class="seed-btn viewer" (click)="fill('alice@trustvault.com', 'Viewer@12345!')">
-              <span class="seed-role">Viewer (Alice)</span>
-              <span class="seed-email">alice&#64;trustvault.com</span>
-            </button>
-            <button type="button" class="seed-btn viewer" (click)="fill('bob@trustvault.com', 'Viewer@12345!')">
-              <span class="seed-role">Viewer (Bob)</span>
-              <span class="seed-email">bob&#64;trustvault.com</span>
-            </button>
-          </div>
+        <div class="info-box">
+          <div class="info-title">Hierarchical Provisioning Architecture</div>
+          <p class="info-desc">
+            The root <strong>Administrator</strong> provisions <strong>Document Owners</strong>.
+            Authorized <strong>Owners</strong> in turn provision and grant discrete access to <strong>Viewers</strong>.
+          </p>
         </div>
 
         <div class="security-footer">
@@ -112,44 +97,65 @@ import { AuthService } from '../../../core/services/auth.service';
       align-items: center;
       justify-content: center;
       padding: 1.5rem;
-      background: radial-gradient(circle at 50% 20%, rgba(37, 99, 235, 0.15), transparent 70%), var(--bg-primary);
+      background: transparent;
     }
     .login-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(16px);
-      border: 1px solid var(--border-color);
-      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      border: 1px solid rgba(34, 133, 172, 0.18);
+      border-radius: 20px;
       padding: 2.5rem;
       width: 100%;
-      max-width: 460px;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      max-width: 440px;
+      box-shadow: 0 15px 35px -5px rgba(41, 42, 46, 0.10);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .login-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 25px 50px -10px rgba(34, 133, 172, 0.18);
+      border-color: rgba(49, 149, 123, 0.40);
     }
     .login-header {
       text-align: center;
       margin-bottom: 2rem;
     }
-    .login-shield {
-      width: 52px;
+    .login-logo-img {
       height: 52px;
+      width: 52px;
       border-radius: 12px;
-      background: linear-gradient(135deg, #2563eb, #1e40af);
-      color: white;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1rem;
-      box-shadow: 0 0 25px rgba(37, 99, 235, 0.5);
+      object-fit: cover;
+      margin-bottom: 0.75rem;
+      border: 1px solid rgba(34, 133, 172, 0.20);
+      box-shadow: 0 4px 14px rgba(34, 133, 172, 0.25);
+      transition: transform 0.25s ease;
+    }
+    .login-logo-img:hover {
+      transform: scale(1.06);
     }
     .login-title {
       font-size: 1.75rem;
       font-weight: 800;
-      color: #f8fafc;
+      color: #292A2E;
       letter-spacing: -0.03em;
     }
     .login-subtitle {
       font-size: 0.825rem;
-      color: var(--text-secondary);
+      color: #475569;
       margin-top: 0.25rem;
+    }
+    .back-home-link {
+      display: inline-block;
+      margin-top: 0.5rem;
+      font-size: 0.75rem;
+      color: #2285AC;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.15s;
+    }
+    .back-home-link:hover {
+      color: #31957B;
+      text-decoration: underline;
     }
     .btn-block {
       width: 100%;
@@ -174,63 +180,36 @@ import { AuthService } from '../../../core/services/auth.service';
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
-    .seed-section {
-      margin-top: 2rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border-color);
+    .info-box {
+      margin-top: 1.75rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 10px;
     }
-    .seed-title {
-      font-size: 0.725rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.75rem;
-      text-align: center;
-    }
-    .seed-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.5rem;
-    }
-    .seed-btn {
-      background: rgba(30, 41, 59, 0.5);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 0.5rem;
-      text-align: left;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: flex;
-      flex-direction: column;
-    }
-    .seed-btn:hover {
-      background: rgba(30, 41, 59, 0.9);
-      border-color: var(--border-color-hover);
-    }
-    .seed-role {
-      font-size: 0.75rem;
+    .info-title {
+      font-size: 0.775rem;
       font-weight: 700;
-      color: #e2e8f0;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
     }
-    .seed-email {
-      font-size: 0.675rem;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+    .info-desc {
+      font-size: 0.75rem;
+      color: #475569;
+      line-height: 1.4;
     }
-    .seed-btn.admin .seed-role { color: #f87171; }
-    .seed-btn.owner .seed-role { color: #fbbf24; }
-    .seed-btn.viewer .seed-role { color: #60a5fa; }
+    .info-desc strong {
+      color: #0f172a;
+    }
     .security-footer {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.4rem;
       font-size: 0.7rem;
-      color: var(--text-muted);
+      color: #64748b;
       margin-top: 1.5rem;
       text-align: center;
     }
@@ -245,12 +224,6 @@ export class LoginComponent {
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
 
-  fill(emailVal: string, passVal: string): void {
-    this.email = emailVal;
-    this.password = passVal;
-    this.errorMessage.set(null);
-  }
-
   onSubmit(): void {
     if (!this.email || !this.password) return;
 
@@ -263,8 +236,12 @@ export class LoginComponent {
       },
       error: (err) => {
         this.isLoading.set(false);
-        const serverMsg = err.error?.message || err.error?.error;
-        this.errorMessage.set(serverMsg || 'Authentication failed. Please verify your credentials.');
+        if (err.status === 0) {
+          this.errorMessage.set('Cannot reach TrustVault API at http://localhost:5000. Please ensure the backend is running.');
+        } else {
+          const serverMsg = err.error?.message || err.error?.error;
+          this.errorMessage.set(serverMsg || 'Authentication failed. Please verify your credentials.');
+        }
       }
     });
   }

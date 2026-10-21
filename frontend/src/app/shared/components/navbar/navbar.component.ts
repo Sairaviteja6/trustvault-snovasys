@@ -10,14 +10,9 @@ import { AuthService } from '../../../core/services/auth.service';
   template: `
     <header class="navbar-header" *ngIf="authService.isAuthenticated()">
       <div class="navbar-container">
-        <div class="navbar-brand">
-          <div class="brand-shield">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-            </svg>
-          </div>
+        <div class="navbar-brand" routerLink="/" style="cursor: pointer;">
+          <img src="/images/trustvault-monogram.png" alt="TrustVault" class="brand-logo-img" />
           <span class="brand-title">TrustVault</span>
-          <span class="env-badge">SECURE</span>
         </div>
 
         <nav class="navbar-nav">
@@ -29,12 +24,9 @@ import { AuthService } from '../../../core/services/auth.service';
               <span class="user-name">{{ user.username }}</span>
               <span class="user-dept" *ngIf="user.department">{{ user.department }}</span>
             </div>
-            <span class="role-pill" [ngClass]="user.role.toLowerCase()">
-              {{ user.role }}
-            </span>
           </div>
 
-          <button class="btn-logout" (click)="onLogout()" title="Terminate secure session">
+          <button class="btn-logout" (click)="onLogout()" title="Disconnect session">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
               <polyline points="16 17 21 12 16 7"/>
@@ -48,9 +40,11 @@ import { AuthService } from '../../../core/services/auth.service';
   `,
   styles: [`
     .navbar-header {
-      background: rgba(15, 23, 42, 0.95);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(20px) saturate(140%);
+      -webkit-backdrop-filter: blur(20px) saturate(140%);
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
       position: sticky;
       top: 0;
       z-index: 1000;
@@ -68,30 +62,27 @@ import { AuthService } from '../../../core/services/auth.service';
       align-items: center;
       gap: 0.75rem;
     }
-    .brand-shield {
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: white;
-      width: 34px;
+    .brand-logo-img {
       height: 34px;
+      width: 34px;
       border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
+      object-fit: cover;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
     }
     .brand-title {
       font-size: 1.25rem;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.02em;
-      color: #f8fafc;
+      color: #0f172a;
     }
     .env-badge {
       font-size: 0.65rem;
       font-weight: 700;
       letter-spacing: 0.08em;
-      background: rgba(16, 185, 129, 0.15);
-      color: #34d399;
-      border: 1px solid rgba(16, 185, 129, 0.3);
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
       padding: 2px 6px;
       border-radius: 4px;
     }
@@ -104,22 +95,28 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: rgba(30, 41, 59, 0.7);
+      background: #f1f5f9;
       padding: 0.35rem 0.85rem 0.35rem 0.5rem;
       border-radius: 9999px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(15, 23, 42, 0.1);
+      transition: all 0.2s ease;
+    }
+    .user-chip:hover {
+      background: #e2e8f0;
+      border-color: rgba(15, 23, 42, 0.2);
     }
     .avatar-circle {
       width: 28px;
       height: 28px;
       border-radius: 50%;
-      background: #3b82f6;
-      color: white;
-      font-weight: 600;
+      background: var(--brand-gradient, linear-gradient(135deg, #2285AC, #31957B));
+      color: #ffffff;
+      font-weight: 700;
       font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 2px 6px rgba(34, 133, 172, 0.35);
     }
     .user-meta {
       display: flex;
@@ -128,53 +125,32 @@ import { AuthService } from '../../../core/services/auth.service';
     }
     .user-name {
       font-size: 0.825rem;
-      font-weight: 600;
-      color: #e2e8f0;
+      font-weight: 700;
+      color: #0f172a;
     }
     .user-dept {
       font-size: 0.7rem;
-      color: #94a3b8;
-    }
-    .role-pill {
-      font-size: 0.7rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 9999px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .role-pill.admin {
-      background: rgba(239, 68, 68, 0.2);
-      color: #f87171;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-    .role-pill.owner {
-      background: rgba(245, 158, 11, 0.2);
-      color: #fbbf24;
-      border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-    .role-pill.viewer {
-      background: rgba(59, 130, 246, 0.2);
-      color: #60a5fa;
-      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: #64748b;
     }
     .btn-logout {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      background: transparent;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #f87171;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #dc2626;
       padding: 0.45rem 0.85rem;
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn-logout:hover {
-      background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.5);
+      background: #fee2e2;
+      border-color: #f87171;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
     }
   `]
 })

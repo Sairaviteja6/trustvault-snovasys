@@ -162,18 +162,96 @@ public class AdminController : ControllerBase
         var users = await _dbContext.Users
             .OrderBy(u => u.Role)
             .ThenBy(u => u.Email)
-            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt))
+            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt, u.IsMasterAdmin))
             .ToListAsync();
 
         return Ok(users);
     }
 
     /// <summary>
-    /// Administrator provisions an Owner account.
+    /// Master Administrator provisions a secondary administrator with restricted privileges.
+    /// </summary>
+    [HttpPost("users/admins")]
+    public async Task<IActionResult> CreateSubAdmin([FromBody] CreateAdminRequest request)
+    {
+        if (!await IsCallerMasterAdminAsync())
+        {
+            await _auditService.LogAsync(
+                AuditAction.AccessRefused,
+                AuditStatus.Refused,
+                GetCurrentUserId(),
+                User.FindFirstValue(ClaimTypes.Email),
+                "Admin",
+                null,
+                null,
+                GetIpAddress(),
+                GetUserAgent(),
+                "Access Denied: Only Master Administrator can provision secondary administrators.");
+
+            return StatusCode(403, new { message = "Only the Master Administrator has authority to provision secondary administrators." });
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var trimmedUsername = request.Username.Trim();
+        var exists = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail || u.Username == trimmedUsername);
+        if (exists)
+        {
+            return Conflict(new { message = "User with this email or username already exists." });
+        }
+
+        var subAdmin = new User
+        {
+            Username = trimmedUsername,
+            Email = normalizedEmail,
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+            Role = UserRole.Admin,
+            IsMasterAdmin = false, // Secondary Admin has restricted privileges
+            Department = string.IsNullOrWhiteSpace(request.Department) ? "Security Operations" : request.Department.Trim(),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        _dbContext.Users.Add(subAdmin);
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            AuditAction.UserRegistered,
+            AuditStatus.Allowed,
+            GetCurrentUserId(),
+            User.FindFirstValue(ClaimTypes.Email),
+            "MasterAdmin",
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            $"Master Administrator provisioned Secondary Administrator: {subAdmin.Email} (Department: {subAdmin.Department})");
+
+        return CreatedAtAction(nameof(GetUsers), new { id = subAdmin.Id }, new UserDto(
+            subAdmin.Id, subAdmin.Username, subAdmin.Email, subAdmin.Role.ToString(), subAdmin.Department, subAdmin.IsActive, subAdmin.CreatedAt, subAdmin.IsMasterAdmin));
+    }
+
+    /// <summary>
+    /// Administrator provisions an Owner account (Master Admin only).
     /// </summary>
     [HttpPost("users/owners")]
     public async Task<IActionResult> CreateOwner([FromBody] CreateOwnerRequest request)
     {
+        if (!await IsCallerMasterAdminAsync())
+        {
+            await _auditService.LogAsync(
+                AuditAction.AccessRefused,
+                AuditStatus.Refused,
+                GetCurrentUserId(),
+                User.FindFirstValue(ClaimTypes.Email),
+                "Admin",
+                null,
+                null,
+                GetIpAddress(),
+                GetUserAgent(),
+                "Access Denied: Only Master Administrator can provision Document Owners.");
+
+            return StatusCode(403, new { message = "Only the Master Administrator has authority to provision Document Owners." });
+        }
+
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
         var trimmedUsername = request.Username.Trim();
         var exists = await _dbContext.Users.AnyAsync(u => u.Email == normalizedEmail || u.Username == trimmedUsername);
@@ -188,6 +266,7 @@ public class AdminController : ControllerBase
             Email = normalizedEmail,
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             Role = UserRole.Owner,
+            IsMasterAdmin = false,
             Department = request.Department,
             CreatedAt = DateTime.UtcNow
         };
@@ -200,7 +279,7 @@ public class AdminController : ControllerBase
             AuditStatus.Allowed,
             GetCurrentUserId(),
             User.FindFirstValue(ClaimTypes.Email),
-            "Admin",
+            "MasterAdmin",
             null,
             null,
             GetIpAddress(),
@@ -208,7 +287,7 @@ public class AdminController : ControllerBase
             $"Administrator provisioned new Document Owner: {owner.Email}");
 
         return CreatedAtAction(nameof(GetUsers), new { id = owner.Id }, new UserDto(
-            owner.Id, owner.Username, owner.Email, owner.Role.ToString(), owner.Department, owner.IsActive, owner.CreatedAt));
+            owner.Id, owner.Username, owner.Email, owner.Role.ToString(), owner.Department, owner.IsActive, owner.CreatedAt, owner.IsMasterAdmin));
     }
 
     /// <summary>
@@ -217,10 +296,17 @@ public class AdminController : ControllerBase
     [HttpPatch("users/{userId}/toggle-status")]
     public async Task<IActionResult> ToggleUserStatus(Guid userId)
     {
+        var isMaster = await IsCallerMasterAdminAsync();
+
         var user = await _dbContext.Users.FindAsync(userId);
         if (user == null)
         {
             return NotFound(new { message = "User not found." });
+        }
+
+        if (!isMaster && (user.IsMasterAdmin || user.Role == UserRole.Owner))
+        {
+            return StatusCode(403, new { message = "Secondary Administrators cannot alter Master Admin or Document Owner accounts." });
         }
 
         user.IsActive = !user.IsActive;
@@ -237,7 +323,7 @@ public class AdminController : ControllerBase
             AuditStatus.Allowed,
             GetCurrentUserId(),
             User.FindFirstValue(ClaimTypes.Email),
-            "Admin",
+            isMaster ? "MasterAdmin" : "Admin",
             null,
             null,
             GetIpAddress(),
@@ -245,6 +331,13 @@ public class AdminController : ControllerBase
             $"User {user.Email} status updated: IsActive = {user.IsActive}");
 
         return Ok(new { message = $"User status updated. IsActive = {user.IsActive}", isActive = user.IsActive });
+    }
+
+    private async Task<bool> IsCallerMasterAdminAsync()
+    {
+        var userId = GetCurrentUserId();
+        var user = await _dbContext.Users.FindAsync(userId);
+        return user != null && user.IsMasterAdmin;
     }
 
     private Guid GetCurrentUserId()

@@ -28,4 +28,5 @@ public class Document
     // Navigation
     public ICollection<DocumentGrant> Grants { get; set; } = new List<DocumentGrant>();
     public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
+    public ICollection<DocumentSnapshot> Snapshots { get; set; } = new List<DocumentSnapshot>();
 }

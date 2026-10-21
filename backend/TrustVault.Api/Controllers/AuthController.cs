@@ -79,7 +79,7 @@ public class AuthController : ControllerBase
             accessToken,
             refreshToken,
             expiration,
-            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt));
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin));
 
         return Ok(response);
     }
@@ -105,7 +105,7 @@ public class AuthController : ControllerBase
             newAccessToken,
             newRefreshToken,
             expiration,
-            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt)));
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin)));
     }
 
     [Authorize]
@@ -147,7 +147,7 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt));
+        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin));
     }
 
     private Guid GetCurrentUserId()

@@ -45,6 +45,37 @@ public class AccessControlTests : IClassFixture<WebApplicationFactory<Program>>
                 db.Database.EnsureCreated();
                 var testStorage = Path.Combine(Path.GetTempPath(), "TrustVaultAccessControlTestStorage");
                 DbSeeder.SeedAsync(db, audit, enc, testStorage).GetAwaiter().GetResult();
+
+                // Seed test personas needed for test suite execution
+                var testOwner = new TrustVault.Core.Entities.User
+                {
+                    Username = "document_owner",
+                    Email = "owner@trustvault.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Owner@12345!"),
+                    Role = UserRole.Owner,
+                    Department = "Corporate Legal & HR",
+                    CreatedAt = DateTime.UtcNow
+                };
+                var alice = new TrustVault.Core.Entities.User
+                {
+                    Username = "alice_viewer",
+                    Email = "alice@trustvault.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Viewer@12345!"),
+                    Role = UserRole.Viewer,
+                    Department = "Finance",
+                    CreatedAt = DateTime.UtcNow
+                };
+                var bob = new TrustVault.Core.Entities.User
+                {
+                    Username = "bob_viewer",
+                    Email = "bob@trustvault.com",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("Viewer@12345!"),
+                    Role = UserRole.Viewer,
+                    Department = "Engineering",
+                    CreatedAt = DateTime.UtcNow
+                };
+                db.Users.AddRange(testOwner, alice, bob);
+                db.SaveChanges();
             });
         });
     }
