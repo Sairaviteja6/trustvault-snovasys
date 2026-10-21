@@ -1,0 +1,69 @@
+name: Deploy TrustVault to AWS EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Automated Security Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore backend/TrustVault.Api/TrustVault.Api.csproj
+
+    - name: Run xUnit Security & Adversarial Tests
+      run: dotnet test backend/TrustVault.Tests/TrustVault.Tests.csproj --configuration Release --verbosity normal
+
+  deploy:
+    name: Deploy to Production EC2
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Configure SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Sync Code to EC2 via Rsync
+      run: |
+        rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" \
+          --exclude '.git' \
+          --exclude 'node_modules' \
+          --exclude 'bin' \
+          --exclude 'obj' \
+          --exclude '.angular' \
+          ./ ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/trustvault/
+
+    - name: Rebuild & Restart Production Docker Containers
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "cd /home/ubuntu/trustvault && sudo docker compose up -d --build && sudo docker ps"
+
+    - name: Verify Live Deployment Status
+      run: |
+        echo "Verifying live web application at http://${{ secrets.EC2_HOST }}..."
+        sleep 10
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.EC2_HOST }}/)
+        echo "Received HTTP status: $HTTP_STATUS"
+        if [ "$HTTP_STATUS" -eq 200 ]; then
+          echo "Deployment successful! TrustVault is live."
+        else
+          echo "Warning: Received unexpected HTTP status $HTTP_STATUS"
+        fi
