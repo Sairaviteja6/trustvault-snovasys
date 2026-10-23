@@ -71,4 +71,69 @@ This log tracks interactions with AI coding assistants throughout the developmen
 
 ---
 
-*(Additional entries will be logged progressively as Angular frontend integration proceeds.)*
+### Entry 4: Frontend Zero-Trust Architecture & In-Memory Decryption
+* **Date**: 2026-10-21
+* **Topic**: Zero-Trust File Delivery, DOM Leakage Prevention, and DRM In-Memory Inspection
+* **Prompt Summary**:
+  > *"How should the Angular frontend display confidential documents without exposing unencrypted URLs or allowing casual browser downloads?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested generating temporary blob URLs (`URL.createObjectURL(blob)`) and setting them as the `src` attribute on `<iframe>` or `<embed>` tags, or opening a temporary browser tab.
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Blob URL Exfiltration**: `blob:` URLs remain accessible in the browser's memory and can be copied or opened in another tab with full browser download capabilities.
+  2. **Browser Print/Download Controls**: Standard `<embed>` and `<iframe>` PDF plugins render browser-native download, print, and save buttons that completely bypass application-level DRM controls.
+  3. **Violation of Read != Download Principle**: An authorized user with only `Read` permission could simply right-click and save the raw decrypted document.
+
+* **What We Did Instead**:
+  > 1. In `viewer-dashboard.component.ts`, documents decrypted in-memory are rendered directly via canvas and controlled protected viewports.
+  > 2. Applied global CSS DRM protections: disabling context menu, `user-select: none`, pointer-event shielding, and watermark overlay with the viewer's identity and timestamp.
+  > 3. Enforced discrete server permissions where `Read` permission returns document bytes strictly for protected viewport rendering, while binary download endpoints enforce `Download` permission separately and return `404` for read-only sessions.
+* **Commit**: `feat(viewer): implement protected in-memory document inspection with dynamic watermarking`
+
+---
+
+### Entry 5: Evaluator & Hiring Team Frictionless Quick-Access
+* **Date**: 2026-10-22
+* **Topic**: Demonstration Usability vs Security Separation in Evaluation Environments
+* **Prompt Summary**:
+  > *"How can technical recruiters and hiring managers instantly inspect all three role dashboards (System Admin, Document Owner, Authorized Viewer) without tedious credential setup while maintaining real role boundaries?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested bypassing authentication in development mode or allowing a dropdown in the navbar that switches the role on the client side without backend re-authentication.
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Compromises Zero-Trust Invariant**: Switching roles purely in the client without server-issued JWTs breaks the core guarantee that the backend strictly verifies cryptographic claims.
+  2. **False Evaluation Experience**: Bypassing real auth hides the actual RBAC enforcement, making it impossible to evaluate real token expiration, refresh rotation, and permission checks.
+
+* **What We Did Instead**:
+  > 1. Created an authenticated **Evaluation Quick Access Bar** directly on the sign-in screen (`login.component.ts`).
+  > 2. Clicking any persona (👑 Owner, 🛡️ Admin, 👁️ Viewer) initiates a real, full authentication handshake against `/api/v1/auth/login` using seeded production-grade credentials.
+  > 3. The backend issues valid cryptographically signed JWT tokens, populates actual role claims, and enforces exact server-side permissions for that role.
+  > 4. Evaluators experience authentic institutional security enforcement in one click with zero manual friction.
+* **Commit**: `feat(auth): add evaluation quick-access bar with authentic token handshakes`
+
+---
+
+### Entry 6: High-Fidelity Enterprise Visual Architecture & Authentic Workflow Flowchart
+* **Date**: 2026-10-23
+* **Topic**: Corporate Visual Polish, Color Harmony, Interactive Parallax, and Project Lifecycle Visualization
+* **Prompt Summary**:
+  > *"How can we elevate the TrustVault experience to feel like a high-end enterprise platform with sleek dark styling (#212529, #1F73B7, #18937A), interactive cursor lighting, and a clear visualization of how the platform works?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested a flashy multi-colored animated tree diagram with large cursor spotlights and rapid particle effects.
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Visual Noise & Distortion**: Oversized cursor lighting (650px) and dramatic parallax created motion sickness and washed out high-contrast text and audit badges.
+  2. **Irrelevant Representation**: An artificial tree diagram failed to communicate TrustVault's real 4-step security lifecycle (Inquiry -> Governance -> Upload -> Protected Inspection).
+
+* **What We Did Instead**:
+  > 1. Refined mouse spotlight to a compact 250px radius using TrustVault brand colors (Steel Blue `#1F73B7` and Teal `#18937A`) with gentle parallax damping factor (0.006).
+  > 2. Built an authentic **4-Step Architectural Flowchart** detailing the real TrustVault lifecycle:
+  >    - **Step 01**: Inquiry & Invitation (Enterprise Client)
+  >    - **Step 02**: Institutional Governance & SHA-256 Ledger (System Admin)
+  >    - **Step 03**: AES-256 Upload & DRM Policies (Document Owner)
+  >    - **Step 04**: Protected In-Memory Viewing & Revocation (Authorized Viewer)
+  > 3. Verified across all screen sizes and confirmed 0 build warnings.
+* **Commit**: `feat(ui): refine dark enterprise styling, authentic 4-step workflow, and button micro-interactions`

@@ -30,3 +30,20 @@ temp/
 *~
 Thumbs.db
 [Dd]esktop.ini
+
+## Infrastructure & Cloud Privacy (Excluded from source control per user directive)
+aws-infrastructure/
+
+## Terraform
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+
+## Archives & Temporary Packages
+*.tar.gz
+*.zip
+*.tar

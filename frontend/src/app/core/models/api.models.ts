@@ -15,7 +15,15 @@ export interface UserDto {
   department?: string;
   isActive: boolean;
   isMasterAdmin?: boolean;
+  mustChangePassword?: boolean;
+  organization?: string;
   createdAt: string;
+}
+
+export interface SetPasswordRequest {
+  email: string;
+  currentPassword: string;
+  newPassword: string;
 }
 
 export interface CreateAdminRequest {

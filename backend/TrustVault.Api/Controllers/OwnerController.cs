@@ -17,11 +17,19 @@ public class OwnerController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
     private readonly IAuditService _auditService;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<OwnerController> _logger;
 
-    public OwnerController(TrustVaultDbContext dbContext, IAuditService auditService)
+    public OwnerController(
+        TrustVaultDbContext dbContext,
+        IAuditService auditService,
+        IEmailService emailService,
+        ILogger<OwnerController> logger)
     {
         _dbContext = dbContext;
         _auditService = auditService;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -32,33 +40,13 @@ public class OwnerController : ControllerBase
     public async Task<IActionResult> GetOwnerAuditLogs(
         [FromQuery] Guid? documentId,
         [FromQuery] string? search,
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] string? preset = "today",
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50)
     {
-        var ownerId = GetCurrentUserId();
-
-        // Subquery of document IDs owned by this owner
-        var ownedDocIds = await _dbContext.Documents
-            .Where(d => d.OwnerId == ownerId)
-            .Select(d => d.Id)
-            .ToListAsync();
-
-        var query = _dbContext.AuditLogs
-            .Where(a => a.DocumentId != null && ownedDocIds.Contains(a.DocumentId.Value));
-
-        if (documentId.HasValue && ownedDocIds.Contains(documentId.Value))
-        {
-            query = query.Where(a => a.DocumentId == documentId.Value);
-        }
-
-        if (!string.IsNullOrWhiteSpace(search))
-        {
-            var s = search.Trim().ToLower();
-            query = query.Where(a =>
-                (a.UserEmail != null && a.UserEmail.ToLower().Contains(s)) ||
-                (a.DocumentTitle != null && a.DocumentTitle.ToLower().Contains(s)) ||
-                (a.Details != null && a.Details.ToLower().Contains(s)));
-        }
+        var query = await BuildScopedOwnerAuditQueryAsync(documentId, search, fromDate, toDate, preset);
 
         var totalCount = await query.CountAsync();
         var logs = await query
@@ -85,6 +73,116 @@ public class OwnerController : ControllerBase
         return Ok(new { totalCount, page, pageSize, items = logs });
     }
 
+    [HttpGet("audit-logs/export")]
+    public async Task<IActionResult> ExportOwnerAuditLogs(
+        [FromQuery] Guid? documentId,
+        [FromQuery] string? search,
+        [FromQuery] DateTime? fromDate,
+        [FromQuery] DateTime? toDate,
+        [FromQuery] string? preset = "today")
+    {
+        var query = await BuildScopedOwnerAuditQueryAsync(documentId, search, fromDate, toDate, preset);
+
+        var logs = await query
+            .OrderByDescending(a => a.Id)
+            .Take(5000)
+            .ToListAsync();
+
+        var (isChainIntact, compromisedId) = await _auditService.VerifyChainIntegrityAsync();
+
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine("TrustVault Document Activity Statement");
+        sb.AppendLine($"Exported At (UTC),{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}");
+        sb.AppendLine($"Cryptographic Chain Verified,{isChainIntact}");
+        sb.AppendLine($"Total Records In Export,{logs.Count}");
+        sb.AppendLine();
+        sb.AppendLine("ID,Timestamp (UTC),User Email,Role,Action,Status,Document Title,IP Address,Details,Previous Hash,Current Hash");
+
+        foreach (var log in logs)
+        {
+            var title = (log.DocumentTitle ?? "—").Replace("\"", "\"\"");
+            var details = (log.Details ?? "—").Replace("\"", "\"\"");
+            var email = (log.UserEmail ?? "System / Anonymous").Replace("\"", "\"\"");
+
+            sb.AppendLine($"{log.Id},{log.Timestamp:yyyy-MM-dd HH:mm:ss},{email},{log.UserRole ?? "N/A"},{log.Action},{log.Status},\"{title}\",{log.IpAddress},\"{details}\",{log.PreviousHash},{log.CurrentHash}");
+        }
+
+        var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        var fileName = $"document-audit-statement-{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
+        return File(bytes, "text/csv", fileName);
+    }
+
+    private async Task<IQueryable<AuditLog>> BuildScopedOwnerAuditQueryAsync(
+        Guid? documentId,
+        string? search,
+        DateTime? fromDate,
+        DateTime? toDate,
+        string? preset)
+    {
+        var ownerId = GetCurrentUserId();
+
+        // Subquery of document IDs owned by this owner
+        var ownedDocIds = await _dbContext.Documents
+            .Where(d => d.OwnerId == ownerId)
+            .Select(d => d.Id)
+            .ToListAsync();
+
+        var query = _dbContext.AuditLogs
+            .Where(a => a.DocumentId != null && ownedDocIds.Contains(a.DocumentId.Value));
+
+        if (documentId.HasValue && ownedDocIds.Contains(documentId.Value))
+        {
+            query = query.Where(a => a.DocumentId == documentId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim().ToLower();
+            query = query.Where(a =>
+                (a.UserEmail != null && a.UserEmail.ToLower().Contains(s)) ||
+                (a.DocumentTitle != null && a.DocumentTitle.ToLower().Contains(s)) ||
+                (a.Details != null && a.Details.ToLower().Contains(s)));
+        }
+
+        // Time range filtering
+        if (fromDate.HasValue)
+        {
+            query = query.Where(a => a.Timestamp >= fromDate.Value);
+        }
+        if (toDate.HasValue)
+        {
+            query = query.Where(a => a.Timestamp <= toDate.Value);
+        }
+
+        if (!fromDate.HasValue && !toDate.HasValue && !string.IsNullOrWhiteSpace(preset))
+        {
+            var normalizedPreset = preset.Trim().ToLowerInvariant();
+            if (normalizedPreset == "today")
+            {
+                var todayUtc = DateTime.UtcNow.Date;
+                query = query.Where(a => a.Timestamp >= todayUtc);
+            }
+            else if (normalizedPreset == "yesterday")
+            {
+                var yestStart = DateTime.UtcNow.Date.AddDays(-1);
+                var yestEnd = DateTime.UtcNow.Date;
+                query = query.Where(a => a.Timestamp >= yestStart && a.Timestamp < yestEnd);
+            }
+            else if (normalizedPreset == "7days" || normalizedPreset == "week")
+            {
+                var past7 = DateTime.UtcNow.AddDays(-7);
+                query = query.Where(a => a.Timestamp >= past7);
+            }
+            else if (normalizedPreset == "30days" || normalizedPreset == "month")
+            {
+                var past30 = DateTime.UtcNow.AddDays(-30);
+                query = query.Where(a => a.Timestamp >= past30);
+            }
+        }
+
+        return query;
+    }
+
     /// <summary>
     /// Owner provisions a new Viewer account.
     /// </summary>
@@ -107,6 +205,7 @@ public class OwnerController : ControllerBase
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             Role = UserRole.Viewer,
             Department = request.Department,
+            MustChangePassword = true,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -131,6 +230,25 @@ public class OwnerController : ControllerBase
             await _dbContext.SaveChangesAsync();
         }
 
+        // Dispatch credentials email to the newly provisioned Viewer
+        var encodedEmail = System.Net.WebUtility.UrlEncode(viewer.Email);
+        var encodedTemp = System.Net.WebUtility.UrlEncode(request.Password);
+        var setPasswordUrl = $"{Request.Scheme}://{Request.Host}/login?action=set-password&email={encodedEmail}&temp={encodedTemp}";
+        try
+        {
+            await _emailService.SendProvisionedCredentialsAsync(
+                viewer.Email,
+                viewer.Username,
+                viewer.Username,
+                request.Password,
+                "Viewer",
+                setPasswordUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not send credentials email to provisioned Viewer {Email}", viewer.Email);
+        }
+
         await _auditService.LogAsync(
             AuditAction.UserRegistered,
             AuditStatus.Allowed,
@@ -144,7 +262,7 @@ public class OwnerController : ControllerBase
             $"Owner provisioned new Viewer account: {viewer.Email}");
 
         return CreatedAtAction(nameof(ListViewers), new { id = viewer.Id }, new UserDto(
-            viewer.Id, viewer.Username, viewer.Email, viewer.Role.ToString(), viewer.Department, viewer.IsActive, viewer.CreatedAt));
+            viewer.Id, viewer.Username, viewer.Email, viewer.Role.ToString(), viewer.Department, viewer.IsActive, viewer.CreatedAt, viewer.IsMasterAdmin, viewer.MustChangePassword));
     }
 
     /// <summary>
@@ -156,7 +274,7 @@ public class OwnerController : ControllerBase
         var viewers = await _dbContext.Users
             .Where(u => u.Role == UserRole.Viewer)
             .OrderBy(u => u.Email)
-            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt, u.IsMasterAdmin))
+            .Select(u => new UserDto(u.Id, u.Username, u.Email, u.Role.ToString(), u.Department, u.IsActive, u.CreatedAt, u.IsMasterAdmin, u.MustChangePassword, u.Organization))
             .ToListAsync();
 
         return Ok(viewers);

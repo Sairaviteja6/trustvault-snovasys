@@ -32,12 +32,27 @@ public class EmailService : IEmailService
   <div style='max-width:600px; margin:0 auto; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.06); overflow:hidden;'>
     <!-- Brand Header -->
     <div style='background-color:#0f172a; padding:24px 32px; border-bottom:3px solid #0284c7;'>
-      <div style='font-size:22px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;'>
-        TRUST<span style='color:#38bdf8;'>VAULT</span>
-      </div>
-      <div style='font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-top:4px;'>
-        Cryptographic Zero-Trust Document Platform
-      </div>
+      <table style='width:100%; border-collapse:collapse;'>
+        <tr>
+          <td style='width:46px; vertical-align:middle;'>
+            <div style='width:40px; height:40px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-radius:10px; text-align:center; line-height:40px; display:inline-block;'>
+              <svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='#ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' style='vertical-align:middle; margin-top:8px;'>
+                <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/>
+                <rect x='9' y='11' width='6' height='4' rx='1'/>
+                <path d='M10 11V9a2 2 0 1 1 4 0v2'/>
+              </svg>
+            </div>
+          </td>
+          <td style='vertical-align:middle; padding-left:14px;'>
+            <div style='font-size:22px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;'>
+              TRUST<span style='color:#38bdf8;'>VAULT</span>
+            </div>
+            <div style='font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>
+              Cryptographic Zero-Trust Document Platform
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <!-- Content Body -->
@@ -93,7 +108,7 @@ public class EmailService : IEmailService
 
     public async Task<bool> SendProvisionedCredentialsAsync(string recipientEmail, string recipientName, string username, string temporaryPassword, string role, string loginUrl)
     {
-        var subject = $"TrustVault Access Granted — Your {role} Credentials";
+        var subject = $"TrustVault Access Granted — Set Your Password for {role} Workspace";
         var body = $@"
 <!DOCTYPE html>
 <html>
@@ -106,12 +121,27 @@ public class EmailService : IEmailService
   <div style='max-width:600px; margin:0 auto; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.06); overflow:hidden;'>
     <!-- Brand Header -->
     <div style='background-color:#0f172a; padding:24px 32px; border-bottom:3px solid #0284c7;'>
-      <div style='font-size:22px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;'>
-        TRUST<span style='color:#38bdf8;'>VAULT</span>
-      </div>
-      <div style='font-size:12px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-top:4px;'>
-        Cryptographic Zero-Trust Document Platform
-      </div>
+      <table style='width:100%; border-collapse:collapse;'>
+        <tr>
+          <td style='width:46px; vertical-align:middle;'>
+            <div style='width:40px; height:40px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border-radius:10px; text-align:center; line-height:40px; display:inline-block;'>
+              <svg width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='#ffffff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' style='vertical-align:middle; margin-top:8px;'>
+                <path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'/>
+                <rect x='9' y='11' width='6' height='4' rx='1'/>
+                <path d='M10 11V9a2 2 0 1 1 4 0v2'/>
+              </svg>
+            </div>
+          </td>
+          <td style='vertical-align:middle; padding-left:14px;'>
+            <div style='font-size:22px; font-weight:800; color:#ffffff; letter-spacing:-0.5px;'>
+              TRUST<span style='color:#38bdf8;'>VAULT</span>
+            </div>
+            <div style='font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>
+              Cryptographic Zero-Trust Document Platform
+            </div>
+          </td>
+        </tr>
+      </table>
     </div>
 
     <!-- Content Body -->
@@ -121,7 +151,7 @@ public class EmailService : IEmailService
         Dear <strong>{recipientName}</strong>,
       </p>
       <p style='margin:0 0 20px 0; font-size:15px; line-height:1.6; color:#334155;'>
-        Your request for <strong>{role}</strong> access on the TrustVault Platform has been approved by the Administrator. Your personal workspace credentials have been provisioned:
+        Your account for <strong>{role}</strong> access on the TrustVault Platform has been provisioned. Your personal workspace credentials are ready:
       </p>
 
       <!-- Credentials Card -->
@@ -147,7 +177,7 @@ public class EmailService : IEmailService
             </td>
           </tr>
           <tr>
-            <td style='padding:8px 0; color:#475569; font-weight:600;'>Password:</td>
+            <td style='padding:8px 0; color:#475569; font-weight:600;'>Temporary Access Code:</td>
             <td style='padding:8px 0;'>
               <span style='font-family:monospace; font-size:15px; font-weight:800; color:#0f172a; background-color:#fef08a; border:1px solid #ca8a04; padding:4px 10px; border-radius:4px;'>{temporaryPassword}</span>
             </td>
@@ -157,13 +187,13 @@ public class EmailService : IEmailService
 
       <!-- Action Button -->
       <div style='margin:28px 0; text-align:center;'>
-        <a href='{loginUrl}' target='_blank' style='display:inline-block; background-color:#0f172a; color:#ffffff !important; text-decoration:none; padding:14px 32px; border-radius:8px; font-weight:700; font-size:15px; box-shadow:0 4px 12px rgba(15,23,42,0.25);'>
-          Sign In to TrustVault &rarr;
+        <a href='{loginUrl}' target='_blank' style='display:inline-block; background-color:#0284c7; color:#ffffff !important; text-decoration:none; padding:14px 34px; border-radius:8px; font-weight:700; font-size:15px; box-shadow:0 4px 14px rgba(2,132,199,0.35);'>
+          Create Your Password &amp; Sign In &rarr;
         </a>
       </div>
 
       <p style='margin:24px 0 0 0; font-size:13px; line-height:1.6; color:#64748b;'>
-        Please keep these credentials secure. Once logged in, you can view confidential documents, manage cryptographic snapshots, and inspect verified zero-trust logs.
+        <strong>First-Time Setup Notice:</strong> Clicking the button above will securely prefill your identity so you can set your personal permanent password immediately before accessing the document vault.
       </p>
     </div>
 
@@ -179,14 +209,96 @@ public class EmailService : IEmailService
         return await SendMailInternalAsync(recipientEmail, subject, body);
     }
 
+    public async Task<bool> SendInquiryRejectedAsync(string recipientEmail, string recipientName, string organization, string referenceId, string reason)
+    {
+        var subject = $"TrustVault Application Update — Reference #{referenceId}";
+        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <title>TrustVault Application Update</title>
+</head>
+<body style='margin:0; padding:24px; background-color:#f1f5f9; font-family:-apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif; color:#0f172a;'>
+  <div style='max-width:600px; margin:0 auto; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.06); overflow:hidden;'>
+    <div style='background-color:#0f172a; padding:24px 32px; border-bottom:3px solid #e11d48;'>
+      <div style='font-size:22px; font-weight:800; color:#ffffff;'>TRUST<span style='color:#38bdf8;'>VAULT</span></div>
+      <div style='font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Cryptographic Zero-Trust Document Platform</div>
+    </div>
+    <div style='padding:32px;'>
+      <h2 style='margin:0 0 16px 0; font-size:20px; font-weight:700; color:#0f172a;'>Inquiry Status: Requirements Not Met</h2>
+      <p style='font-size:15px; line-height:1.6; color:#334155;'>Dear <strong>{recipientName}</strong>,</p>
+      <p style='font-size:15px; line-height:1.6; color:#334155;'>
+        Thank you for submitting an enterprise inquiry on behalf of <strong>{organization}</strong> (Reference <code>#{referenceId}</code>).
+      </p>
+      <div style='background-color:#fff1f2; border:1px solid #fecdd3; border-left:4px solid #e11d48; border-radius:8px; padding:16px; margin:20px 0;'>
+        <div style='font-size:12px; font-weight:700; text-transform:uppercase; color:#be123c; margin-bottom:6px;'>Administrative Review Decision</div>
+        <div style='font-size:14px; color:#9f1239; line-height:1.5;'>
+          {reason}
+        </div>
+      </div>
+      <p style='font-size:15px; line-height:1.6; color:#334155;'>
+        Because your organization's criteria do not currently match our automated tenant onboarding requirements, an active workspace could not be provisioned automatically.
+      </p>
+      <p style='font-size:14px; line-height:1.6; color:#64748b; margin-top:24px;'>
+        If you have questions or would like to request an enterprise consultation, please contact our team at <a href='mailto:enterprise-support@trustvault.com' style='color:#0284c7;'>enterprise-support@trustvault.com</a>.
+      </p>
+    </div>
+  </div>
+</body>
+</html>";
+        return await SendMailInternalAsync(recipientEmail, subject, body);
+    }
+
+    public async Task<bool> SendDocumentAccessGrantedAsync(string recipientEmail, string recipientName, string documentTitle, string grantedByOwnerName, string permissionType, string documentViewUrl)
+    {
+        var subject = $"Secure Document Access Granted: {documentTitle}";
+        var body = $@"
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='utf-8'>
+  <title>Document Access Granted</title>
+</head>
+<body style='margin:0; padding:24px; background-color:#f1f5f9; font-family:-apple-system, BlinkMacSystemFont, ""Segoe UI"", Roboto, Helvetica, Arial, sans-serif; color:#0f172a;'>
+  <div style='max-width:600px; margin:0 auto; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 4px 16px rgba(0,0,0,0.06); overflow:hidden;'>
+    <div style='background-color:#0f172a; padding:24px 32px; border-bottom:3px solid #18937A;'>
+      <div style='font-size:22px; font-weight:800; color:#ffffff;'>TRUST<span style='color:#18937A;'>VAULT</span></div>
+      <div style='font-size:11px; color:#94a3b8; text-transform:uppercase; letter-spacing:1px; margin-top:2px;'>Cryptographic Zero-Trust Document Platform</div>
+    </div>
+    <div style='padding:32px;'>
+      <h2 style='margin:0 0 16px 0; font-size:20px; font-weight:700; color:#0f172a;'>Confidential Document Access Granted</h2>
+      <p style='font-size:15px; line-height:1.6; color:#334155;'>Dear <strong>{recipientName}</strong>,</p>
+      <p style='font-size:15px; line-height:1.6; color:#334155;'>
+        Document Owner <strong>{grantedByOwnerName}</strong> has granted you secure <strong>{permissionType}</strong> permission to access:
+      </p>
+      <div style='background-color:#f0fdfa; border:1px solid #ccfbf1; border-left:4px solid #18937A; border-radius:8px; padding:18px; margin:20px 0;'>
+        <div style='font-size:16px; font-weight:700; color:#115e59; margin-bottom:6px;'>📄 {documentTitle}</div>
+        <div style='font-size:13px; color:#042f2e;'>Permission Level: <strong>{permissionType}</strong></div>
+        <div style='font-size:12px; color:#0f766e; margin-top:6px;'>Protected in-memory decrypted viewing with active watermarking and real-time audit logging.</div>
+      </div>
+      <div style='text-align:center; margin:30px 0;'>
+        <a href='{documentViewUrl}' style='display:inline-block; background-color:#18937A; color:#ffffff; font-weight:700; font-size:15px; text-decoration:none; padding:13px 32px; border-radius:8px; box-shadow:0 4px 12px rgba(24,147,122,0.3);'>
+          Sign In & View Document &rarr;
+        </a>
+      </div>
+      <p style='font-size:12px; line-height:1.5; color:#94a3b8; text-align:center;'>
+        If you were not expecting this document access, please notify your organization security administrator immediately.
+      </p>
+    </div>
+  </div>
+</body>
+</html>";
+        return await SendMailInternalAsync(recipientEmail, subject, body);
+    }
 
     private async Task<bool> SendMailInternalAsync(string toEmail, string subject, string htmlBody)
     {
-        var smtpHost = _config["Smtp:Host"];
-        var smtpPortStr = _config["Smtp:Port"];
-        var smtpUser = _config["Smtp:Username"];
-        var smtpPass = _config["Smtp:Password"];
-        var fromEmail = _config["Smtp:From"] ?? "noreply@trustvault.com";
+        var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _config["Smtp:Host"];
+        var smtpPortStr = Environment.GetEnvironmentVariable("SMTP_PORT") ?? _config["Smtp:Port"];
+        var smtpUser = Environment.GetEnvironmentVariable("SMTP_USERNAME") ?? _config["Smtp:Username"];
+        var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? _config["Smtp:Password"];
+        var fromEmail = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _config["Smtp:From"] ?? "noreply@trustvault.com";
 
         // Record outgoing email to outbox directory for local inspection & auditing
         try

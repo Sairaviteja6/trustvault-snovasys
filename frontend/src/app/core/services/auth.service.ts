@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthResponse, UserDto, UserRole } from '../models/api.models';
+import { AuthResponse, SetPasswordRequest, UserDto, UserRole } from '../models/api.models';
 
 const TOKEN_KEY = 'trustvault_access_token';
 const REFRESH_KEY = 'trustvault_refresh_token';
@@ -25,6 +25,15 @@ export class AuthService {
 
   login(email: string, password: string): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, { email, password }).pipe(
+      tap(res => {
+        this.saveAuth(res);
+        this.redirectByRole(res.user.role);
+      })
+    );
+  }
+
+  setPassword(req: SetPasswordRequest): Observable<AuthResponse> {
+    return this.http.post<AuthResponse>(`${this.baseUrl}/set-password`, req).pipe(
       tap(res => {
         this.saveAuth(res);
         this.redirectByRole(res.user.role);
@@ -54,8 +63,35 @@ export class AuthService {
     );
   }
 
+  updateUsername(newUsername: string): Observable<UserDto> {
+    return this.http.patch<UserDto>(`${this.baseUrl}/profile/username`, { newUsername }).pipe(
+      tap(updatedUser => {
+        this.currentUser.set(updatedUser);
+        sessionStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      })
+    );
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.baseUrl}/profile/change-password`, { currentPassword, newPassword });
+  }
+
   getToken(): string | null {
     return sessionStorage.getItem(TOKEN_KEY);
+  }
+
+  getTokenRole(): UserRole | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const payload = JSON.parse(atob(parts[1]));
+      const roleClaim = payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || payload['role'];
+      return (roleClaim as UserRole) || null;
+    } catch {
+      return null;
+    }
   }
 
   getRefreshToken(): string | null {

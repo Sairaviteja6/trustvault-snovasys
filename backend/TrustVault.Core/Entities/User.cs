@@ -10,8 +10,11 @@ public class User
     public string PasswordHash { get; set; } = string.Empty;
     public UserRole Role { get; set; } = UserRole.Viewer;
     public string? Department { get; set; }
+    public string? Organization { get; set; }
     public bool IsActive { get; set; } = true;
     public bool IsMasterAdmin { get; set; } = false;
+    public Guid? CreatedByAdminId { get; set; }
+    public bool MustChangePassword { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     // Refresh token revocation tracking

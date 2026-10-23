@@ -36,6 +36,10 @@ export class UserService {
     return this.http.patch<{ message: string; isActive: boolean }>(`${this.adminUrl}/users/${userId}/toggle-status`, null);
   }
 
+  deleteAdminUser(userId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.adminUrl}/users/${userId}`);
+  }
+
   // Owner capabilities
   getViewers(): Observable<UserDto[]> {
     return this.http.get<UserDto[]>(`${this.ownerUrl}/users/viewers`);

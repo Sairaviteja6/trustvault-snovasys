@@ -17,11 +17,19 @@ public class PermissionsController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
     private readonly IAuditService _auditService;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<PermissionsController> _logger;
 
-    public PermissionsController(TrustVaultDbContext dbContext, IAuditService auditService)
+    public PermissionsController(
+        TrustVaultDbContext dbContext,
+        IAuditService auditService,
+        IEmailService emailService,
+        ILogger<PermissionsController> logger)
     {
         _dbContext = dbContext;
         _auditService = auditService;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -121,6 +129,23 @@ public class PermissionsController : ControllerBase
             GetUserAgent(),
             $"Granted [{permSummary}] to named user {targetUser.Email}");
 
+        // Dispatch notification email to Viewer
+        try
+        {
+            var viewUrl = $"{Request.Scheme}://{Request.Host}/viewer?docId={document.Id}";
+            await _emailService.SendDocumentAccessGrantedAsync(
+                targetUser.Email,
+                targetUser.Username,
+                document.Title,
+                userEmail,
+                permSummary,
+                viewUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not send document access granted email to {Email}", targetUser.Email);
+        }
+
         return Ok(new { message = $"Permissions [{permSummary}] successfully granted to {targetUser.Email}." });
     }
 
@@ -190,6 +215,27 @@ public class PermissionsController : ControllerBase
             GetIpAddress(),
             GetUserAgent(),
             $"Bulk-expanded tag '{request.TagName}': granted [{permSummary}] to {userCount} named individuals.");
+
+        // Dispatch notification emails to granted users
+        var viewUrl = $"{Request.Scheme}://{Request.Host}/viewer?docId={document.Id}";
+        foreach (var u in taggedUsers)
+        {
+            if (u.Id == userId) continue;
+            try
+            {
+                await _emailService.SendDocumentAccessGrantedAsync(
+                    u.Email,
+                    u.Username,
+                    document.Title,
+                    userEmail,
+                    permSummary,
+                    viewUrl);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not send document access granted email to {Email}", u.Email);
+            }
+        }
 
         return Ok(new { message = $"Successfully granted [{permSummary}] to {userCount} users from tag '{request.TagName}'." });
     }

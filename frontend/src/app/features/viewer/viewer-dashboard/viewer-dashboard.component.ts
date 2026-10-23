@@ -13,23 +13,34 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
     <div class="container">
       <div class="section-header">
         <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
+              Enterprise Tenant &rsaquo; prod-vault-viewer-us1
+            </span>
+            <span class="badge badge-success" style="font-size: 0.7rem; font-weight: 600;">
+              <span class="live-dot" style="width: 5px; height: 5px;"></span> KMS Hardware Enclave: Active
+            </span>
+            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
+              Viewer Session
+            </span>
+          </div>
           <h1 class="section-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F73B7" stroke-width="2.2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
             Document Workspace
           </h1>
           <p class="section-subtitle">
-            Access, inspect, and collaborate on confidential documents shared with your identity.
+            Access, inspect, and collaborate on confidential zero-knowledge documents shared with your identity.
           </p>
         </div>
-        <button class="btn btn-secondary" (click)="loadDocuments()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <button class="btn btn-secondary btn-sm" (click)="loadDocuments()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/>
             <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
           </svg>
-          Refresh Documents
+          <span>Refresh Documents</span>
         </button>
       </div>
 
@@ -38,8 +49,118 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
         {{ successMessage() }}
       </div>
 
-      <!-- Documents Table -->
-      <div class="card" style="margin-top: 1rem;">
+      <!-- Reference Stat Metric Cards (4 Columns) -->
+      <div class="stat-card-grid">
+        <!-- Card 1: Shared Documents -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Accessible Documents</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="9" y1="9" x2="15" y2="9"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="13" y2="17"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ documents().length }} <span class="stat-box-subval">files</span>
+          </div>
+          <div class="stat-box-desc">Stored securely &bull; AES-256 GCM encrypted</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="activeViewerTab.set('documents')">View All Files &rsaquo;</span>
+            <span class="stat-box-pill pill-success">Enclave Verified</span>
+          </div>
+        </div>
+
+        <!-- Card 2: Read-Only Access -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Read-Only Files</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ readOnlyCount }} <span class="stat-box-subval">documents</span>
+          </div>
+          <div class="stat-box-desc">In-browser inspection with DLP copy restrictions</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="activeViewerTab.set('documents')">Inspect Files &rsaquo;</span>
+            <span class="stat-box-pill">DLP Active</span>
+          </div>
+        </div>
+
+        <!-- Card 3: Collaborative Edit -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Editable Files</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ editableCount }} <span class="stat-box-subval">revisable</span>
+          </div>
+          <div class="stat-box-desc">Authorized for in-browser collaborative snapshots</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="activeViewerTab.set('documents')">Collaborative Mode &rsaquo;</span>
+            <span class="stat-box-pill pill-success">{{ editableCount }} Allowed</span>
+          </div>
+        </div>
+
+        <!-- Card 4: Downloadable Assets -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Downloadable Assets</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ downloadableCount }} <span class="stat-box-subval">authorized</span>
+          </div>
+          <div class="stat-box-desc">Authorized for local AES-256 decrypted export</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="activeViewerTab.set('documents')">Download Mode &rsaquo;</span>
+            <span class="stat-box-pill">{{ downloadableCount }} Permitted</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Segmented Navigation Pills Bar (Matching Reference Image) -->
+      <div class="segmented-nav-wrapper">
+        <div class="segmented-nav">
+          <button class="segmented-tab" [class.active]="activeViewerTab() === 'documents'" (click)="activeViewerTab.set('documents')">
+            <span>Shared Documents {{ documents().length }}</span>
+          </button>
+          <button class="segmented-tab" [class.active]="activeViewerTab() === 'policies'" (click)="activeViewerTab.set('policies')">
+            <span>Security Policies &amp; Invariants</span>
+          </button>
+        </div>
+
+        <div class="ledger-stream-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#18937A" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Ledger stream: SHA256 Chained Hash</span>
+        </div>
+      </div>
+
+      <!-- TAB 1: Documents Table (Contained in dedicated Content Box Card) -->
+      <div *ngIf="activeViewerTab() === 'documents'" class="content-box-card">
         <div class="table-responsive">
           <table class="table">
             <thead>
@@ -138,6 +259,65 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
               </tr>
             </tbody>
           </table>
+      </div>
+
+      <!-- TAB 2: Security Policies & Invariants Panel -->
+      <div *ngIf="activeViewerTab() === 'policies'" class="content-box-card">
+        <div class="content-box-header">
+          <div>
+            <div class="content-box-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#18937A" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>Security Policies &amp; DLP Protections</span>
+              <span class="badge badge-success" style="font-size: 0.65rem;">
+                <span class="live-dot" style="width: 5px; height: 5px;"></span> ACTIVE
+              </span>
+            </div>
+            <div class="content-box-subtitle">
+              Cryptographic zero-trust policies enforced on your viewer session by TrustVault hardware enclaves.
+            </div>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.25rem; margin-top: 1rem;">
+          <div style="background: #f8fafc; border: 1px solid rgba(33, 37, 41, 0.08); border-radius: 12px; padding: 1.25rem;">
+            <div style="font-weight: 700; color: #212529; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F73B7" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+              </svg>
+              In-Browser Clipboard &amp; Print Defense
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; line-height: 1.6; margin: 0;">
+              Copying, cutting, print screen, and context menu actions are cryptographically intercepted and blocked during confidential document viewing sessions.
+            </p>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid rgba(33, 37, 41, 0.08); border-radius: 12px; padding: 1.25rem;">
+            <div style="font-weight: 700; color: #212529; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#18937A" stroke-width="2">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              Discrete Caller Grants &amp; TTL
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; line-height: 1.6; margin: 0;">
+              Access is granted per-document or per-tag by the Document Owner. Grants are evaluated dynamically on every decrypt attempt with zero implicit permissions.
+            </p>
+          </div>
+
+          <div style="background: #f8fafc; border: 1px solid rgba(33, 37, 41, 0.08); border-radius: 12px; padding: 1.25rem;">
+            <div style="font-weight: 700; color: #212529; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ca8a04" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Immutable Audit Ledger
+            </div>
+            <p style="font-size: 0.8rem; color: #64748b; line-height: 1.6; margin: 0;">
+              Every view, edit, download, or refused access attempt is logged with timestamp, client IP, caller token, and linked via a cryptographic SHA-256 hash chain.
+            </p>
+          </div>
         </div>
       </div>
     </div>
@@ -484,7 +664,21 @@ export class ViewerDashboardComponent implements OnInit {
   private documentService = inject(DocumentService);
   private sanitizer = inject(DomSanitizer);
 
+  activeViewerTab = signal<'documents' | 'policies'>('documents');
   documents = signal<DocumentResponse[]>([]);
+
+  get readOnlyCount(): number {
+    return this.documents().filter(d => d.permittedActions?.includes('Read') && !d.permittedActions?.includes('Edit')).length;
+  }
+
+  get editableCount(): number {
+    return this.documents().filter(d => d.permittedActions?.includes('Edit')).length;
+  }
+
+  get downloadableCount(): number {
+    return this.documents().filter(d => d.permittedActions?.includes('Download')).length;
+  }
+
   previewDoc = signal<DocumentResponse | null>(null);
   viewingDocContent = signal<DocumentContentResponse | null>(null);
   editingDoc = signal<DocumentContentResponse | null>(null);
