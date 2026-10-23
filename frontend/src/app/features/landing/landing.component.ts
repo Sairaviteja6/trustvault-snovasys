@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
 import { InquiryService, ClientInquiry } from '../../core/services/inquiry.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-landing',
@@ -10,6 +11,20 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
     <div class="landing-page">
+      <!-- Dynamic Interactive Mouse-Tracking Background (Reference: trustvault.biz) -->
+      <div 
+        class="interactive-ambient-mesh" 
+        [style.transform]="'translate3d(' + (-parallaxX) + 'px, ' + (-parallaxY) + 'px, 0)'"
+      ></div>
+      <div 
+        class="interactive-cursor-spotlight"
+        [style.transform]="'translate3d(' + mouseX + 'px, ' + mouseY + 'px, 0)'"
+      ></div>
+      <div 
+        class="interactive-grid-lines"
+        [style.transform]="'translate3d(' + (parallaxX * 0.4) + 'px, ' + (parallaxY * 0.4) + 'px, 0)'"
+      ></div>
+
       <!-- Top Sticky Navigation -->
       <header class="landing-header">
         <div class="nav-container">
@@ -19,9 +34,10 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
           </div>
 
           <nav class="nav-links">
+            <a href="#workflow" class="nav-item">How It Works</a>
             <a href="#architecture" class="nav-item">Architecture</a>
-            <a href="#access-control" class="nav-item">Access Control</a>
-            <a href="#transparency" class="nav-item">Transparency</a>
+            <a href="#access-control" class="nav-item">Access Tiers</a>
+            <a href="#transparency" class="nav-item">Audit Ledger</a>
             <a href="#inquiry" class="nav-item">Get Started</a>
           </nav>
 
@@ -47,15 +63,15 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
           <div class="hero-content">
             <div class="hero-badge">
               <span class="badge-dot"></span>
-              <span>Zero-Trust Cryptographic Document Platform</span>
+              <span>Enterprise Confidential Document Platform</span>
             </div>
 
             <h1 class="hero-title">
-              Your documents, organized and under your control.
+              Your documents, organized and <span class="hero-highlight">under your control</span>.
             </h1>
 
             <p class="hero-subtitle">
-              Share important files with the right people, manage access effortlessly, and keep a clear record of every action.
+              Share critical files with authorized teams, maintain complete sovereign control over access, and track every single interaction on a clear, verifiable timeline.
             </p>
 
             <div class="hero-buttons">
@@ -73,14 +89,14 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
 
             <div class="hero-trust-bar">
               <div class="trust-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#31957B" stroke-width="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
-                <span>AES-256-GCM Bit-Level Security</span>
+                <span>AES-256 Bit-Level Security</span>
               </div>
               <div class="trust-divider"></div>
               <div class="trust-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2285AC" stroke-width="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0ea5e9" stroke-width="2">
                   <circle cx="12" cy="12" r="10"/>
                   <polyline points="12 6 12 12 16 14"/>
                 </svg>
@@ -88,11 +104,11 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
               </div>
               <div class="trust-divider"></div>
               <div class="trust-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fbbf24" stroke-width="2">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                 </svg>
-                <span>Tamper-Evident SHA-256 Audit Trail</span>
+                <span>Tamper-Proof Audit History</span>
               </div>
             </div>
           </div>
@@ -102,20 +118,20 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
               <img src="/images/trustvault-monogram.png" alt="TrustVault Logo" class="card-logo" />
               <div class="preview-meta">
                 <span class="preview-app-title">TrustVault Core</span>
-                <span class="preview-status">Operational &bull; Cryptographic Invariants Enforced</span>
+                <span class="preview-status">Operational &bull; Zero-Knowledge Isolation Active</span>
               </div>
             </div>
 
-            <!-- Generated TrustVault Core Graphic matching logo color palette -->
+            <!-- TrustVault Core Graphic with humanized active overlay -->
             <div class="core-image-wrapper">
               <img 
                 src="/images/trustvault-core.jpg" 
-                alt="TrustVault Core Zero-Trust Architecture" 
+                alt="TrustVault Core Architecture" 
                 class="core-image" 
               />
               <div class="core-image-overlay-badge">
                 <span class="dot-pulse"></span>
-                <span>Cryptographic Core Active</span>
+                <span>Security Engine Active</span>
               </div>
             </div>
 
@@ -139,7 +155,118 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
             </div>
           </div>
         </div>
+      </section>
 
+      <!-- Section: Platform Workflow (How TrustVault Works) -->
+      <section id="workflow" class="section-block workflow-section">
+        <div class="container">
+          <div class="section-heading text-center">
+            <div class="workflow-badge">
+              <span class="badge-dot-teal"></span>
+              <span>Platform Workflow</span>
+            </div>
+            <h2 class="section-title-large">How TrustVault Works</h2>
+            <p class="section-desc-large">
+              A transparent, end-to-end security lifecycle: from enterprise inquiry and administrative governance to sovereign document ownership and audited viewer inspection.
+            </p>
+          </div>
+
+          <!-- 4-Step Process Flow Grid -->
+          <div class="workflow-flow-grid">
+            <!-- Step 1 -->
+            <div class="workflow-card">
+              <div class="step-indicator">
+                <span class="step-num">01</span>
+                <span class="step-connector"></span>
+              </div>
+              <div class="workflow-icon-box icon-teal">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="8.5" cy="7" r="4"/>
+                  <line x1="20" y1="8" x2="20" y2="14"/>
+                  <line x1="23" y1="11" x2="17" y2="11"/>
+                </svg>
+              </div>
+              <div class="workflow-role-tag tag-client">Enterprise Client</div>
+              <h3 class="workflow-card-title">Inquiry &amp; Invitation</h3>
+              <p class="workflow-card-desc">
+                Prospective teams submit an inquiry through the portal. The system automatically dispatches an onboarding email with temporary access credentials for account activation.
+              </p>
+              <div class="workflow-pill-row">
+                <span class="workflow-pill">Self-Service Portal</span>
+                <span class="workflow-pill">Secure Email Dispatch</span>
+              </div>
+            </div>
+
+            <!-- Step 2 -->
+            <div class="workflow-card">
+              <div class="step-indicator">
+                <span class="step-num">02</span>
+                <span class="step-connector"></span>
+              </div>
+              <div class="workflow-icon-box icon-blue">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  <polyline points="9 12 11 14 15 10"/>
+                </svg>
+              </div>
+              <div class="workflow-role-tag tag-admin">System Admin</div>
+              <h3 class="workflow-card-title">Institutional Governance</h3>
+              <p class="workflow-card-desc">
+                The Administrator manages organization directories and provisions Document Owner workspaces while strictly isolated from viewing unencrypted document contents.
+              </p>
+              <div class="workflow-pill-row">
+                <span class="workflow-pill">Zero File Access</span>
+                <span class="workflow-pill">SHA-256 Ledger Audit</span>
+              </div>
+            </div>
+
+            <!-- Step 3 -->
+            <div class="workflow-card">
+              <div class="step-indicator">
+                <span class="step-num">03</span>
+                <span class="step-connector"></span>
+              </div>
+              <div class="workflow-icon-box icon-purple">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <div class="workflow-role-tag tag-owner">Document Owner</div>
+              <h3 class="workflow-card-title">Upload &amp; DRM Policy</h3>
+              <p class="workflow-card-desc">
+                Owners upload sensitive files with AES-256 client encryption, configure fine-grained permissions, dynamic session watermarking, and time-to-live (TTL) expiration rules.
+              </p>
+              <div class="workflow-pill-row">
+                <span class="workflow-pill">AES-256 Encryption</span>
+                <span class="workflow-pill">TTL Expiry &amp; DRM</span>
+              </div>
+            </div>
+
+            <!-- Step 4 -->
+            <div class="workflow-card">
+              <div class="step-indicator">
+                <span class="step-num">04</span>
+              </div>
+              <div class="workflow-icon-box icon-emerald">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </div>
+              <div class="workflow-role-tag tag-viewer">Authorized Viewer</div>
+              <h3 class="workflow-card-title">Protected Inspection</h3>
+              <p class="workflow-card-desc">
+                Authorized viewers receive notification emails, activate their credentials, and inspect documents decrypted safely in-memory with immutable tamper-proof audit tracking.
+              </p>
+              <div class="workflow-pill-row">
+                <span class="workflow-pill">In-Memory Decryption</span>
+                <span class="workflow-pill">Immutable Audit Trail</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- Section: Architectural Integrity -->
@@ -208,7 +335,7 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
 
           <div class="grid-cols-3 role-grid">
             <!-- Administrator Card -->
-            <div class="card role-card">
+            <div class="card role-card role-card-admin">
               <div class="role-badge badge-admin">Master &amp; Secondary Governance</div>
               <div class="role-icon-box">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2">
@@ -237,11 +364,11 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
             </div>
 
             <!-- Document Owner Card -->
-            <div class="card role-card featured">
+            <div class="card role-card role-card-owner featured">
               <div class="featured-ribbon">Core Workspace</div>
               <div class="role-badge badge-owner">Data Authority</div>
               <div class="role-icon-box">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1F73B7" stroke-width="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
                   <polyline points="14 2 14 8 20 8"/>
                 </svg>
@@ -265,7 +392,7 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
             </div>
 
             <!-- Viewer Card -->
-            <div class="card role-card">
+            <div class="card role-card role-card-viewer">
               <div class="role-badge badge-viewer">Target Recipient</div>
               <div class="role-icon-box">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2">
@@ -578,8 +705,68 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
   styles: [`
     .landing-page {
       min-height: 100vh;
-      color: var(--text-primary);
+      color: #f8fafc;
       position: relative;
+      overflow-x: hidden;
+      background-color: #0b0f19;
+    }
+
+    /* Vibrant Multi-Color Aurora Ambient Mesh (Cool, Pleasant, Alive) */
+    .interactive-ambient-mesh {
+      position: fixed;
+      inset: -150px;
+      pointer-events: none;
+      z-index: 0;
+      background: 
+        radial-gradient(circle 850px at 15% 15%, rgba(31, 115, 183, 0.16), transparent 55%),
+        radial-gradient(circle 750px at 85% 35%, rgba(24, 147, 122, 0.14), transparent 50%),
+        radial-gradient(circle 700px at 50% 75%, rgba(14, 165, 233, 0.12), transparent 50%),
+        radial-gradient(circle 600px at 20% 85%, rgba(49, 149, 123, 0.10), transparent 45%);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    /* Refined, Subtle Cursor Spotlight (TrustVault Logo Blue & Teal, Compact 250px) */
+    .interactive-cursor-spotlight {
+      position: fixed;
+      top: -125px;
+      left: -125px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 5;
+      background: radial-gradient(circle, rgba(31, 115, 183, 0.35) 0%, rgba(24, 147, 122, 0.20) 45%, transparent 70%);
+      mix-blend-mode: screen;
+      opacity: 0.50;
+      transition: transform 0.04s linear;
+      will-change: transform;
+    }
+
+    .interactive-grid-lines {
+      position: fixed;
+      inset: -50px;
+      pointer-events: none;
+      z-index: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+      background-size: 54px 54px;
+      transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    .hero-highlight {
+      color: #38bdf8;
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #34d399 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Section Hierarchy */
+    .landing-header, .hero-section, section, footer {
+      position: relative;
+      z-index: 1;
     }
 
     /* Header */
@@ -587,11 +774,11 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       position: sticky;
       top: 0;
       z-index: 1000;
-      background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(20px) saturate(160%);
-      -webkit-backdrop-filter: blur(20px) saturate(160%);
-      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+      background: rgba(11, 15, 25, 0.82);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
     }
     .nav-container {
       max-width: 1400px;
@@ -610,38 +797,40 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       cursor: pointer;
     }
     .brand-logo {
-      height: 38px;
-      width: 38px;
-      border-radius: 9px;
+      height: 40px;
+      width: 40px;
+      border-radius: 10px;
       object-fit: cover;
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
-      transition: transform 0.2s ease;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 4px 14px rgba(31, 115, 183, 0.35);
+      transition: all 0.25s ease;
     }
     .brand-link:hover .brand-logo {
-      transform: scale(1.05);
+      transform: scale(1.08) rotate(-2deg);
+      box-shadow: 0 6px 20px rgba(24, 147, 122, 0.45);
+      border-color: rgba(24, 147, 122, 0.6);
     }
     .brand-text {
       font-size: 1.35rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: #0f172a;
+      color: #FFFFFF !important;
       font-family: var(--font-sans);
     }
     .nav-links {
       display: flex;
-      gap: 2rem;
+      gap: 1.75rem;
       align-items: center;
     }
     .nav-item {
-      color: #475569;
+      color: #94a3b8;
       font-size: 0.9rem;
       font-weight: 600;
       text-decoration: none;
       transition: all 0.2s ease;
     }
     .nav-item:hover {
-      color: #0f172a;
+      color: #38bdf8;
       transform: translateY(-1px);
     }
     .nav-actions {
@@ -652,7 +841,10 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
 
     /* Hero Section */
     .hero-section {
-      padding: 5rem 0 4rem;
+      padding: 6.5rem 0 5.5rem;
+      background: linear-gradient(180deg, rgba(11, 15, 25, 0.80) 0%, rgba(15, 23, 42, 0.90) 100%), url('/images/executive-office-bg.png') center/cover no-repeat;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
     }
     .hero-container {
       display: grid;
@@ -664,40 +856,41 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #0f172a;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: #38bdf8;
       font-size: 0.75rem;
       font-weight: 700;
-      padding: 0.4rem 0.9rem;
+      padding: 0.45rem 1rem;
       border-radius: 9999px;
       letter-spacing: 0.04em;
       text-transform: uppercase;
       margin-bottom: 1.5rem;
       transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
     }
     .hero-badge:hover {
-      background: #e2e8f0;
-      border-color: #94a3b8;
+      background: rgba(45, 55, 72, 0.95);
+      border-color: #38bdf8;
     }
     .badge-dot {
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #0f172a;
-      box-shadow: 0 0 6px rgba(15, 23, 42, 0.35);
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
     }
     .hero-title {
       font-size: 3.25rem;
       font-weight: 800;
       line-height: 1.15;
       letter-spacing: -0.03em;
-      color: #0f172a;
+      color: #FFFFFF;
       margin-bottom: 1.25rem;
     }
     .hero-subtitle {
       font-size: 1.15rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.6;
       margin-bottom: 2rem;
       max-width: 620px;
@@ -719,40 +912,41 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       gap: 1.25rem;
       flex-wrap: wrap;
       padding-top: 1.5rem;
-      border-top: 1px solid rgba(15, 23, 42, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
     .trust-item {
       display: flex;
       align-items: center;
       gap: 0.5rem;
       font-size: 0.8rem;
-      color: #475569;
+      color: #cbd5e1;
       font-weight: 600;
       transition: color 0.2s ease;
     }
     .trust-item:hover {
-      color: #0f172a;
+      color: #FFFFFF;
     }
     .trust-divider {
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background: rgba(15, 23, 42, 0.25);
+      background: rgba(255, 255, 255, 0.25);
     }
 
     /* Hero Preview Card */
     .hero-preview-card {
       padding: 2rem;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(20px);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .hero-preview-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 25px 50px rgba(15, 23, 42, 0.15);
-      border-color: rgba(15, 23, 42, 0.25);
+      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.65);
+      border-color: rgba(56, 189, 248, 0.4);
     }
     .preview-header {
       display: flex;
@@ -765,18 +959,18 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       width: 44px;
       border-radius: 10px;
       object-fit: cover;
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
     }
     .preview-app-title {
       display: block;
       font-size: 1.1rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #FFFFFF;
     }
     .preview-status {
       font-size: 0.75rem;
-      color: #059669;
+      color: #10b981;
       font-weight: 700;
     }
     .preview-stats-grid {
@@ -786,26 +980,26 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       margin-bottom: 1.5rem;
     }
     .preview-stat {
-      background: #f8fafc;
-      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 12px;
       padding: 1rem;
       transition: all 0.2s ease;
     }
     .preview-stat:hover {
-      background: #f1f5f9;
-      border-color: rgba(15, 23, 42, 0.18);
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(56, 189, 248, 0.35);
       transform: translateY(-2px);
     }
     .stat-number {
       display: block;
       font-size: 1.5rem;
       font-weight: 800;
-      color: #0f172a;
+      color: #FFFFFF;
     }
     .stat-label {
       font-size: 0.75rem;
-      color: #64748b;
+      color: #94a3b8;
       margin-top: 0.2rem;
     }
     .core-image-wrapper {
@@ -813,9 +1007,9 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       border-radius: 14px;
       overflow: hidden;
       margin-bottom: 1.5rem;
-      border: 1px solid rgba(34, 133, 172, 0.25);
-      box-shadow: 0 8px 24px rgba(34, 133, 172, 0.15);
-      background: #292A2E;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      background: #0b0f19;
     }
     .core-image {
       width: 100%;
@@ -831,9 +1025,9 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       position: absolute;
       bottom: 12px;
       left: 12px;
-      background: rgba(41, 42, 46, 0.85);
+      background: rgba(15, 23, 42, 0.9);
       backdrop-filter: blur(10px);
-      border: 1px solid rgba(49, 149, 123, 0.5);
+      border: 1px solid rgba(16, 185, 129, 0.6);
       padding: 0.35rem 0.75rem;
       border-radius: 9999px;
       display: flex;
@@ -842,14 +1036,14 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       font-size: 0.75rem;
       font-weight: 700;
       color: #ffffff;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
     .dot-pulse {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #31957B;
-      box-shadow: 0 0 8px #31957B;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
       animation: pulseTeal 2s infinite;
     }
     @keyframes pulseTeal {
@@ -857,10 +1051,20 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       50% { opacity: 0.5; transform: scale(1.3); }
     }
 
-
-    /* Sections */
+    /* Sections Shared Styling */
     .section-block {
-      padding: 5rem 0;
+      padding: 5.5rem 0;
+      background: rgba(11, 15, 25, 0.72);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    #architecture {
+      background: linear-gradient(180deg, rgba(11, 15, 25, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%), url('/images/trustvault-core.jpg') center/cover no-repeat;
+      position: relative;
+    }
+    #transparency {
+      background: linear-gradient(180deg, rgba(11, 15, 25, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%), url('/images/verified-transparency.jpg') center/cover no-repeat;
+      position: relative;
     }
     .section-heading {
       max-width: 850px;
@@ -873,39 +1077,187 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       font-size: 2.4rem;
       font-weight: 800;
       letter-spacing: -0.025em;
-      color: #0f172a;
+      color: #FFFFFF;
       margin-bottom: 1rem;
     }
     .section-desc-large {
       font-size: 1.05rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.7;
     }
 
-    /* Features Grid */
+    /* ========================================================
+       PLATFORM WORKFLOW PROCESS (HOW TRUSTVAULT WORKS)
+       ======================================================== */
+    .workflow-section {
+      background: rgba(15, 23, 42, 0.72);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .workflow-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(24, 147, 122, 0.15);
+      border: 1px solid rgba(24, 147, 122, 0.35);
+      color: #34d399;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+    .badge-dot-teal {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 8px #34d399;
+    }
+    .workflow-flow-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-top: 3.5rem;
+      position: relative;
+    }
+    @media (max-width: 1024px) {
+      .workflow-flow-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (max-width: 640px) {
+      .workflow-flow-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .workflow-card {
+      background: rgba(17, 24, 39, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 18px;
+      padding: 2rem 1.6rem;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(16px);
+    }
+    .workflow-card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(31, 115, 183, 0.45);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), 0 0 30px rgba(24, 147, 122, 0.20);
+    }
+    .step-indicator {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .step-num {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: 0.05em;
+      background: rgba(56, 189, 248, 0.12);
+      padding: 0.25rem 0.65rem;
+      border-radius: 8px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+    .step-connector {
+      height: 2px;
+      flex: 1;
+      margin-left: 1rem;
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.4), rgba(24, 147, 122, 0.1));
+      border-radius: 2px;
+    }
+    .workflow-icon-box {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      transition: transform 0.25s ease;
+    }
+    .workflow-card:hover .workflow-icon-box {
+      transform: scale(1.08);
+    }
+    .icon-teal { background: rgba(24, 147, 122, 0.18); color: #34d399; border: 1px solid rgba(24, 147, 122, 0.35); }
+    .icon-blue { background: rgba(31, 115, 183, 0.18); color: #38bdf8; border: 1px solid rgba(31, 115, 183, 0.35); }
+    .icon-purple { background: rgba(129, 140, 248, 0.18); color: #a5b4fc; border: 1px solid rgba(129, 140, 248, 0.35); }
+    .icon-emerald { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.35); }
+    .workflow-role-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+    }
+    .tag-client { color: #34d399; }
+    .tag-admin { color: #38bdf8; }
+    .tag-owner { color: #a5b4fc; }
+    .tag-viewer { color: #6ee7b7; }
+    .workflow-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin-bottom: 0.65rem;
+      letter-spacing: -0.01em;
+    }
+    .workflow-card-desc {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.55;
+      margin-bottom: 1.25rem;
+      flex: 1;
+    }
+    .workflow-pill-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-top: auto;
+    }
+    .workflow-pill {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      background: rgba(30, 41, 59, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    /* Architecture Features Grid */
     .grid-cols-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
+      gap: 1.75rem;
     }
     .feature-card {
-      padding: 2rem;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(15, 23, 42, 0.10);
-      border-radius: 16px;
+      padding: 2.25rem 2rem;
+      background: rgba(17, 24, 39, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.10);
+      border-radius: 18px;
+      backdrop-filter: blur(16px);
       transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .feature-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(15, 23, 42, 0.30);
-      box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.5);
     }
     .feature-icon-wrapper {
       width: 48px;
       height: 48px;
       border-radius: 12px;
-      background: #f1f5f9;
-      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -913,47 +1265,65 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       transition: all 0.2s ease;
     }
     .feature-card:hover .feature-icon-wrapper {
-      background: #0f172a;
-      color: #ffffff;
+      background: #38bdf8;
+      color: #0b0f19;
       transform: scale(1.05);
     }
     .feature-title {
       font-size: 1.25rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #FFFFFF;
       margin-bottom: 0.6rem;
     }
     .feature-text {
       font-size: 0.9rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.6;
     }
 
     /* Role Cards */
     .role-card {
-      padding: 2.25rem 2rem;
+      padding: 2.5rem 2rem;
       display: flex;
       flex-direction: column;
       position: relative;
-      background: rgba(255, 255, 255, 0.92);
-      border: 1px solid rgba(15, 23, 42, 0.10);
-      border-radius: 16px;
-      transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 18px;
+      overflow: hidden;
+      backdrop-filter: blur(14px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
     }
     .role-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(15, 23, 42, 0.30);
-      box-shadow: 0 20px 40px -8px rgba(15, 23, 42, 0.12);
+      transform: translateY(-6px);
+      box-shadow: 0 25px 55px rgba(0, 0, 0, 0.6);
     }
-    .role-card.featured {
-      border-color: #0f172a;
-      box-shadow: 0 12px 30px -5px rgba(15, 23, 42, 0.15);
+    .role-card-admin {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 15, 25, 0.96) 100%), url('/images/role-admin-bg.jpg') center/cover no-repeat;
+      border: 1px solid rgba(244, 63, 94, 0.4);
+    }
+    .role-card-admin:hover {
+      border-color: rgba(244, 63, 94, 0.7);
+    }
+    .role-card-owner {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 15, 25, 0.96) 100%), url('/images/role-owner-bg.jpg') center/cover no-repeat;
+      border: 1px solid rgba(99, 102, 241, 0.55);
+      box-shadow: 0 14px 34px rgba(99, 102, 241, 0.22);
+    }
+    .role-card-owner:hover {
+      border-color: #818cf8;
+    }
+    .role-card-viewer {
+      background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 15, 25, 0.96) 100%), url('/images/role-viewer-bg.jpg') center/cover no-repeat;
+      border: 1px solid rgba(16, 185, 129, 0.45);
+    }
+    .role-card-viewer:hover {
+      border-color: #34d399;
     }
     .featured-ribbon {
       position: absolute;
       top: -12px;
       right: 20px;
-      background: #0f172a;
+      background: #6366f1;
       color: white;
       font-size: 0.7rem;
       font-weight: 800;
@@ -961,6 +1331,7 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       letter-spacing: 0.05em;
       padding: 0.25rem 0.75rem;
       border-radius: 9999px;
+      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
     }
     .role-badge {
       font-size: 0.7rem;
@@ -969,15 +1340,15 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       text-transform: uppercase;
       margin-bottom: 1rem;
     }
-    .badge-admin { color: #dc2626; }
-    .badge-owner { color: #0f172a; font-weight: 800; }
-    .badge-viewer { color: #059669; }
+    .badge-admin { color: #f87171; }
+    .badge-owner { color: #a5b4fc; font-weight: 800; }
+    .badge-viewer { color: #6ee7b7; }
     .role-icon-box {
       width: 52px;
       height: 52px;
       border-radius: 14px;
-      background: #f1f5f9;
-      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -985,18 +1356,17 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       transition: all 0.2s ease;
     }
     .role-card:hover .role-icon-box {
-      background: #0f172a;
-      color: #ffffff;
+      transform: scale(1.06);
     }
     .role-title {
       font-size: 1.45rem;
       font-weight: 800;
-      color: #0f172a;
+      color: #FFFFFF;
       margin-bottom: 0.75rem;
     }
     .role-summary {
       font-size: 0.875rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.6;
       margin-bottom: 1.5rem;
     }
@@ -1004,10 +1374,11 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       list-style: none;
       margin-bottom: 2rem;
       flex: 1;
+      padding: 0;
     }
     .role-features-list li {
       font-size: 0.85rem;
-      color: #334155;
+      color: #cbd5e1;
       padding: 0.4rem 0;
       display: flex;
       align-items: center;
@@ -1015,7 +1386,7 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     }
     .role-features-list li::before {
       content: '✓';
-      color: #059669;
+      color: #10b981;
       font-weight: 800;
     }
     .btn-block {
@@ -1024,16 +1395,17 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
 
     /* Transparency Section */
     .transparency-card {
-      padding: 3rem;
+      padding: 3.5rem;
       border-radius: 24px;
-      background: rgba(255, 255, 255, 0.94);
-      border: 1px solid rgba(15, 23, 42, 0.12);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(11, 15, 25, 0.98) 100%);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .transparency-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 24px 45px -8px rgba(15, 23, 42, 0.14);
-      border-color: rgba(15, 23, 42, 0.25);
+      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.7);
+      border-color: rgba(16, 185, 129, 0.55);
     }
     .transparency-grid {
       display: grid;
@@ -1043,7 +1415,7 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     }
     .transparency-desc {
       font-size: 1.05rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.7;
       margin-bottom: 2rem;
     }
@@ -1057,15 +1429,15 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       align-items: center;
       gap: 0.75rem;
       font-size: 0.9rem;
-      color: #0f172a;
+      color: #cbd5e1;
       font-weight: 600;
     }
     .transparency-image-box {
       border-radius: 16px;
       overflow: hidden;
-      border: 1px solid rgba(34, 133, 172, 0.25);
-      box-shadow: 0 10px 30px rgba(34, 133, 172, 0.16);
-      background: #292A2E;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      background: #0b0f19;
       position: relative;
     }
     .transparency-image {
@@ -1080,8 +1452,8 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     }
     .transparency-image-caption {
       padding: 0.75rem 1rem;
-      background: rgba(41, 42, 46, 0.95);
-      border-top: 1px solid rgba(49, 149, 123, 0.3);
+      background: rgba(15, 23, 42, 0.95);
+      border-top: 1px solid rgba(16, 185, 129, 0.4);
       display: flex;
       align-items: center;
       gap: 0.6rem;
@@ -1089,52 +1461,11 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       font-weight: 700;
       color: #ffffff;
     }
-    .hash-chain-box {
-      background: #f8fafc;
-      border: 1px solid rgba(34, 133, 172, 0.15);
-      border-radius: 16px;
-      padding: 1.75rem;
-    }
-    .chain-step {
-      background: #ffffff;
-      border: 1px solid rgba(34, 133, 172, 0.15);
-      border-radius: 10px;
-      padding: 0.85rem 1rem;
-      transition: all 0.2s ease;
-    }
-    .chain-step:hover {
-      border-color: var(--brand-blue);
-      transform: translateY(-2px);
-    }
-    .chain-step.active {
-      border-color: #31957B;
-      background: rgba(49, 149, 123, 0.08);
-    }
-    .step-label {
-      font-size: 0.725rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--brand-teal);
-    }
-    .step-hash {
-      font-family: var(--font-mono);
-      font-size: 0.775rem;
-      color: var(--brand-blue);
-      font-weight: 600;
-      margin-top: 0.2rem;
-    }
-    .chain-connector {
-      text-align: center;
-      color: var(--brand-teal);
-      font-size: 1.2rem;
-      padding: 0.4rem 0;
-    }
-
 
     /* Inquiry Form Section */
     .inquiry-section {
-      padding: 5rem 0 6rem;
+      padding: 5.5rem 0 6.5rem;
+      background: linear-gradient(180deg, rgba(11, 15, 25, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
     }
     .inquiry-wrapper {
       max-width: 820px;
@@ -1145,26 +1476,50 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     }
     .inquiry-subnote {
       font-size: 0.95rem;
-      color: #0f172a;
+      color: #38bdf8;
       font-weight: 700;
       margin-top: 0.75rem;
     }
     .inquiry-card {
       padding: 2.5rem 3rem;
       border-radius: 20px;
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(15, 23, 42, 0.14);
-      box-shadow: 0 15px 35px -5px rgba(15, 23, 42, 0.08);
+      background: rgba(17, 24, 39, 0.92);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(20px);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .inquiry-card:hover {
-      box-shadow: 0 25px 50px -10px rgba(15, 23, 42, 0.15);
-      border-color: rgba(15, 23, 42, 0.25);
+      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.7);
+      border-color: rgba(56, 189, 248, 0.6);
     }
     .form-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 1.25rem;
+    }
+    .form-label {
+      color: #cbd5e1;
+      font-size: 0.825rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+    .form-input, .form-select, .form-textarea {
+      background: rgba(15, 23, 42, 0.85) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      color: #FFFFFF !important;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+      transition: all 0.2s ease;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35) !important;
     }
     .form-agreement {
       display: flex;
@@ -1172,12 +1527,12 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       gap: 0.75rem;
       margin: 1.5rem 0 2rem;
       font-size: 0.825rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.5;
     }
     .form-agreement input {
       margin-top: 0.2rem;
-      accent-color: #0f172a;
+      accent-color: #38bdf8;
     }
 
     /* Success View */
@@ -1189,8 +1544,8 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       width: 72px;
       height: 72px;
       border-radius: 50%;
-      background: #ecfdf5;
-      border: 1px solid #a7f3d0;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid #10b981;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1199,14 +1554,14 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     .success-title {
       font-size: 1.75rem;
       font-weight: 800;
-      color: #0f172a;
+      color: #FFFFFF;
       margin-bottom: 0.75rem;
     }
     .success-ref-pill {
       display: inline-block;
-      background: #f1f5f9;
-      border: 1px solid #cbd5e1;
-      color: #0f172a;
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
       font-size: 0.85rem;
       font-weight: 700;
       padding: 0.3rem 0.9rem;
@@ -1215,22 +1570,22 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     }
     .success-message {
       font-size: 1.05rem;
-      color: #475569;
+      color: #cbd5e1;
       margin-bottom: 1.5rem;
     }
     .success-box-details {
-      background: #f8fafc;
-      border: 1px solid rgba(15, 23, 42, 0.10);
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.10);
       border-radius: 12px;
       padding: 1.25rem;
       font-size: 0.9rem;
-      color: #475569;
+      color: #94a3b8;
       line-height: 1.6;
       margin-bottom: 2rem;
       text-align: left;
     }
     .success-box-details strong {
-      color: #0f172a;
+      color: #FFFFFF;
     }
     .success-actions {
       display: flex;
@@ -1239,67 +1594,82 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       flex-wrap: wrap;
     }
 
-    /* Footer */
+    /* Full-Bleed Site Footer */
     .landing-footer {
-      background: #ffffff;
-      border-top: 1px solid rgba(15, 23, 42, 0.08);
-      padding: 4rem 0 0;
+      background: #0b0f19;
+      color: #94a3b8;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 4.5rem 0 0;
+      position: relative;
+      z-index: 1;
     }
     .footer-container {
       display: grid;
       grid-template-columns: 1.5fr 1fr 1fr;
       gap: 3rem;
-      padding-bottom: 3rem;
+      padding-bottom: 3.5rem;
+    }
+    .landing-footer .brand-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+    }
+    .landing-footer .brand-text {
+      color: #FFFFFF !important;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
     }
     .footer-tagline {
+      margin-top: 1rem;
       font-size: 0.9rem;
-      color: #64748b;
-      margin-top: 0.75rem;
+      color: #94a3b8;
       line-height: 1.6;
       max-width: 320px;
     }
     .footer-col-title {
-      font-size: 0.85rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: #0f172a;
+      color: #FFFFFF;
+      font-size: 0.95rem;
+      font-weight: 700;
       margin-bottom: 1.25rem;
+      letter-spacing: -0.01em;
     }
     .footer-address {
       font-size: 0.875rem;
-      color: #475569;
       line-height: 1.6;
-      margin-bottom: 0.5rem;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
     }
     .footer-email a {
-      color: #0f172a;
+      color: #38bdf8;
       text-decoration: none;
       font-size: 0.875rem;
-      font-weight: 700;
-      transition: color 0.2s;
+      font-weight: 600;
+      transition: color 0.2s ease;
     }
     .footer-email a:hover {
-      text-decoration: underline;
+      color: #34d399;
     }
     .footer-nav {
       list-style: none;
-    }
-    .footer-nav li {
-      margin-bottom: 0.6rem;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
     }
     .footer-nav a {
-      color: #475569;
-      font-size: 0.875rem;
+      color: #94a3b8;
       text-decoration: none;
-      transition: all 0.2s;
+      font-size: 0.875rem;
+      transition: color 0.2s ease;
     }
     .footer-nav a:hover {
-      color: #0f172a;
-      padding-left: 2px;
+      color: #FFFFFF;
     }
     .footer-bottom {
-      border-top: 1px solid rgba(15, 23, 42, 0.06);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
       padding: 1.5rem 0;
       font-size: 0.8rem;
       color: #64748b;
@@ -1307,6 +1677,7 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
     .footer-bottom-inner {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       flex-wrap: wrap;
       gap: 1rem;
     }
@@ -1319,10 +1690,20 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       .hero-title {
         font-size: 2.75rem;
       }
+      .tree-level {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      .tree-svg-connector {
+        display: none;
+      }
       .grid-cols-3 {
         grid-template-columns: 1fr;
       }
       .transparency-grid {
+        grid-template-columns: 1fr;
+      }
+      .detail-grid {
         grid-template-columns: 1fr;
       }
       .footer-container {
@@ -1343,12 +1724,45 @@ import { InquiryService, ClientInquiry } from '../../core/services/inquiry.servi
       .inquiry-card {
         padding: 1.5rem;
       }
+      .tree-canvas-card {
+        padding: 1.75rem 1rem;
+      }
+      .footer-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
     }
   `]
 })
-export class LandingComponent {
+export class LandingComponent implements OnInit {
   private router = inject(Router);
   private inquiryService = inject(InquiryService);
+  private authService = inject(AuthService);
+
+  mouseX = 0;
+  mouseY = 0;
+  parallaxX = 0;
+  parallaxY = 0;
+
+  @HostListener('window:mousemove', ['$event'])
+  onMouseMove(event: MouseEvent): void {
+    this.mouseX = event.clientX;
+    this.mouseY = event.clientY;
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    this.parallaxX = Math.round((event.clientX - centerX) * 0.006);
+    this.parallaxY = Math.round((event.clientY - centerY) * 0.006);
+  }
+
+  ngOnInit(): void {
+    // If the user is already authenticated, immediately route them to their personal dashboard
+    if (this.authService.isAuthenticated()) {
+      const role = this.authService.userRole();
+      if (role) {
+        this.authService.redirectByRole(role);
+      }
+    }
+  }
 
   formData = {
     fullName: '',

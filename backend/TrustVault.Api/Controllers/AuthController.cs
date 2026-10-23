@@ -79,7 +79,59 @@ public class AuthController : ControllerBase
             accessToken,
             refreshToken,
             expiration,
-            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin));
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin, user.MustChangePassword));
+
+        return Ok(response);
+    }
+
+    [HttpPost("set-password")]
+    public async Task<IActionResult> SetPassword([FromBody] SetPasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Email, current password, and new password are required." });
+        }
+
+        if (request.NewPassword.Length < 8)
+        {
+            return BadRequest(new { message = "New password must be at least 8 characters long." });
+        }
+
+        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+
+        if (user == null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+        {
+            return Unauthorized(new { message = "Invalid email or temporary password." });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.MustChangePassword = false;
+
+        var (accessToken, expiration) = _tokenService.GenerateAccessToken(user);
+        var refreshToken = _tokenService.GenerateRefreshToken();
+        user.RefreshToken = refreshToken;
+        user.RefreshTokenExpiryTime = DateTime.UtcNow.AddDays(7);
+        user.IsRevoked = false;
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            AuditAction.UserRegistered,
+            AuditStatus.Allowed,
+            user.Id,
+            user.Email,
+            user.Role.ToString(),
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            "User established permanent custom security credentials.");
+
+        var response = new AuthResponse(
+            accessToken,
+            refreshToken,
+            expiration,
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin, false));
 
         return Ok(response);
     }
@@ -105,7 +157,7 @@ public class AuthController : ControllerBase
             newAccessToken,
             newRefreshToken,
             expiration,
-            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin)));
+            new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin, user.MustChangePassword)));
     }
 
     [Authorize]
@@ -147,7 +199,106 @@ public class AuthController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin));
+        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin, user.MustChangePassword));
+    }
+
+    [Authorize]
+    [HttpPatch("profile/username")]
+    public async Task<IActionResult> UpdateUsername([FromBody] UpdateUsernameRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.NewUsername))
+        {
+            return BadRequest(new { message = "Username cannot be empty." });
+        }
+
+        var trimmed = request.NewUsername.Trim();
+        if (trimmed.Length < 3 || trimmed.Length > 50)
+        {
+            return BadRequest(new { message = "Username must be between 3 and 50 characters." });
+        }
+
+        var userId = GetCurrentUserId();
+        var user = await _dbContext.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        var normalizedNew = trimmed.ToLowerInvariant();
+        var exists = await _dbContext.Users.AnyAsync(u => u.Id != userId && u.Username.ToLower() == normalizedNew);
+        if (exists)
+        {
+            return Conflict(new { message = "Username is already taken by another user." });
+        }
+
+        var oldName = user.Username;
+        user.Username = trimmed;
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            AuditAction.UserRegistered,
+            AuditStatus.Allowed,
+            user.Id,
+            user.Email,
+            user.Role.ToString(),
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            $"User updated display username from '{oldName}' to '{user.Username}'.");
+
+        return Ok(new UserDto(user.Id, user.Username, user.Email, user.Role.ToString(), user.Department, user.IsActive, user.CreatedAt, user.IsMasterAdmin, user.MustChangePassword));
+    }
+
+    [Authorize]
+    [HttpPost("profile/change-password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.CurrentPassword) || string.IsNullOrWhiteSpace(request.NewPassword))
+        {
+            return BadRequest(new { message = "Current password and new password are required." });
+        }
+
+        if (request.NewPassword.Length < 8)
+        {
+            return BadRequest(new { message = "New password must be at least 8 characters long." });
+        }
+
+        var userId = GetCurrentUserId();
+        var user = await _dbContext.Users.FindAsync(userId);
+        if (user == null) return NotFound();
+
+        if (!BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+        {
+            await _auditService.LogAsync(
+                AuditAction.UserLogin,
+                AuditStatus.Refused,
+                user.Id,
+                user.Email,
+                user.Role.ToString(),
+                null,
+                null,
+                GetIpAddress(),
+                GetUserAgent(),
+                "Failed attempt to change password (incorrect current password).");
+
+            return BadRequest(new { message = "Incorrect current password." });
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.MustChangePassword = false;
+        await _dbContext.SaveChangesAsync();
+
+        await _auditService.LogAsync(
+            AuditAction.UserRegistered,
+            AuditStatus.Allowed,
+            user.Id,
+            user.Email,
+            user.Role.ToString(),
+            null,
+            null,
+            GetIpAddress(),
+            GetUserAgent(),
+            "User successfully updated their account password.");
+
+        return Ok(new { message = "Password updated successfully." });
     }
 
     private Guid GetCurrentUserId()

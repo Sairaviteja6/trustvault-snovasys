@@ -132,6 +132,8 @@ public class InquiriesController : ControllerBase
             user.Role = roleEnum;
             user.IsActive = true;
             user.Department = inq.Department ?? inq.Organization;
+            user.Organization = inq.Organization;
+            user.MustChangePassword = true;
         }
         else
         {
@@ -143,6 +145,8 @@ public class InquiriesController : ControllerBase
                 username = $"{usernamePrefix}_{counter++}";
             }
 
+            var callerGuid = Guid.TryParse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var gId) ? (Guid?)gId : null;
+
             user = new User
             {
                 Id = Guid.NewGuid(),
@@ -151,7 +155,10 @@ public class InquiriesController : ControllerBase
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(tempPassword),
                 Role = roleEnum,
                 IsMasterAdmin = false,
+                CreatedByAdminId = callerGuid,
+                MustChangePassword = true,
                 Department = inq.Department ?? inq.Organization,
+                Organization = inq.Organization,
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
@@ -165,8 +172,10 @@ public class InquiriesController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        // Dispatch credentials email
-        var loginUrl = $"{Request.Scheme}://{Request.Host}/login";
+        // Dispatch credentials email with direct create-new-password workflow
+        var encodedEmail = System.Net.WebUtility.UrlEncode(user.Email);
+        var encodedTemp = System.Net.WebUtility.UrlEncode(tempPassword);
+        var setPasswordUrl = $"{Request.Scheme}://{Request.Host}/login?action=set-password&email={encodedEmail}&temp={encodedTemp}";
         try
         {
             await _emailService.SendProvisionedCredentialsAsync(
@@ -175,7 +184,7 @@ public class InquiriesController : ControllerBase
                 user.Username,
                 tempPassword,
                 user.Role.ToString(),
-                loginUrl);
+                setPasswordUrl);
         }
         catch (Exception ex)
         {
@@ -205,6 +214,67 @@ public class InquiriesController : ControllerBase
             email = user.Email,
             role = user.Role.ToString(),
             temporaryPassword = tempPassword,
+            inquiryStatus = inq.Status
+        });
+    }
+
+    public record RejectInquiryRequest(string? Reason);
+
+    [HttpPost("{id}/reject")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> RejectInquiry(string id, [FromBody] RejectInquiryRequest? request)
+    {
+        var inq = await _context.ClientInquiries.FindAsync(id);
+        if (inq == null)
+        {
+            return NotFound(new { message = $"Inquiry with ID {id} not found." });
+        }
+
+        if (inq.Status == "Approved")
+        {
+            return BadRequest(new { message = "Cannot reject an inquiry that has already been approved." });
+        }
+
+        var reason = string.IsNullOrWhiteSpace(request?.Reason)
+            ? "Your organization's profile does not currently satisfy TrustVault zero-trust enterprise compliance requirements. Please contact our corporate sales team for customized deployment."
+            : request.Reason.Trim();
+
+        inq.Status = "Rejected";
+        await _context.SaveChangesAsync();
+
+        // Dispatch notification email
+        try
+        {
+            await _emailService.SendInquiryRejectedAsync(
+                inq.Email,
+                inq.FullName,
+                inq.Organization,
+                inq.Id,
+                reason);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not send rejection email to {Email}", inq.Email);
+        }
+
+        // Audit Log
+        var callerId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "SYSTEM";
+        var callerEmail = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? "admin@trustvault.com";
+        await _auditService.LogAsync(
+            AuditAction.UserLogout,
+            AuditStatus.Allowed,
+            Guid.TryParse(callerId, out var g) ? g : null,
+            callerEmail,
+            "Admin",
+            null,
+            null,
+            HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1",
+            Request.Headers["User-Agent"].ToString(),
+            $"Rejected client inquiry {inq.Id} for {inq.Email}. Reason: {reason}");
+
+        return Ok(new
+        {
+            message = $"Inquiry #{inq.Id} rejected and notification email sent to {inq.Email}.",
             inquiryStatus = inq.Status
         });
     }

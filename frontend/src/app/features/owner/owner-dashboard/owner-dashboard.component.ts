@@ -26,8 +26,19 @@ import {
     <div class="container">
       <div class="section-header">
         <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
+            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
+              Enterprise Tenant &rsaquo; prod-vault-owner-us1
+            </span>
+            <span class="badge badge-success" style="font-size: 0.7rem; font-weight: 600;">
+              <span class="live-dot" style="width: 5px; height: 5px;"></span> KMS Hardware Enclave: Active
+            </span>
+            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
+              Verified Mainnet
+            </span>
+          </div>
           <h1 class="section-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#18937A" stroke-width="2.2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
@@ -36,79 +47,157 @@ import {
             Document Workspace
           </h1>
           <p class="section-subtitle">
-            Manage confidential files, discrete caller grants, version snapshots, and access activity.
+            Manage zero-knowledge confidential files, discrete caller grants, deterministic snapshots, and inspect immutable access audit trails.
           </p>
         </div>
         <div class="action-buttons">
-          <button class="btn btn-secondary" (click)="loadAll()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="btn btn-secondary btn-sm" (click)="loadAll()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
-            Refresh
+            <span>Refresh</span>
           </button>
-          <button class="btn btn-secondary" (click)="showNewViewerModal.set(true)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="btn btn-secondary btn-sm" (click)="showNewViewerModal.set(true)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
               <circle cx="8.5" cy="7" r="4"/>
               <line x1="20" y1="8" x2="20" y2="14"/>
               <line x1="23" y1="11" x2="17" y2="11"/>
             </svg>
-            Provision Viewer
+            <span>Provision Viewer</span>
           </button>
-          <button class="btn btn-primary" (click)="showUploadModal.set(true)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button class="btn btn-primary btn-sm" (click)="showUploadModal.set(true)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
               <polyline points="17 8 12 3 7 8"/>
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-            Upload Document
+            <span>Upload Document</span>
+            <span class="badge badge-success" style="font-size: 0.65rem; padding: 1px 5px; background: rgba(255,255,255,0.2); color: #fff; border: none;">E2EE</span>
           </button>
         </div>
       </div>
 
-      <!-- Metrics Cards -->
-      <div class="grid-cols-4" *ngIf="metrics() as m">
-        <div class="card metric-card">
-          <span class="metric-label">Owned Documents</span>
-          <span class="metric-value">{{ m.totalOwnedDocs }}</span>
-          <span class="metric-note">Stored securely</span>
+      <!-- Reference Stat Metric Cards (4 Columns) -->
+      <div class="stat-card-grid" *ngIf="displayedMetrics as m">
+        <!-- Card 1: Owned Documents -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Owned Documents</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                <line x1="9" y1="9" x2="15" y2="9"/>
+                <line x1="9" y1="13" x2="15" y2="13"/>
+                <line x1="9" y1="17" x2="13" y2="17"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ m.totalOwnedDocs }} <span class="stat-box-subval">/ 250 GB limit</span>
+          </div>
+          <div class="stat-box-desc">Stored securely &bull; AES-256 GCM encrypted</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="showUploadModal.set(true)">+ Add First File &rsaquo;</span>
+            <span class="stat-box-pill">{{ m.totalOwnedDocs > 0 ? 'Vault Active' : 'Vault Idle' }}</span>
+          </div>
         </div>
-        <div class="card metric-card">
-          <span class="metric-label">Active Caller Grants</span>
-          <span class="metric-value text-primary">{{ m.activeGrantsCount }}</span>
-          <span class="metric-note">Dynamic permissions</span>
+
+        <!-- Card 2: Active Caller Grants -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Active Caller Grants</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 2l-2 2m-1-1l-2 2m-2-2l-2 2m-2-2l-2 2M3 21l9-9m0 0a5 5 0 1 0-7-7 5 5 0 0 0 7 7z"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ m.activeGrantsCount }} <span class="stat-box-subval">ephemeral tokens</span>
+          </div>
+          <div class="stat-box-desc">Dynamic session-bound caller keys</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="activeTab.set('tags')">Manage Grants &rsaquo;</span>
+            <span class="stat-box-pill pill-success">{{ m.activeGrantsCount }} TTL active</span>
+          </div>
         </div>
-        <div class="card metric-card">
-          <span class="metric-label">Provisioned Viewers</span>
-          <span class="metric-value">{{ m.totalViewers }}</span>
-          <span class="metric-note">Authorized accounts</span>
+
+        <!-- Card 3: Provisioned Viewers -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Provisioned Viewers</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ m.totalViewers }} <span class="stat-box-subval">assigned seats</span>
+          </div>
+          <div class="stat-box-desc">Hardware token &amp; IAM enrolled accounts</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="showNewViewerModal.set(true)">+ Invite Viewer &rsaquo;</span>
+            <span class="stat-box-pill">{{ viewers().length > 0 ? (viewers().length + ' enrolled') : 'Empty directory' }}</span>
+          </div>
         </div>
-        <div class="card metric-card">
-          <span class="metric-label">User Tags</span>
-          <span class="metric-value">{{ m.totalTags }}</span>
-          <span class="metric-note">For bulk assignments</span>
+
+        <!-- Card 4: Security Audit Tags -->
+        <div class="stat-box">
+          <div class="stat-box-top">
+            <span class="stat-box-title">Security Audit Tags</span>
+            <div class="stat-box-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                <line x1="7" y1="7" x2="7.01" y2="7"/>
+              </svg>
+            </div>
+          </div>
+          <div class="stat-box-metric">
+            {{ m.totalTags }} <span class="stat-box-subval">active rules</span>
+          </div>
+          <div class="stat-box-desc">Bulk classification &amp; sensitivity groups</div>
+          <div class="stat-box-footer">
+            <span class="stat-box-link" (click)="activeTab.set('tags')">Configure Tags &rsaquo;</span>
+            <span class="stat-box-pill pill-success">Standard DLP</span>
+          </div>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
-      <div class="tabs-bar">
-        <button class="tab-btn" [class.active]="activeTab() === 'documents'" (click)="activeTab.set('documents')">
-          Documents ({{ documents().length }})
-        </button>
-        <button class="tab-btn" [class.active]="activeTab() === 'viewers'" (click)="activeTab.set('viewers')">
-          Viewers ({{ viewers().length }})
-        </button>
-        <button class="tab-btn" [class.active]="activeTab() === 'tags'" (click)="activeTab.set('tags')">
-          Tags &amp; Groups
-        </button>
-        <button class="tab-btn" [class.active]="activeTab() === 'audit'" (click)="activeTab.set('audit')">
-          Audit Activity
-        </button>
+      <!-- Segmented Navigation Pills Bar (Matching Reference Image) -->
+      <div class="segmented-nav-wrapper">
+        <div class="segmented-nav">
+          <button class="segmented-tab" [class.active]="activeTab() === 'documents'" (click)="activeTab.set('documents')">
+            <span>Documents {{ documents().length }}</span>
+          </button>
+          <button class="segmented-tab" [class.active]="activeTab() === 'viewers'" (click)="activeTab.set('viewers')">
+            <span>Viewers {{ viewers().length }}</span>
+          </button>
+          <button class="segmented-tab" [class.active]="activeTab() === 'tags'" (click)="activeTab.set('tags')">
+            <span>Tags &amp; Groups</span>
+          </button>
+          <button class="segmented-tab" [class.active]="activeTab() === 'audit'" (click)="activeTab.set('audit')">
+            <span class="live-dot" *ngIf="activeTab() === 'audit'"></span>
+            <span>Audit Activity</span>
+          </button>
+        </div>
+
+        <div class="ledger-stream-pill">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#18937A" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <span>Ledger stream: SHA256 Chained Hash</span>
+        </div>
       </div>
 
-      <!-- TAB 1: Documents Catalog -->
-      <div *ngIf="activeTab() === 'documents'" class="card" style="margin-top: 1rem;">
+      <!-- TAB 1: Documents Catalog (Contained in dedicated Content Box Card) -->
+      <div *ngIf="activeTab() === 'documents'" class="content-box-card">
         <div class="section-header">
           <div class="search-bar">
             <input 
@@ -193,7 +282,7 @@ import {
       </div>
 
       <!-- TAB 2: Viewers Management -->
-      <div *ngIf="activeTab() === 'viewers'" class="card" style="margin-top: 1rem;">
+      <div *ngIf="activeTab() === 'viewers'" class="content-box-card">
         <div class="section-header">
           <div>
             <h2 class="card-title">Authorized Viewers</h2>
@@ -238,7 +327,7 @@ import {
       </div>
 
       <!-- TAB 3: User Tags -->
-      <div *ngIf="activeTab() === 'tags'" class="card" style="margin-top: 1rem;">
+      <div *ngIf="activeTab() === 'tags'" class="content-box-card">
         <div class="section-header">
           <div>
             <h2 class="card-title">User Tags for Bulk Permissions</h2>
@@ -283,21 +372,85 @@ import {
         </div>
       </div>
 
-      <!-- TAB 4: Owner Audit Trail -->
-      <div *ngIf="activeTab() === 'audit'" class="card" style="margin-top: 1rem;">
-        <div class="section-header">
-          <div>
-            <h2 class="card-title">Document Access Activity</h2>
-            <p class="section-subtitle">Real-time log of reads, edits, downloads, and grants on documents you own.</p>
+      <!-- TAB 4: Owner Audit Trail (Matching Reference Image) -->
+      <div *ngIf="activeTab() === 'audit'" class="content-box-card">
+        <div class="section-header" style="flex-direction: column; align-items: flex-start; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 1rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.6rem;">
+                <h2 class="card-title" style="margin-bottom: 0;">Document Access Activity</h2>
+                <span class="badge badge-success" style="font-size: 0.65rem;">
+                  <span class="live-dot" style="width: 5px; height: 5px;"></span> LIVE
+                </span>
+                <span class="badge badge-info">{{ ownerTimePresetLabel() }}</span>
+              </div>
+              <p class="section-subtitle" style="margin-bottom: 0;">
+                Real-time cryptographic log of reads, edits, downloads, and grants on documents you own.
+              </p>
+            </div>
+
+            <!-- Download Statement / Export Button -->
+            <button 
+              class="btn btn-sm btn-primary" 
+              (click)="onExportOwnerAuditStatement()"
+              title="Download verified document access statement as CSV"
+              style="display: flex; align-items: center; gap: 0.4rem;"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span>Download Statement (CSV)</span>
+            </button>
           </div>
-          <input 
-            type="text" 
-            class="form-input" 
-            style="width: 260px;" 
-            placeholder="Search audit events..." 
-            [(ngModel)]="auditSearchQuery" 
-            (keyup.enter)="loadOwnerAudit()"
-          />
+
+          <!-- Time Presets Bar & Search -->
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap; gap: 0.75rem;">
+            <div class="time-presets-bar">
+              <button class="preset-chip" [class.active]="ownerTimePreset() === 'today'" (click)="setOwnerTimePreset('today')">
+                Today (Live)
+              </button>
+              <button class="preset-chip" [class.active]="ownerTimePreset() === 'yesterday'" (click)="setOwnerTimePreset('yesterday')">
+                Yesterday
+              </button>
+              <button class="preset-chip" [class.active]="ownerTimePreset() === '7days'" (click)="setOwnerTimePreset('7days')">
+                Last 7 Days
+              </button>
+              <button class="preset-chip" [class.active]="ownerTimePreset() === '30days'" (click)="setOwnerTimePreset('30days')">
+                Last 30 Days
+              </button>
+              <button class="preset-chip" [class.active]="ownerTimePreset() === 'custom'" (click)="setOwnerTimePreset('custom')">
+                Custom Range
+              </button>
+              <button class="preset-chip" [class.active]="ownerTimePreset() === 'all'" (click)="setOwnerTimePreset('all')">
+                All Records
+              </button>
+            </div>
+
+            <input 
+              type="text" 
+              class="form-input" 
+              style="width: 240px;" 
+              placeholder="Search audit events..." 
+              [(ngModel)]="auditSearchQuery" 
+              (keyup.enter)="loadOwnerAudit()"
+            />
+          </div>
+
+          <!-- Custom Date Range Inputs -->
+          <div *ngIf="ownerTimePreset() === 'custom'" class="custom-range-row">
+            <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">Select Time Interval:</span>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label style="font-size: 0.75rem; color: #64748b;">From:</label>
+              <input type="date" class="form-input" style="width: 150px; padding: 0.3rem 0.5rem;" [(ngModel)]="ownerFromDate" (change)="loadOwnerAudit()" />
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <label style="font-size: 0.75rem; color: #64748b;">To:</label>
+              <input type="date" class="form-input" style="width: 150px; padding: 0.3rem 0.5rem;" [(ngModel)]="ownerToDate" (change)="loadOwnerAudit()" />
+            </div>
+            <button class="btn btn-sm btn-primary" (click)="loadOwnerAudit()">Apply Range</button>
+          </div>
         </div>
 
         <div class="table-responsive">
@@ -736,6 +889,45 @@ import {
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .time-presets-bar {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .preset-chip {
+      background: #f1f5f9;
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 20px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .preset-chip:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .preset-chip.active {
+      background: #0284c7;
+      border-color: #0284c7;
+      color: #ffffff;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3);
+    }
+    .custom-range-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+      background: #f8fafc;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      border: 1px dashed rgba(15, 23, 42, 0.15);
+      margin-top: 0.25rem;
+      width: 100%;
+    }
   `]
 })
 export class OwnerDashboardComponent implements OnInit {
@@ -766,6 +958,15 @@ export class OwnerDashboardComponent implements OnInit {
   activeTab = signal<'documents' | 'viewers' | 'tags' | 'audit'>('documents');
   ownerViewerMode = signal<'pdf' | 'text'>('pdf');
   metrics = signal<OwnerMetricsResponse | null>(null);
+
+  get displayedMetrics(): OwnerMetricsResponse {
+    return this.metrics() || {
+      totalOwnedDocs: this.documents().length,
+      activeGrantsCount: 0,
+      totalViewers: this.viewers().length,
+      totalTags: this.tags().length
+    };
+  }
   documents = signal<DocumentResponse[]>([]);
 
   ownerAuditLogs = signal<AuditLogDto[]>([]);
@@ -804,6 +1005,11 @@ export class OwnerDashboardComponent implements OnInit {
   tagToGrant = '';
   grantError = signal<string | null>(null);
 
+  // Owner time preset state
+  ownerTimePreset = signal<'today' | 'yesterday' | '7days' | '30days' | 'custom' | 'all'>('today');
+  ownerFromDate = '';
+  ownerToDate = '';
+
   // New viewer modal state
   showNewViewerModal = signal(false);
   newViewer = { username: '', email: '', password: '', department: '' };
@@ -826,6 +1032,22 @@ export class OwnerDashboardComponent implements OnInit {
     this.userService.getTags().subscribe(t => this.tags.set(t));
   }
 
+  setOwnerTimePreset(preset: 'today' | 'yesterday' | '7days' | '30days' | 'custom' | 'all'): void {
+    this.ownerTimePreset.set(preset);
+    this.loadOwnerAudit();
+  }
+
+  ownerTimePresetLabel(): string {
+    switch (this.ownerTimePreset()) {
+      case 'today': return "Today's Activity";
+      case 'yesterday': return "Yesterday's Activity";
+      case '7days': return "Past 7 Days";
+      case '30days': return "Past 30 Days";
+      case 'custom': return "Custom Range Filtered";
+      case 'all': return "Complete Unbounded Activity";
+    }
+  }
+
   loadDocuments(): void {
     this.documentService.list().subscribe(docs => this.documents.set(docs));
   }
@@ -833,9 +1055,35 @@ export class OwnerDashboardComponent implements OnInit {
   loadOwnerAudit(): void {
     this.auditService.getOwnerAuditLogs({
       search: this.auditSearchQuery || undefined,
+      preset: this.ownerTimePreset(),
+      fromDate: this.ownerTimePreset() === 'custom' && this.ownerFromDate ? this.ownerFromDate : undefined,
+      toDate: this.ownerTimePreset() === 'custom' && this.ownerToDate ? this.ownerToDate : undefined,
       page: 1,
       pageSize: 50
     }).subscribe(res => this.ownerAuditLogs.set(res.items));
+  }
+
+  onExportOwnerAuditStatement(): void {
+    this.auditService.exportOwnerAuditLogs({
+      search: this.auditSearchQuery || undefined,
+      preset: this.ownerTimePreset(),
+      fromDate: this.ownerTimePreset() === 'custom' && this.ownerFromDate ? this.ownerFromDate : undefined,
+      toDate: this.ownerTimePreset() === 'custom' && this.ownerToDate ? this.ownerToDate : undefined
+    }).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `document-access-statement-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => {
+        alert('Could not download document access statement from server.');
+      }
+    });
   }
 
   onSearch(): void {

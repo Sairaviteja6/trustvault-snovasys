@@ -15,7 +15,7 @@ RUN dotnet publish "TrustVault.Api.csproj" -c Release -o /app/publish /p:UseAppH
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build /app/publish .
 
 # Secure storage directory outside wwwroot
 RUN mkdir -p /app/Storage/encrypted_blobs

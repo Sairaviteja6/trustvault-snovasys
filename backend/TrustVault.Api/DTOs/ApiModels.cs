@@ -6,7 +6,10 @@ public record RegisterRequest(string Username, string Email, string Password, Us
 public record LoginRequest(string Email, string Password);
 public record AuthResponse(string Token, string RefreshToken, DateTime Expiration, UserDto User);
 public record RefreshTokenRequest(string RefreshToken);
-public record UserDto(Guid Id, string Username, string Email, string Role, string? Department, bool IsActive, DateTime CreatedAt, bool IsMasterAdmin = false);
+public record UserDto(Guid Id, string Username, string Email, string Role, string? Department, bool IsActive, DateTime CreatedAt, bool IsMasterAdmin = false, bool MustChangePassword = false, string? Organization = null);
+public record SetPasswordRequest(string Email, string CurrentPassword, string NewPassword);
+public record UpdateUsernameRequest(string NewUsername);
+public record ChangePasswordRequest(string CurrentPassword, string NewPassword);
 
 // Provisioning
 public record CreateAdminRequest(string Username, string Email, string Password, string? Department);

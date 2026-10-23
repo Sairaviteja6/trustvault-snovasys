@@ -14,7 +14,7 @@ export interface ClientInquiry {
   teamSize: string;
   message?: string;
   createdAt: string;
-  status: 'Pending' | 'Approved' | 'Contacted';
+  status: 'Pending' | 'Approved' | 'Rejected' | 'Contacted';
   provisionedUserId?: string;
   provisionedAt?: string;
 }
@@ -75,6 +75,14 @@ export class InquiryService {
 
   approveInquiry(id: string, assignedRole?: string, customPassword?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/${id}/approve`, { assignedRole, customPassword }).pipe(
+      tap(() => {
+        this.refreshInquiries();
+      })
+    );
+  }
+
+  rejectInquiry(id: string, reason?: string): Observable<any> {
+    return this.http.post(`${this.baseUrl}/${id}/reject`, { reason }).pipe(
       tap(() => {
         this.refreshInquiries();
       })

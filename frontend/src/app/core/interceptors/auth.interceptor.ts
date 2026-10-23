@@ -23,6 +23,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       // If server returns 401 Unauthorized (e.g. token expired, revoked, or account deactivated)
       if (error.status === 401 && !req.url.includes('/auth/login')) {
         authService.logout();
+      } else if (error.status === 403) {
+        // Forbidden: user attempted unauthorized action/route. Redirect to their allowed dashboard
+        const currentRole = authService.userRole();
+        if (currentRole) {
+          authService.redirectByRole(currentRole);
+        } else {
+          authService.logout();
+        }
       }
       return throwError(() => error);
     })

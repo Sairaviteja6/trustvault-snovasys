@@ -14,16 +14,22 @@ export const roleGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
   const expectedRoles = route.data['expectedRoles'] as UserRole[] | undefined;
   const currentRole = authService.userRole();
+  const tokenRole = authService.getTokenRole();
 
-  if (!expectedRoles || (currentRole && expectedRoles.includes(currentRole))) {
-    return true;
+  // Strict double-check: both stored profile and verified JWT claim must match expected role
+  const effectiveRole = tokenRole || currentRole;
+
+  if (expectedRoles && expectedRoles.length > 0) {
+    if (!effectiveRole || !expectedRoles.includes(effectiveRole)) {
+      // Unauthorized role attempt detected. Redirect directly to the caller's permitted dashboard
+      if (effectiveRole) {
+        authService.redirectByRole(effectiveRole);
+      } else {
+        router.navigate(['/login']);
+      }
+      return false;
+    }
   }
 
-  // If wrong role, navigate to user's corresponding dashboard instead of error
-  if (currentRole) {
-    authService.redirectByRole(currentRole);
-  } else {
-    router.navigate(['/login']);
-  }
-  return false;
+  return true;
 };

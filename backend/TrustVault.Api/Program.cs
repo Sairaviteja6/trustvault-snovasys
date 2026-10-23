@@ -223,6 +223,21 @@ BEGIN
         [ProvisionedUserId] uniqueidentifier NULL,
         [ProvisionedAt] datetime2 NULL
     );
+END
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'CreatedByAdminId')
+BEGIN
+    ALTER TABLE [Users] ADD [CreatedByAdminId] uniqueidentifier NULL;
+END
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'MustChangePassword')
+BEGIN
+    ALTER TABLE [Users] ADD [MustChangePassword] bit NOT NULL DEFAULT 0;
+END
+
+IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AND name = 'Organization')
+BEGIN
+    ALTER TABLE [Users] ADD [Organization] nvarchar(256) NULL;
 END");
 
         var auditService = services.GetRequiredService<IAuditService>();
@@ -256,6 +271,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "Healthy", timestamp = DateTime.UtcNow }));
 
 app.Run();
 
