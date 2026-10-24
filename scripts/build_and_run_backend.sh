@@ -40,17 +40,17 @@ docker run -d \
   -e ConnectionStrings__DefaultConnection="Server=localhost;Database=TrustVaultDb;User Id=sa;Password=TrustVault_StrongPass2026#;TrustServerCertificate=True;MultipleActiveResultSets=true;" \
   -e Jwt__Secret="SuperSecretTrustVaultProductionGradeKey2026!#$StrictCryptoEnforcement" \
   -e Security__MasterEncryptionKeyHex="0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" \
-  -e Smtp__Host="email-smtp.us-east-1.amazonaws.com" \
+  -e Smtp__Host="smtp.gmail.com" \
   -e Smtp__Port="587" \
   -e Smtp__EnableSsl="true" \
-  -e Smtp__Username="REDACTED_AWS_KEY" \
-  -e Smtp__Password="REDACTED_AWS_SECRET" \
+  -e Smtp__Username="noreply@trustvault.local" \
+  -e Smtp__Password="REDACTED_GMAIL_PASS" \
   -e Smtp__From="noreply@trustvault.local" \
-  -e SMTP_HOST="email-smtp.us-east-1.amazonaws.com" \
+  -e SMTP_HOST="smtp.gmail.com" \
   -e SMTP_PORT="587" \
   -e SMTP_ENABLE_SSL="true" \
-  -e SMTP_USERNAME="REDACTED_AWS_KEY" \
-  -e SMTP_PASSWORD="REDACTED_AWS_SECRET" \
+  -e SMTP_USERNAME="noreply@trustvault.local" \
+  -e SMTP_PASSWORD="REDACTED_GMAIL_PASS" \
   -e SMTP_FROM="noreply@trustvault.local" \
   --log-driver json-file \
   --log-opt max-size=50m \

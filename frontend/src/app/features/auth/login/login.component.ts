@@ -116,7 +116,7 @@ import { AuthService } from '../../../core/services/auth.service';
             </div>
           </div>
 
-          <!-- Linear gradient 90°: #000000 to #3533cd. On Hover: #b07f02 Background with Black Text -->
+          <!-- Linear gradient #552612 to #b07f02. On Hover: #b07f02 Background with Black Text -->
           <button 
             type="submit" 
             class="btn btn-primary btn-block custom-gradient-btn" 
@@ -313,14 +313,14 @@ import { AuthService } from '../../../core/services/auth.service';
       animation: floatBounce1 7s ease-in-out infinite alternate;
     }
 
-    /* Sphere 2: Electric Indigo Glass Ball (Top Right) */
+    /* Sphere 2: Deep Espresso Glass Ball (Top Right) */
     .sphere-2 {
       width: 58px;
       height: 58px;
       top: 18%;
       right: 12%;
-      background: radial-gradient(circle at 35% 35%, rgba(180, 195, 255, 0.80) 0%, rgba(53, 51, 205, 0.60) 55%, rgba(15, 10, 40, 0.35) 100%);
-      box-shadow: 0 10px 25px rgba(53, 51, 205, 0.35), inset 0 2px 6px rgba(255, 255, 255, 0.6);
+      background: radial-gradient(circle at 35% 35%, rgba(176, 127, 2, 0.80) 0%, rgba(85, 38, 18, 0.70) 55%, rgba(35, 14, 6, 0.45) 100%);
+      box-shadow: 0 10px 25px rgba(85, 38, 18, 0.50), inset 0 2px 6px rgba(255, 255, 255, 0.4);
       backdrop-filter: blur(8px);
       animation: floatBounce2 8.5s ease-in-out infinite alternate;
     }
@@ -331,19 +331,19 @@ import { AuthService } from '../../../core/services/auth.service';
       height: 44px;
       bottom: 18%;
       left: 14%;
-      background: radial-gradient(circle at 35% 35%, rgba(255, 235, 180, 0.90) 0%, rgba(176, 127, 2, 0.50) 60%, transparent 100%);
-      box-shadow: 0 8px 20px rgba(176, 127, 2, 0.30);
+      background: radial-gradient(circle at 35% 35%, rgba(255, 235, 180, 0.90) 0%, rgba(176, 127, 2, 0.60) 60%, transparent 100%);
+      box-shadow: 0 8px 20px rgba(176, 127, 2, 0.35);
       animation: floatBounce2 6.5s ease-in-out infinite alternate;
     }
 
-    /* Sphere 4: Floating Indigo Orb (Bottom Right) */
+    /* Sphere 4: Floating Espresso-Gold Orb (Bottom Right) */
     .sphere-4 {
       width: 80px;
       height: 80px;
       bottom: 16%;
       right: 10%;
-      background: radial-gradient(circle at 35% 35%, rgba(190, 205, 255, 0.75) 0%, rgba(53, 51, 205, 0.50) 55%, rgba(85, 38, 18, 0.30) 100%);
-      box-shadow: 0 14px 32px rgba(53, 51, 205, 0.30), inset 0 2px 8px rgba(255, 255, 255, 0.5);
+      background: radial-gradient(circle at 35% 35%, rgba(176, 127, 2, 0.75) 0%, rgba(85, 38, 18, 0.75) 55%, rgba(20, 8, 3, 0.45) 100%);
+      box-shadow: 0 14px 32px rgba(85, 38, 18, 0.45), inset 0 2px 8px rgba(255, 255, 255, 0.4);
       animation: floatBounce1 9s ease-in-out infinite alternate;
     }
 
@@ -409,7 +409,7 @@ import { AuthService } from '../../../core/services/auth.service';
       display: inline-flex;
       padding: 3px;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(176, 127, 2, 0.6), rgba(53, 51, 205, 0.6));
+      background: linear-gradient(135deg, rgba(176, 127, 2, 0.8), rgba(85, 38, 18, 0.8));
       box-shadow: 0 0 16px rgba(176, 127, 2, 0.35);
       margin-bottom: 0.75rem;
       transition: transform 0.25s ease;
@@ -477,24 +477,24 @@ import { AuthService } from '../../../core/services/auth.service';
 
     .form-input:focus {
       outline: none;
-      border-color: #3533cd !important;
-      box-shadow: 0 0 0 3px rgba(53, 51, 205, 0.35) !important;
+      border-color: #ffd166 !important;
+      box-shadow: 0 0 0 3px rgba(176, 127, 2, 0.40) !important;
       background: rgba(55, 22, 10, 0.75) !important;
     }
 
-    /* Button Gradient #000000 to #3533cd. On Hover: #b07f02 background with Black text */
+    /* Button Gradient #552612 to #b07f02. On Hover: #b07f02 background with Black text */
     .custom-gradient-btn {
       width: 100%;
       padding: 0.8rem;
       font-size: 0.925rem;
       margin-top: 0.5rem;
-      background: linear-gradient(90deg, #000000 0%, #3533cd 100%) !important;
-      border: 1px solid rgba(53, 51, 205, 0.55) !important;
+      background: linear-gradient(135deg, #552612 0%, #b07f02 100%) !important;
+      border: 1px solid rgba(176, 127, 2, 0.65) !important;
       border-radius: 10px;
       color: #ffffff !important;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 14px rgba(53, 51, 205, 0.30);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 14px rgba(176, 127, 2, 0.30);
       transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     }
 

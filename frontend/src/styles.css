@@ -13,31 +13,41 @@
   --brand-container-border: rgba(176, 127, 2, 0.35);       /* Subtle golden border */
   --brand-container-hover-border: rgba(176, 127, 2, 0.60);
   
-  --brand-electric: #3533cd;                              /* Electric Royal Blue Accent */
-  --brand-electric-glow: rgba(53, 51, 205, 0.35);
+  /* Strict Two-Color Enterprise Corporate Palette: #b07f02 and #552612 */
+  --brand-gold: #b07f02;
+  --brand-gold-60: rgba(176, 127, 2, 0.60);                 /* Primary 60% Transparency Background Accent */
+  --brand-gold-tint: rgba(176, 127, 2, 0.25);
+  --brand-gold-glow: rgba(176, 127, 2, 0.40);
   
-  /* Buttons: Linear gradient 90°: #000000, #3533cd */
-  --btn-gradient: linear-gradient(90deg, #000000 0%, #3533cd 100%);
+  --brand-espresso: #552612;
+  --brand-espresso-60: rgba(85, 38, 18, 0.60);             /* Primary 60% Transparency Container Background */
+  --brand-container-bg: rgba(85, 38, 18, 0.60);            /* Exact 60% translucent container */
+  --brand-container-border: rgba(176, 127, 2, 0.40);       /* Clean gold border */
+  --brand-container-hover-border: #b07f02;
+  
+  /* Buttons: Alternating between #552612 and #b07f02 */
+  --btn-gradient: linear-gradient(135deg, #552612 0%, #b07f02 100%);
+  --btn-primary-bg: #b07f02;
   --btn-hover-bg: #b07f02;                                /* Hover background */
   --btn-hover-text: #000000;                              /* Button text changes to black on hover */
 
-  /* Pure White Text for High Readability */
+  /* Pure White Text for High Readability & Contrast */
   --brand-white: #FFFFFF;
   --text-primary: #FFFFFF;
-  --text-secondary: rgba(255, 255, 255, 0.90);
-  --text-muted: rgba(255, 255, 255, 0.72);
+  --text-secondary: rgba(255, 255, 255, 0.92);
+  --text-muted: rgba(255, 255, 255, 0.75);
 
-  /* Warm, Light, Professional Canvas */
+  /* Clean Executive Canvas */
   --bg-primary: #120e0a;
-  --bg-surface: rgba(85, 38, 18, 0.48);
-  --bg-surface-elevated: rgba(85, 38, 18, 0.58);
-  --bg-card: rgba(85, 38, 18, 0.48);
-  --border-color: rgba(176, 127, 2, 0.28);
-  --border-color-hover: rgba(176, 127, 2, 0.55);
+  --bg-surface: rgba(85, 38, 18, 0.60);
+  --bg-surface-elevated: rgba(85, 38, 18, 0.70);
+  --bg-card: rgba(85, 38, 18, 0.60);
+  --border-color: rgba(176, 127, 2, 0.35);
+  --border-color-hover: #b07f02;
 
-  --primary: #3533cd;
-  --primary-hover: #b07f02;
-  --primary-glow: rgba(53, 51, 205, 0.35);
+  --primary: #b07f02;
+  --primary-hover: #ffd166;
+  --primary-glow: rgba(176, 127, 2, 0.40);
   --success: #10b981;
   --warning: #f59e0b;
   --danger: #ef4444;
@@ -140,7 +150,7 @@ body {
   margin-top: 0.25rem;
 }
 
-/* Buttons: Linear Gradient 90deg #000000 to #3533cd. On Hover -> #b07f02 Background with Black Text */
+/* Buttons: Alternating #552612 and #b07f02. On Hover -> #b07f02 with Black Text */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -151,13 +161,13 @@ body {
   font-weight: 600;
   padding: 0.70rem 1.45rem;
   border-radius: 11px;
-  border: 1px solid rgba(53, 51, 205, 0.45);
+  border: 1px solid rgba(176, 127, 2, 0.50);
   cursor: pointer;
   transition: transform 0.10s cubic-bezier(0.16, 1, 0.3, 1), background 0.14s ease, box-shadow 0.14s ease, color 0.14s ease;
   text-decoration: none;
   background: var(--btn-gradient);
   color: #ffffff;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 16px rgba(53, 51, 205, 0.30);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 16px rgba(176, 127, 2, 0.25);
   user-select: none;
 }
 
@@ -183,8 +193,8 @@ body {
 .btn-primary {
   background: var(--btn-gradient) !important;
   color: #ffffff !important;
-  border: 1px solid rgba(53, 51, 205, 0.60) !important;
-  box-shadow: 0 4px 18px rgba(53, 51, 205, 0.35) !important;
+  border: 1px solid rgba(176, 127, 2, 0.60) !important;
+  box-shadow: 0 4px 18px rgba(176, 127, 2, 0.35) !important;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -196,9 +206,9 @@ body {
 }
 
 .btn-secondary {
-  background: rgba(85, 38, 18, 0.50);
+  background: rgba(85, 38, 18, 0.60);
   color: #ffffff;
-  border: 1px solid rgba(176, 127, 2, 0.40);
+  border: 1px solid rgba(176, 127, 2, 0.45);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
 }
 
