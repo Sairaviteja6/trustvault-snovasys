@@ -56,3 +56,70 @@
 .main-content {
   flex: 1;
 }
+
+/* Global Interactive Mouse Cursor Spotlight (Warm Amber + Electric Blue Glow) */
+.global-cursor-spotlight {
+  position: fixed;
+  top: -150px;
+  left: -150px;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  background: radial-gradient(circle, rgba(176, 127, 2, 0.28) 0%, rgba(53, 51, 205, 0.16) 45%, transparent 70%);
+  mix-blend-mode: screen;
+  opacity: 0.65;
+  transition: transform 0.05s ease-out;
+  will-change: transform;
+}
+
+/* Precision Outer Ring */
+.global-cursor-ring {
+  position: fixed;
+  top: -18px;
+  left: -18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 209, 102, 0.65);
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.10s cubic-bezier(0.16, 1, 0.3, 1), width 0.2s ease, height 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  will-change: transform;
+  box-shadow: 0 0 12px rgba(176, 127, 2, 0.35);
+}
+
+.global-cursor-ring.cursor-hover {
+  top: -24px;
+  left: -24px;
+  width: 48px;
+  height: 48px;
+  border-color: #ffd166;
+  background: rgba(176, 127, 2, 0.15);
+  box-shadow: 0 0 20px rgba(255, 209, 102, 0.65);
+}
+
+/* Precision Inner Dot */
+.global-cursor-dot {
+  position: fixed;
+  top: -3px;
+  left: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ffd166;
+  pointer-events: none;
+  z-index: 10000;
+  transition: transform 0.02s linear;
+  will-change: transform;
+  box-shadow: 0 0 8px #ffffff;
+}
+
+@media (pointer: coarse) {
+  .global-cursor-spotlight,
+  .global-cursor-ring,
+  .global-cursor-dot {
+    display: none !important;
+  }
+}

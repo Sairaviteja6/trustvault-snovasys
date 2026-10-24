@@ -352,48 +352,18 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
             <span>{{ copyWarning() }}</span>
           </div>
 
-          <!-- View mode switcher for documents with both Visual PDF and Extracted Text -->
-
-          <div *ngIf="isPdf(viewingDocContent()) && viewingDocContent()?.textContent" style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
-            <button 
-              type="button" 
-              class="btn btn-sm" 
-              [ngClass]="viewerMode() === 'pdf' ? 'btn-primary' : 'btn-secondary'"
-              (click)="viewerMode.set('pdf')"
-            >
-              📄 Visual PDF Document
-            </button>
-            <button 
-              type="button" 
-              class="btn btn-sm" 
-              [ngClass]="viewerMode() === 'text' ? 'btn-primary' : 'btn-secondary'"
-              (click)="viewerMode.set('text')"
-            >
-              📝 Extracted Plain Text
-            </button>
-          </div>
-
           <div 
             class="document-content-area"
             (contextmenu)="$event.preventDefault()"
             (copy)="$event.preventDefault()"
             (dragstart)="$event.preventDefault()"
           >
-            <!-- Case 1: PDF Document rendered directly in browser via iframe (Default for PDF) -->
-            <div *ngIf="isPdf(viewingDocContent()) && viewerMode() === 'pdf' && viewingDocContent()?.base64Data" style="width: 100%; height: 600px;">
-              <iframe 
-                [src]="getSafePdfUrl(viewingDocContent()!)" 
-                style="width: 100%; height: 100%; border: none; border-radius: 6px; background: #ffffff;"
-                title="Secure PDF Viewer"
-              ></iframe>
-            </div>
-
-            <!-- Case 2: Plain text / Code / Markdown / JSON / CSV / XML / PDF Extracted Text -->
-            <div *ngIf="viewingDocContent()?.textContent && (!isPdf(viewingDocContent()) || viewerMode() === 'text')">
+            <!-- Plain text Decrypted View (Crisp, High-Contrast Luxury Panel) -->
+            <div *ngIf="viewingDocContent()?.textContent">
               <pre class="secure-text-view">{{ viewingDocContent()?.textContent }}</pre>
             </div>
 
-            <!-- Case 3: Image rendered directly in browser -->
+            <!-- Image preview if pure image -->
             <div *ngIf="isImage(viewingDocContent()) && viewingDocContent()?.base64Data" style="text-align: center; padding: 1rem;">
               <img 
                 [src]="getSafeImageUrl(viewingDocContent()!)" 
@@ -402,8 +372,8 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
               />
             </div>
 
-            <!-- Case 4: Other binary (fallback info only, strictly NO DOWNLOAD BUTTON) -->
-            <div *ngIf="!viewingDocContent()?.textContent && !isPdf(viewingDocContent()) && !isImage(viewingDocContent())" style="text-align: center; padding: 2.5rem;">
+            <!-- Fallback if no text extracted -->
+            <div *ngIf="!viewingDocContent()?.textContent && !isImage(viewingDocContent())" style="text-align: center; padding: 2.5rem;">
               <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">🔒</div>
               <p style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.25rem;">
                 Protected Document ({{ viewingDocContent()?.contentType }})
@@ -457,30 +427,87 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
           </div>
 
 
-          <!-- Rich Editing Toolbar -->
-          <div class="editor-toolbar">
-            <div class="toolbar-group">
-              <button type="button" class="tool-btn" (click)="insertFormatting('heading')" title="Insert Heading">
-                H1
-              </button>
-              <button type="button" class="tool-btn" (click)="insertFormatting('bold')" title="Insert Bold Text">
-                <strong>B</strong>
-              </button>
-              <button type="button" class="tool-btn" (click)="insertFormatting('italic')" title="Insert Italic Text">
-                <em>I</em>
-              </button>
-              <button type="button" class="tool-btn" (click)="insertFormatting('bullet')" title="Insert Bullet Point">
-                &bull; List
-              </button>
-              <button type="button" class="tool-btn" (click)="insertFormatting('timestamp')" title="Insert Timestamp">
-                🕒 Time
-              </button>
+          <!-- Format-Tailored Header Badge -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span *ngIf="isPdf(editingDoc())" class="badge" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                📄 PDF Document Revision Mode
+              </span>
+              <span *ngIf="isSpreadsheet(editingDoc())" class="badge" style="background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                📊 Spreadsheet / Tabular Editor Mode
+              </span>
+              <span *ngIf="isWordDoc(editingDoc())" class="badge" style="background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); font-size: 0.8rem; padding: 0.35rem 0.75rem;">
+                📝 Word &amp; Executive Document Mode
+              </span>
+              <span style="font-size: 0.8rem; color: #cbd5e1;">(Cryptographically Signed Version Snapshot)</span>
             </div>
-            <div class="toolbar-stats">
-              <span>Lines: <strong>{{ lineCount }}</strong></span>
-              <span>Words: <strong>{{ wordCount }}</strong></span>
-              <span>Chars: <strong>{{ charCount }}</strong></span>
+
+            <!-- Stats Counter -->
+            <div class="toolbar-stats" style="font-size: 0.775rem; color: #94a3b8;">
+              <span>Lines: <strong style="color: #ffd166;">{{ lineCount }}</strong></span> &bull;
+              <span>Words: <strong style="color: #ffd166;">{{ wordCount }}</strong></span> &bull;
+              <span>Chars: <strong style="color: #ffd166;">{{ charCount }}</strong></span>
             </div>
+          </div>
+
+          <!-- 1. PDF-Specific Revision Toolbar -->
+          <div *ngIf="isPdf(editingDoc())" class="editor-toolbar" style="background: rgba(45, 18, 8, 0.5); border: 1px solid rgba(176, 127, 2, 0.3); border-radius: 8px; padding: 0.5rem; margin-bottom: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertPdfFormatting('clause')" title="Add Amendment Clause">
+              § Add Revision Clause
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertPdfFormatting('signature')" title="Insert Authorized Signature Block">
+              ✍️ Insert Signature Block
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertPdfFormatting('redact')" title="Insert Redaction Marker">
+              🔒 Redact Sensitive Data
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertPdfFormatting('compliance')" title="Add Compliance Approval Stamp">
+              🏷️ Compliance Note
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('timestamp')" title="Add Audit Timestamp">
+              🕒 Timestamp
+            </button>
+          </div>
+
+          <!-- 2. Spreadsheet-Specific Tabular Toolbar -->
+          <div *ngIf="isSpreadsheet(editingDoc())" class="editor-toolbar" style="background: rgba(45, 18, 8, 0.5); border: 1px solid rgba(176, 127, 2, 0.3); border-radius: 8px; padding: 0.5rem; margin-bottom: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertSpreadsheetFormatting('row')" title="Add Tabular Data Row">
+              ➕ Add Data Row
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertSpreadsheetFormatting('header')" title="Insert Table Columns Header">
+              📋 Add Table Headers
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertSpreadsheetFormatting('currency')" title="Format Currency ($)">
+              💲 Format Currency ($)
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertSpreadsheetFormatting('sum')" title="Insert Sum Total Formula">
+              🧮 Insert SUM() Formula
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('timestamp')" title="Add Timestamp">
+              🕒 Timestamp
+            </button>
+          </div>
+
+          <!-- 3. Word/Document-Specific Rich Text Toolbar -->
+          <div *ngIf="isWordDoc(editingDoc())" class="editor-toolbar" style="background: rgba(45, 18, 8, 0.5); border: 1px solid rgba(176, 127, 2, 0.3); border-radius: 8px; padding: 0.5rem; margin-bottom: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('heading')" title="Insert Heading">
+              H1
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('bold')" title="Insert Bold Text">
+              <strong>B</strong>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('italic')" title="Insert Italic Text">
+              <em>I</em>
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('bullet')" title="Insert Bullet Point">
+              &bull; Bullet List
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('quote')" title="Insert Blockquote">
+              ❝ Quote
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" (click)="insertFormatting('timestamp')" title="Insert Timestamp">
+              🕒 Time
+            </button>
           </div>
 
           <div class="form-group" style="margin-bottom: 1rem;">
@@ -763,14 +790,18 @@ export class ViewerDashboardComponent implements OnInit {
     return doc.permittedActions?.includes('Edit') || false;
   }
 
-  isPdf(doc: DocumentContentResponse | null): boolean {
+  isPdf(doc: any): boolean {
     if (!doc) return false;
-    return doc.contentType.toLowerCase().includes('pdf') || doc.title.toLowerCase().endsWith('.pdf');
+    const name = (doc.originalFileName || doc.title || '').toLowerCase();
+    const ct = (doc.contentType || '').toLowerCase();
+    return ct.includes('pdf') || name.endsWith('.pdf');
   }
 
-  isImage(doc: DocumentContentResponse | null): boolean {
+  isImage(doc: any): boolean {
     if (!doc) return false;
-    return doc.contentType.toLowerCase().startsWith('image/');
+    const name = (doc.originalFileName || doc.title || '').toLowerCase();
+    const ct = (doc.contentType || '').toLowerCase();
+    return ct.startsWith('image/') || name.endsWith('.png') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.webp');
   }
 
   getSafePdfUrl(doc: DocumentContentResponse): SafeResourceUrl {
@@ -793,7 +824,7 @@ export class ViewerDashboardComponent implements OnInit {
     return this.editBuffer ? this.editBuffer.split('\n').length : 0;
   }
 
-  insertFormatting(type: 'heading' | 'bold' | 'italic' | 'bullet' | 'timestamp'): void {
+  insertFormatting(type: 'heading' | 'bold' | 'italic' | 'bullet' | 'quote' | 'timestamp'): void {
     if (type === 'heading') {
       this.editBuffer += '\n### New Section Heading\n';
     } else if (type === 'bold') {
@@ -802,8 +833,59 @@ export class ViewerDashboardComponent implements OnInit {
       this.editBuffer += '*Revised Text* ';
     } else if (type === 'bullet') {
       this.editBuffer += '\n- Action Item: ';
+    } else if (type === 'quote') {
+      this.editBuffer += '\n> Confidential Quote / Reference Clause:\n';
     } else if (type === 'timestamp') {
       this.editBuffer += ` [Edited on ${new Date().toLocaleString()}] `;
+    }
+  }
+
+  isSpreadsheet(doc: DocumentContentResponse | DocumentResponse | null): boolean {
+    if (!doc) return false;
+    const name = ('originalFileName' in doc ? (doc as any).originalFileName : doc.title) || '';
+    const ct = doc.contentType || '';
+    return name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv') || ct.includes('spreadsheet') || ct.includes('csv') || ct.includes('excel');
+  }
+
+  isWordDoc(doc: DocumentContentResponse | DocumentResponse | null): boolean {
+    if (!doc) return false;
+    if (this.isPdf(doc) || this.isSpreadsheet(doc)) return false;
+    return true;
+  }
+
+  insertPdfFormatting(type: 'clause' | 'signature' | 'redact' | 'compliance'): void {
+    const time = new Date().toISOString();
+    switch (type) {
+      case 'clause':
+        this.editBuffer += `\n\n[AMENDMENT CLAUSE §: "Insert revised terms or policy details here."]\n`;
+        break;
+      case 'signature':
+        this.editBuffer += `\n\n[AUTHORIZED DIGITAL SIGNATURE: Signed by Reviewer at ${time} (SHA-256 Verified)]\n`;
+        break;
+      case 'redact':
+        this.editBuffer += ` [REDACTED: Confidential Information] `;
+        break;
+      case 'compliance':
+        this.editBuffer += `\n\n[COMPLIANCE AUDIT CHECK: Verified against regulatory requirements by security reviewer at ${time}]\n`;
+        break;
+    }
+  }
+
+  insertSpreadsheetFormatting(type: 'row' | 'header' | 'currency' | 'sum'): void {
+    switch (type) {
+      case 'header':
+        this.editBuffer += `\n| Line # | Account / Category | Unit Price | Qty | Total Amount |\n|--------|---------------------|------------|-----|--------------|\n`;
+        break;
+      case 'row':
+        const nextId = (this.editBuffer.split('\n').length);
+        this.editBuffer += `| ${nextId} | Operational Expense | $1,250.00 | 1 | $1,250.00 |\n`;
+        break;
+      case 'currency':
+        this.editBuffer += ` $0.00 `;
+        break;
+      case 'sum':
+        this.editBuffer += `\n| TOTAL  | Gross Balance       |            |     | [=SUM(E2:E10)] |\n`;
+        break;
     }
   }
 
@@ -829,8 +911,17 @@ export class ViewerDashboardComponent implements OnInit {
       next: (content) => {
         this.showPdfRef.set(false);
         this.editingDoc.set(content);
-        this.editBuffer = content.textContent;
-        this.editChangeSummary = '';
+        this.editBuffer = content.textContent || '';
+        if (!this.editBuffer.trim()) {
+          if (this.isPdf(content)) {
+            this.editBuffer = `[PDF DOCUMENT REVISION DRAFT: ${content.title}]\n\nSECTION 1: Scope & Terms\n- Standard confidentiality provisions active.\n\n[AMENDMENT § 1.1]: `;
+          } else if (this.isSpreadsheet(content)) {
+            this.editBuffer = `| ID | Account / Category | Unit Price | Qty | Total Amount |\n|----|---------------------|------------|-----|--------------|\n| 1  | Cloud Infrastructure | $1,250.00 | 1   | $1,250.00     |\n| 2  | Security Audits      | $3,400.00 | 1   | $3,400.00     |\n`;
+          } else {
+            this.editBuffer = `[CONFIDENTIAL MEMORANDUM: ${content.title}]\n\nReviewer Revisions & Observations:\n- Reviewed and approved under cryptographic zero-trust controls.\n`;
+          }
+        }
+        this.editChangeSummary = 'Updated document terms and content';
       },
       error: () => {
         alert('Access denied: You do not have active Edit permission for this document.');

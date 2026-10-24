@@ -1,7 +1,6 @@
-import { Component, ElementRef, ViewChild, signal, inject, OnInit } from '@angular/core';
+import { Component, HostListener, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { RouterOutlet } from '@angular/router';
 import { NavbarComponent } from './shared/components/navbar/navbar.component';
 
 @Component({
@@ -13,5 +12,19 @@ import { NavbarComponent } from './shared/components/navbar/navbar.component';
 })
 export class AppComponent {
   title = 'TrustVault';
+
+  mouseX = signal(-200);
+  mouseY = signal(-200);
+  isHoveringClickable = signal(false);
+
+  @HostListener('window:mousemove', ['$event'])
+  onMouseMove(e: MouseEvent): void {
+    this.mouseX.set(e.clientX);
+    this.mouseY.set(e.clientY);
+
+    const target = e.target as HTMLElement | null;
+    const isClickable = !!target?.closest('button, a, input, select, textarea, [role="button"], .btn, .tab-btn');
+    this.isHoveringClickable.set(isClickable);
+  }
 }
 
