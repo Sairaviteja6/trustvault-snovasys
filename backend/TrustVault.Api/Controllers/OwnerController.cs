@@ -205,6 +205,7 @@ public class OwnerController : ControllerBase
             PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
             Role = UserRole.Viewer,
             Department = request.Department,
+            CreatedByAdminId = ownerId,
             MustChangePassword = true,
             CreatedAt = DateTime.UtcNow
         };

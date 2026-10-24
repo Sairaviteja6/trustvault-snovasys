@@ -666,9 +666,30 @@ public class DocumentsController : ControllerBase
 
     private static string ExtractPlainText(byte[] bytes, string fileName, string contentType)
     {
-        // 0. Check if PDF document - extract actual readable page text
-        if (fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || 
-            contentType.Contains("pdf", StringComparison.OrdinalIgnoreCase))
+        if (bytes == null || bytes.Length == 0) return string.Empty;
+
+        // 1. Check if the bytes are directly printable UTF-8 text (e.g. in-browser edits, .txt, .md, .csv, code)
+        try
+        {
+            var isBinaryCheck = bytes.Take(Math.Min(bytes.Length, 512)).Any(b => b == 0);
+            if (!isBinaryCheck)
+            {
+                var directText = System.Text.Encoding.UTF8.GetString(bytes);
+                if (!string.IsNullOrWhiteSpace(directText))
+                {
+                    var printable = directText.Count(c => !char.IsControl(c) || c == '\r' || c == '\n' || c == '\t');
+                    if (directText.Length > 0 && ((double)printable / directText.Length) > 0.85)
+                    {
+                        return directText;
+                    }
+                }
+            }
+        }
+        catch { }
+
+        // 2. Check if binary PDF document (starts with %PDF) - extract actual readable page text
+        var isPdfMagic = bytes.Length >= 4 && bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46;
+        if (isPdfMagic || fileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || contentType.Contains("pdf", StringComparison.OrdinalIgnoreCase))
         {
             try
             {
@@ -694,8 +715,6 @@ public class DocumentsController : ControllerBase
             {
                 // Fallback gracefully without throwing
             }
-
-            // CRITICAL: Under NO circumstances return raw binary PDF bytes as text!
             return string.Empty;
         }
 

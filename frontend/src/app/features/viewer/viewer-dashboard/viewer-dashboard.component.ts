@@ -600,20 +600,21 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
       color: inherit !important;
     }
     .document-content-area {
-      background: #f8fafc;
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      border-radius: 10px;
-      padding: 1rem;
+      background: rgba(30, 12, 5, 0.75);
+      border: 1px solid rgba(176, 127, 2, 0.40);
+      border-radius: 12px;
+      padding: 1.25rem;
       max-height: 640px;
       overflow-y: auto;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5);
     }
     .secure-text-view {
-      font-family: var(--font-sans);
-      font-size: 0.9rem;
-      color: #0f172a;
+      font-family: var(--font-mono);
+      font-size: 0.925rem;
+      color: #ffffff;
       white-space: pre-wrap;
       word-break: break-word;
-      line-height: 1.6;
+      line-height: 1.65;
     }
     .editor-toolbar {
       display: flex;
@@ -813,7 +814,7 @@ export class ViewerDashboardComponent implements OnInit {
   onOpenSecureViewer(doc: DocumentResponse): void {
     this.documentService.getContent(doc.id).subscribe({
       next: (content) => {
-        this.viewerMode.set('pdf');
+        this.viewerMode.set(content.textContent ? 'text' : 'pdf');
         this.viewingDocContent.set(content);
       },
       error: () => {

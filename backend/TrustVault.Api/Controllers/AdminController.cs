@@ -150,10 +150,32 @@ public class AdminController : ControllerBase
                 .Select(d => d.Id)
                 .ToListAsync();
 
+            var viewerIdsUnderOwners = await _dbContext.Users
+                .Where(u => u.Role == UserRole.Viewer && u.CreatedByAdminId.HasValue && createdOwnerIds.Contains(u.CreatedByAdminId.Value))
+                .Select(u => u.Id)
+                .ToListAsync();
+
+            var taggedViewerIds = await _dbContext.UserTags
+                .Where(ut => createdOwnerIds.Contains(ut.OwnerId))
+                .Select(ut => ut.UserId)
+                .ToListAsync();
+
+            var permittedViewerIds = await _dbContext.DocumentGrants
+                .Where(p => createdOwnerDocIds.Contains(p.DocumentId))
+                .Select(p => p.UserId)
+                .ToListAsync();
+
+            var relevantViewerIds = viewerIdsUnderOwners
+                .Concat(taggedViewerIds)
+                .Concat(permittedViewerIds)
+                .Distinct()
+                .ToList();
+
             query = query.Where(a =>
                 a.UserId == callerId ||
                 (a.UserId.HasValue && createdOwnerIds.Contains(a.UserId.Value)) ||
-                (a.DocumentId.HasValue && createdOwnerDocIds.Contains(a.DocumentId.Value)));
+                (a.DocumentId.HasValue && createdOwnerDocIds.Contains(a.DocumentId.Value)) ||
+                (a.UserId.HasValue && relevantViewerIds.Contains(a.UserId.Value)));
         }
 
         // 2. Action & Status filters
