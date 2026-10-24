@@ -35,12 +35,7 @@ export class AuthService {
   }
 
   setPassword(req: SetPasswordRequest): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.baseUrl}/set-password`, req).pipe(
-      tap(res => {
-        this.saveAuth(res);
-        this.redirectByRole(res.user.role);
-      })
-    );
+    return this.http.post<AuthResponse>(`${this.baseUrl}/set-password`, req);
   }
 
   logout(): void {
