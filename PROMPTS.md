@@ -1,6 +1,13 @@
 # TrustVault — AI Interaction & Prompt Log (PROMPTS.md)
 
-This log tracks interactions with AI coding assistants throughout the development of TrustVault. As required by the evaluation criteria, each entry records the prompt, the AI's output, critical evaluation of flaws (specifically focusing on authorization, access control, and audit integrity), and the engineering decisions taken to fix them.
+This log tracks interactions with AI tools throughout the development of TrustVault. As required by the evaluation criteria, each entry records the prompt, the AI's output, critical evaluation of flaws (specifically focusing on authorization, access control, and audit integrity), and the engineering decisions taken to fix them.
+
+### 🛠️ AI Tools Utilized:
+- **ChatGPT**: Used initially for breaking down and deeply analyzing the hiring challenge problem statement, threat scenarios, and zero-trust edge cases.
+- **Google Antigravity (Gemini 2.5 Flash / Pro)**: Primary engineering pair programmer for full-stack architecture, ASP.NET Core backend implementation, Angular 19 reactive components, cryptographic audit chain engineering, and AWS cloud debugging.
+- **GitHub Copilot**: Inline code completion, repetitive DTO/Entity mappings, and adversarial unit test scaffolding.
+- **Canva AI**: Conceptualization of UI typography, color harmonies (espresso glass `#552612` and gold accents `#b07f02`), and executive layout structure.
+- **Wixel & Stitch**: Generation of brand graphics, monogram assets, and visual architectural flowcharts.
 
 ---
 
