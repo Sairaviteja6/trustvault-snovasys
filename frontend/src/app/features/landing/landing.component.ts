@@ -1053,19 +1053,19 @@ import { AuthService } from '../../core/services/auth.service';
       50% { opacity: 0.5; transform: scale(1.3); }
     }
 
-    /* Sections Shared Styling */
+    /* Sections Shared Styling: Unified Warm Light Theme */
     .section-block {
       padding: 5.5rem 0;
-      background: rgba(11, 15, 25, 0.72);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: transparent;
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid rgba(176, 127, 2, 0.18);
     }
     #architecture {
-      background: linear-gradient(180deg, rgba(11, 15, 25, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%), url('/images/trustvault-core.jpg') center/cover no-repeat;
+      background: linear-gradient(180deg, rgba(176, 127, 2, 0.14) 0%, rgba(85, 38, 18, 0.25) 100%), url('/images/trustvault-core.jpg') center/cover no-repeat;
       position: relative;
     }
     #transparency {
-      background: linear-gradient(180deg, rgba(11, 15, 25, 0.88) 0%, rgba(15, 23, 42, 0.92) 100%), url('/images/verified-transparency.jpg') center/cover no-repeat;
+      background: linear-gradient(180deg, rgba(176, 127, 2, 0.14) 0%, rgba(85, 38, 18, 0.25) 100%), url('/images/verified-transparency.jpg') center/cover no-repeat;
       position: relative;
     }
     .section-heading {
@@ -1084,7 +1084,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .section-desc-large {
       font-size: 1.05rem;
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.90);
       line-height: 1.7;
     }
 
@@ -1092,17 +1092,17 @@ import { AuthService } from '../../core/services/auth.service';
        PLATFORM WORKFLOW PROCESS (HOW TRUSTVAULT WORKS)
        ======================================================== */
     .workflow-section {
-      background: rgba(15, 23, 42, 0.72);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      background: linear-gradient(180deg, rgba(176, 127, 2, 0.10) 0%, rgba(85, 38, 18, 0.18) 100%);
+      border-top: 1px solid rgba(176, 127, 2, 0.18);
+      border-bottom: 1px solid rgba(176, 127, 2, 0.18);
     }
     .workflow-badge {
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: rgba(24, 147, 122, 0.15);
-      border: 1px solid rgba(24, 147, 122, 0.35);
-      color: #34d399;
+      background: rgba(176, 127, 2, 0.20);
+      border: 1px solid rgba(176, 127, 2, 0.40);
+      color: #ffd166;
       font-size: 0.75rem;
       font-weight: 700;
       padding: 0.4rem 0.9rem;
@@ -1115,8 +1115,8 @@ import { AuthService } from '../../core/services/auth.service';
       width: 7px;
       height: 7px;
       border-radius: 50%;
-      background: #34d399;
-      box-shadow: 0 0 8px #34d399;
+      background: #ffd166;
+      box-shadow: 0 0 8px #ffd166;
     }
     .workflow-flow-grid {
       display: grid;
@@ -1136,22 +1136,22 @@ import { AuthService } from '../../core/services/auth.service';
       }
     }
     .workflow-card {
-      background: rgba(85, 38, 18, 0.60);
-      border: 1px solid rgba(176, 127, 2, 0.38);
+      background: rgba(85, 38, 18, 0.48);
+      border: 1px solid rgba(176, 127, 2, 0.32);
       border-radius: 18px;
       padding: 2rem 1.6rem;
       position: relative;
       display: flex;
       flex-direction: column;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.55), 0 0 20px rgba(176, 127, 2, 0.12);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
     }
     .workflow-card:hover {
-      transform: translateY(-6px);
-      border-color: rgba(176, 127, 2, 0.70);
-      box-shadow: 0 24px 55px rgba(0, 0, 0, 0.75), 0 0 35px rgba(176, 127, 2, 0.30);
+      transform: translateY(-5px);
+      border-color: rgba(176, 127, 2, 0.60);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55), 0 0 25px rgba(176, 127, 2, 0.20);
     }
     .step-indicator {
       display: flex;
@@ -1163,18 +1163,18 @@ import { AuthService } from '../../core/services/auth.service';
       font-family: var(--font-mono);
       font-size: 1.1rem;
       font-weight: 800;
-      color: #38bdf8;
+      color: #ffd166;
       letter-spacing: 0.05em;
-      background: rgba(56, 189, 248, 0.12);
+      background: rgba(176, 127, 2, 0.22);
       padding: 0.25rem 0.65rem;
       border-radius: 8px;
-      border: 1px solid rgba(56, 189, 248, 0.25);
+      border: 1px solid rgba(176, 127, 2, 0.40);
     }
     .step-connector {
       height: 2px;
       flex: 1;
       margin-left: 1rem;
-      background: linear-gradient(90deg, rgba(56, 189, 248, 0.4), rgba(24, 147, 122, 0.1));
+      background: linear-gradient(90deg, rgba(176, 127, 2, 0.4), rgba(53, 51, 205, 0.2));
       border-radius: 2px;
     }
     .workflow-icon-box {
@@ -1186,25 +1186,31 @@ import { AuthService } from '../../core/services/auth.service';
       justify-content: center;
       margin-bottom: 1rem;
       transition: transform 0.25s ease;
+      background: rgba(176, 127, 2, 0.20);
+      border: 1px solid rgba(176, 127, 2, 0.40);
+      color: #ffd166;
     }
     .workflow-card:hover .workflow-icon-box {
       transform: scale(1.08);
+      background: #b07f02;
+      color: #000000;
     }
-    .icon-teal { background: rgba(24, 147, 122, 0.18); color: #34d399; border: 1px solid rgba(24, 147, 122, 0.35); }
-    .icon-blue { background: rgba(31, 115, 183, 0.18); color: #38bdf8; border: 1px solid rgba(31, 115, 183, 0.35); }
-    .icon-purple { background: rgba(129, 140, 248, 0.18); color: #a5b4fc; border: 1px solid rgba(129, 140, 248, 0.35); }
-    .icon-emerald { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.35); }
+    .icon-teal { color: #ffd166; }
+    .icon-blue { color: #c7d2fe; }
+    .icon-purple { color: #ffd166; }
+    .icon-emerald { color: #c7d2fe; }
     .workflow-role-tag {
       font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       margin-bottom: 0.35rem;
+      color: #ffd166;
     }
-    .tag-client { color: #34d399; }
-    .tag-admin { color: #38bdf8; }
-    .tag-owner { color: #a5b4fc; }
-    .tag-viewer { color: #6ee7b7; }
+    .tag-client { color: #ffd166; }
+    .tag-admin { color: #c7d2fe; }
+    .tag-owner { color: #ffd166; }
+    .tag-viewer { color: #c7d2fe; }
     .workflow-card-title {
       font-size: 1.15rem;
       font-weight: 700;
@@ -1214,7 +1220,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .workflow-card-desc {
       font-size: 0.85rem;
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.88);
       line-height: 1.55;
       margin-bottom: 1.25rem;
       flex: 1;
@@ -1228,15 +1234,15 @@ import { AuthService } from '../../core/services/auth.service';
     .workflow-pill {
       font-size: 0.7rem;
       font-weight: 600;
-      color: #cbd5e1;
-      background: rgba(30, 41, 59, 0.65);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: #ffffff;
+      background: rgba(45, 18, 8, 0.55);
+      border: 1px solid rgba(176, 127, 2, 0.25);
       padding: 0.3rem 0.6rem;
       border-radius: 6px;
       display: inline-block;
     }
 
-    /* Architecture Features Grid */
+    /* Architecture Features Grid: #552612 60% Translucent Containers */
     .grid-cols-3 {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -1244,33 +1250,35 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .feature-card {
       padding: 2.25rem 2rem;
-      background: rgba(17, 24, 39, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(85, 38, 18, 0.48);
+      border: 1px solid rgba(176, 127, 2, 0.32);
       border-radius: 18px;
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(20px) saturate(160%);
+      -webkit-backdrop-filter: blur(20px) saturate(160%);
       transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .feature-card:hover {
       transform: translateY(-4px);
-      border-color: rgba(56, 189, 248, 0.4);
-      box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.5);
+      border-color: rgba(176, 127, 2, 0.60);
+      box-shadow: 0 18px 40px -8px rgba(0, 0, 0, 0.55), 0 0 20px rgba(176, 127, 2, 0.15);
     }
     .feature-icon-wrapper {
       width: 48px;
       height: 48px;
       border-radius: 12px;
-      background: rgba(30, 41, 59, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(176, 127, 2, 0.22);
+      border: 1px solid rgba(176, 127, 2, 0.40);
       display: flex;
       align-items: center;
       justify-content: center;
       margin-bottom: 1.25rem;
       transition: all 0.2s ease;
+      color: #ffd166;
     }
     .feature-card:hover .feature-icon-wrapper {
-      background: #38bdf8;
-      color: #0b0f19;
-      transform: scale(1.05);
+      background: #b07f02;
+      color: #000000;
+      transform: scale(1.06);
     }
     .feature-title {
       font-size: 1.25rem;
@@ -1280,7 +1288,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .feature-text {
       font-size: 0.9rem;
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.88);
       line-height: 1.6;
     }
 
@@ -1292,41 +1300,32 @@ import { AuthService } from '../../core/services/auth.service';
       position: relative;
       border-radius: 18px;
       overflow: hidden;
-      backdrop-filter: blur(14px);
+      backdrop-filter: blur(18px);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.45);
+      background: rgba(85, 38, 18, 0.48);
+      border: 1px solid rgba(176, 127, 2, 0.35);
     }
     .role-card:hover {
-      transform: translateY(-6px);
-      box-shadow: 0 25px 55px rgba(0, 0, 0, 0.6);
+      transform: translateY(-5px);
+      box-shadow: 0 22px 50px rgba(0, 0, 0, 0.60);
+      border-color: rgba(176, 127, 2, 0.65);
     }
     .role-card-admin {
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 15, 25, 0.96) 100%), url('/images/role-admin-bg.jpg') center/cover no-repeat;
-      border: 1px solid rgba(244, 63, 94, 0.4);
-    }
-    .role-card-admin:hover {
-      border-color: rgba(244, 63, 94, 0.7);
+      border: 1px solid rgba(176, 127, 2, 0.45);
     }
     .role-card-owner {
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 15, 25, 0.96) 100%), url('/images/role-owner-bg.jpg') center/cover no-repeat;
-      border: 1px solid rgba(99, 102, 241, 0.55);
-      box-shadow: 0 14px 34px rgba(99, 102, 241, 0.22);
-    }
-    .role-card-owner:hover {
-      border-color: #818cf8;
+      border: 1px solid rgba(53, 51, 205, 0.50);
+      box-shadow: 0 14px 34px rgba(53, 51, 205, 0.18);
     }
     .role-card-viewer {
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.86) 0%, rgba(11, 15, 25, 0.96) 100%), url('/images/role-viewer-bg.jpg') center/cover no-repeat;
-      border: 1px solid rgba(16, 185, 129, 0.45);
-    }
-    .role-card-viewer:hover {
-      border-color: #34d399;
+      border: 1px solid rgba(176, 127, 2, 0.40);
     }
     .featured-ribbon {
       position: absolute;
       top: -12px;
       right: 20px;
-      background: #6366f1;
+      background: linear-gradient(90deg, #000000, #3533cd);
       color: white;
       font-size: 0.7rem;
       font-weight: 800;
@@ -1334,7 +1333,7 @@ import { AuthService } from '../../core/services/auth.service';
       letter-spacing: 0.05em;
       padding: 0.25rem 0.75rem;
       border-radius: 9999px;
-      box-shadow: 0 4px 10px rgba(99, 102, 241, 0.4);
+      border: 1px solid rgba(176, 127, 2, 0.4);
     }
     .role-badge {
       font-size: 0.7rem;

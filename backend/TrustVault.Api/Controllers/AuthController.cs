@@ -35,8 +35,10 @@ public class AuthController : ControllerBase
             return BadRequest(new { message = "Email and Password are required." });
         }
 
-        var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+        var identifier = request.Email.Trim().ToLowerInvariant();
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => 
+            u.Email.ToLower() == identifier || 
+            u.Username.ToLower() == identifier);
 
         if (user == null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
@@ -44,7 +46,7 @@ public class AuthController : ControllerBase
                 AuditAction.UserLogin,
                 AuditStatus.Refused,
                 user?.Id,
-                normalizedEmail,
+                identifier,
                 user?.Role.ToString(),
                 null,
                 null,
