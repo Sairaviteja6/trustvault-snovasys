@@ -1767,13 +1767,7 @@ export class LandingComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // If the user is already authenticated, immediately route them to their personal dashboard
-    if (this.authService.isAuthenticated()) {
-      const role = this.authService.userRole();
-      if (role) {
-        this.authService.redirectByRole(role);
-      }
-    }
+    // Public landing page displays directly without forcing redirect
   }
 
   formData = {

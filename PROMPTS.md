@@ -137,3 +137,49 @@ This log tracks interactions with AI coding assistants throughout the developmen
   >    - **Step 04**: Protected In-Memory Viewing & Revocation (Authorized Viewer)
   > 3. Verified across all screen sizes and confirmed 0 build warnings.
 * **Commit**: `feat(ui): refine dark enterprise styling, authentic 4-step workflow, and button micro-interactions`
+
+---
+
+### Entry 7: Foreign Key Cascades & Audit Referential Integrity on User Deprovisioning
+* **Date**: 2026-10-24
+* **Topic**: Database Constraints, Relational Integrity vs Audit Non-Repudiation
+* **Prompt Summary**:
+  > *"How should our AdminController handle the deletion or deprovisioning of a compromised or departing user account when that user is referenced across DocumentGrants, ClientInquiries, UserTags, and AuditLogs?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested a simple `_context.Users.Remove(user)` with `ON DELETE CASCADE` enabled globally on all relational tables, including the `AuditLogs` table.
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Audit Trail Destruction (Critical Security Flaw)**: Cascading deletes to the `AuditLogs` table would silently erase all forensic history and previous actions taken by the departed user, violating the non-repudiation guarantee!
+  2. **SQL Server Foreign Key Collisions**: SQL Server forbids multiple cascade paths (`cycles or multiple cascade paths` error). Directly deleting the user failed with an unhandled 500 SqlException due to foreign key constraints on `ClientInquiries` and `DocumentPermissions`.
+
+* **What We Did Instead**:
+  > 1. In `AdminController.cs`, engineered an explicit safe deprovisioning sequence:
+  >    - First, unlinked non-destructive associations (cleared `ConvertedByAdminId` in `ClientInquiries`).
+  >    - Second, purged active `DocumentPermissions` (cutting off all granted access immediately).
+  >    - Third, unlinked or soft-flagged owned documents.
+  >    - Fourth, preserved all historical records in `AuditLogs` by leaving the cryptographic hash chain intact and nullifying the user foreign key reference (`UserId = null`) without altering the immutable payload string or SHA-256 hash.
+  > 2. Verified via live testing script `scripts/TestDeleteUser.ps1` against live production database with zero constraint errors.
+* **Commit**: `fix(admin): implement safe user deletion with inquiry and audit fk unlinking`
+
+---
+
+### Entry 8: Edge Proxying, Mixed Content Elimination, and Root State Routing
+* **Date**: 2026-10-24
+* **Topic**: HTTPS Edge Delivery, Mixed-Content Protocol Security, and Angular SPA Routing
+* **Prompt Summary**:
+  > *"How do we deliver a public HTTPS green-padlock production URL when AWS CloudFront distribution creation requires support ticket verification on new accounts, and ensure the root domain always lands on the TrustVault product overview?"*
+
+* **What the AI Initially Suggested**:
+  > The AI suggested configuring Angular to query the HTTP ALB URL directly (`http://trustvault-alb.../api`) from an HTTPS frontend, or using client-side redirects from `/` to `/login` based on stored session tokens.
+
+* **What Was Wrong With It (Security & Challenge Flaws)**:
+  1. **Browser Mixed-Content Blocking**: Browsers strictly block unencrypted `http://` API requests initiated from an `https://` origin, failing all logins and file downloads.
+  2. **Violated Evaluator Flow**: Forcing an automatic redirect to `/login` on the root route broke the public landing page experience, preventing recruiters from viewing the platform architecture and security documentation.
+
+* **What We Did Instead**:
+  > 1. Created Vercel edge reverse-proxy configuration (`vercel.json`) that proxies `/api/*` server-to-server to the AWS ALB backend over dedicated edge nodes. The client browser communicates 100% over HTTPS with zero mixed-content warnings.
+  > 2. Fixed `LandingComponent` to ensure the root route (`/`) permanently renders the product landing page and enterprise architecture overview without premature redirects.
+  > 3. Verified across private/incognito browser sessions: landing page, login modal, and admin dashboards execute seamlessly with 100% SSL encryption.
+* **Commit**: `feat(deploy): full production deployment on Vercel with edge API proxy and landing root routing`
+
