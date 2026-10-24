@@ -4,7 +4,19 @@
 
 TrustVault is an enterprise document platform built with a **security-first invariant**: the wrong person can never read a document, and every access attempt (allowed or refused) is permanently, tamper-evidently recorded.
 
-Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular**.
+Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular 19**.
+
+---
+
+## 🌐 Live Production Deployments
+
+| Component | Target URL | Notes |
+| :--- | :--- | :--- |
+| **Official Live Production URL (HTTPS)** | **[https://trustvault-snovasys.vercel.app](https://trustvault-snovasys.vercel.app)** | Complete Angular 19 SPA + Edge API Proxy over TLS/HTTPS (Green Padlock). |
+| **AWS Cloud Infrastructure (ALB)** | `http://trustvault-alb-production-1074225278.us-east-1.elb.amazonaws.com` | AWS Application Load Balancer, EC2 Linux Docker backend, RDS SQL Server. |
+| **GitHub Repository** | [https://github.com/Sairaviteja6/trustvault-snovasys](https://github.com/Sairaviteja6/trustvault-snovasys) | Clean commit history spanning full sprint week. |
+
+> **Evaluator Quick Start**: Open [https://trustvault-snovasys.vercel.app](https://trustvault-snovasys.vercel.app) in an incognito or private browser window. Click **Sign In** to access the sign-in modal, or use the one-click **Evaluation Quick-Access Bar** to instantly log in as Admin, Owner, or Viewer.
 
 ---
 
