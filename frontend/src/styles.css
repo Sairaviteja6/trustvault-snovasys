@@ -720,10 +720,10 @@ body {
 }
 
 .segmented-tab.active {
-  background: var(--btn-gradient);
+  background: linear-gradient(135deg, #552612 0%, #b07f02 100%);
   color: #ffffff;
-  border: 1px solid rgba(176, 127, 2, 0.50);
-  box-shadow: 0 4px 16px rgba(53, 51, 205, 0.45), 0 0 14px rgba(176, 127, 2, 0.25);
+  border: 1px solid rgba(176, 127, 2, 0.65);
+  box-shadow: 0 4px 16px rgba(176, 127, 2, 0.40);
 }
 
 .segmented-tab .live-dot {
@@ -741,16 +741,18 @@ body {
   gap: 0.4rem;
   font-size: 0.75rem;
   font-family: var(--font-mono);
-  color: #94a3b8;
+  color: #ffd166;
 }
 
-/* Dedicated High-Contrast Container Box for Selected Tab */
+/* Dedicated High-Contrast Container Box for Selected Tab — Exact 60% Espresso */
 .content-box-card {
-  background: rgba(17, 24, 39, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(85, 38, 18, 0.60);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(176, 127, 2, 0.40);
   border-radius: 16px;
   padding: 1.6rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.55), 0 0 20px rgba(176, 127, 2, 0.10);
   margin-top: 0.5rem;
   color: #ffffff;
 }
@@ -775,14 +777,14 @@ body {
 
 .content-box-subtitle {
   font-size: 0.825rem;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.85);
   margin-top: 0.2rem;
 }
 
-/* Organization Multi-Tenant Filtering Styles */
+/* Organization Multi-Tenant Filtering Styles — Exact Two-Color Palette */
 .org-filter-container {
-  background: rgba(15, 23, 42, 0.65);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(85, 38, 18, 0.55);
+  border: 1px solid rgba(176, 127, 2, 0.35);
   border-radius: 12px;
   padding: 1.2rem;
   margin-bottom: 1.5rem;
@@ -805,7 +807,7 @@ body {
 
 .org-filter-sub {
   font-size: 0.775rem;
-  color: #94a3b8;
+  color: rgba(255, 255, 255, 0.80);
 }
 
 .org-chips-row {
@@ -821,9 +823,9 @@ body {
   gap: 0.45rem;
   padding: 0.45rem 0.9rem;
   border-radius: 8px;
-  background: rgba(30, 41, 59, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #cbd5e1;
+  background: rgba(85, 38, 18, 0.70);
+  border: 1px solid rgba(176, 127, 2, 0.35);
+  color: #ffffff;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
@@ -831,24 +833,31 @@ body {
 }
 
 .org-chip:hover {
-  background: rgba(51, 65, 85, 0.9);
-  color: #ffffff;
-  border-color: rgba(31, 115, 183, 0.4);
+  background: #b07f02;
+  color: #000000;
+  border-color: #ffd166;
+  font-weight: 700;
 }
 
 .org-chip.active {
-  background: rgba(31, 115, 183, 0.25);
-  border-color: #1F73B7;
-  color: #38bdf8;
-  box-shadow: 0 0 12px rgba(31, 115, 183, 0.3);
+  background: #b07f02;
+  border-color: #ffd166;
+  color: #000000;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(176, 127, 2, 0.50);
 }
 
 .org-chip-badge {
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(0, 0, 0, 0.35);
   color: #ffffff;
   font-size: 0.7rem;
   padding: 1px 6px;
   border-radius: 999px;
+}
+
+.org-chip.active .org-chip-badge {
+  background: #000000;
+  color: #ffffff;
 }
 
 .selected-org-banner {
@@ -857,11 +866,12 @@ body {
   align-items: center;
   margin-top: 1rem;
   padding: 0.65rem 0.95rem;
-  background: rgba(31, 115, 183, 0.12);
-  border: 1px solid rgba(31, 115, 183, 0.3);
+  background: rgba(85, 38, 18, 0.65);
+  border: 1px solid rgba(176, 127, 2, 0.40);
+  border-left: 4px solid #b07f02;
   border-radius: 8px;
   font-size: 0.8rem;
-  color: #e2e8f0;
+  color: #ffffff;
   flex-wrap: wrap;
   gap: 0.5rem;
 }

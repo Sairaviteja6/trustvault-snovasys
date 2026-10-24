@@ -894,10 +894,12 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .hero-subtitle {
       font-size: 1.15rem;
-      color: #94a3b8;
+      color: #FFFFFF;
+      font-weight: 500;
       line-height: 1.6;
       margin-bottom: 2rem;
       max-width: 620px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
     }
     .hero-buttons {
       display: flex;
@@ -1065,11 +1067,11 @@ import { AuthService } from '../../core/services/auth.service';
       border-bottom: 1px solid rgba(176, 127, 2, 0.18);
     }
     #architecture {
-      background: linear-gradient(180deg, rgba(176, 127, 2, 0.14) 0%, rgba(85, 38, 18, 0.25) 100%), url('/images/trustvault-core.jpg') center/cover no-repeat;
+      background: linear-gradient(180deg, rgba(18, 14, 10, 0.90) 0%, rgba(85, 38, 18, 0.85) 100%), url('/images/trustvault-core.jpg') center/cover no-repeat;
       position: relative;
     }
     #transparency {
-      background: linear-gradient(180deg, rgba(176, 127, 2, 0.14) 0%, rgba(85, 38, 18, 0.25) 100%), url('/images/verified-transparency.jpg') center/cover no-repeat;
+      background: linear-gradient(180deg, rgba(18, 14, 10, 0.90) 0%, rgba(85, 38, 18, 0.85) 100%), url('/images/verified-transparency.jpg') center/cover no-repeat;
       position: relative;
     }
     .section-heading {
@@ -1471,7 +1473,7 @@ import { AuthService } from '../../core/services/auth.service';
     /* Inquiry Form Section */
     .inquiry-section {
       padding: 5.5rem 0 6.5rem;
-      background: linear-gradient(180deg, rgba(11, 15, 25, 0.8) 0%, rgba(15, 23, 42, 0.95) 100%);
+      background: linear-gradient(180deg, rgba(85, 38, 18, 0.65) 0%, rgba(18, 14, 10, 0.90) 100%);
     }
     .inquiry-wrapper {
       max-width: 820px;
@@ -1482,7 +1484,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .inquiry-subnote {
       font-size: 0.95rem;
-      color: #38bdf8;
+      color: #ffd166;
       font-weight: 700;
       margin-top: 0.75rem;
     }
@@ -1602,11 +1604,13 @@ import { AuthService } from '../../core/services/auth.service';
       flex-wrap: wrap;
     }
 
-    /* Full-Bleed Site Footer */
+    /* Full-Bleed Site Footer — Exact 60% Espresso Container */
     .landing-footer {
-      background: #0b0f19;
-      color: #94a3b8;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(85, 38, 18, 0.60);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      color: #ffffff;
+      border-top: 1px solid rgba(176, 127, 2, 0.35);
       padding: 4.5rem 0 0;
       position: relative;
       z-index: 1;
@@ -1650,14 +1654,14 @@ import { AuthService } from '../../core/services/auth.service';
       margin-bottom: 0.75rem;
     }
     .footer-email a {
-      color: #38bdf8;
+      color: #ffd166;
       text-decoration: none;
       font-size: 0.875rem;
       font-weight: 600;
       transition: color 0.2s ease;
     }
     .footer-email a:hover {
-      color: #34d399;
+      color: #ffffff;
     }
     .footer-nav {
       list-style: none;
