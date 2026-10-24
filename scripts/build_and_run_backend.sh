@@ -40,18 +40,18 @@ docker run -d \
   -e ConnectionStrings__DefaultConnection="Server=trustvault-sqlserver-production.cujaee0eiksn.us-east-1.rds.amazonaws.com;Database=TrustVaultDb;User Id=sa;Password=TrustVault_StrongPass2026#;TrustServerCertificate=True;MultipleActiveResultSets=true;" \
   -e Jwt__Secret="SuperSecretTrustVaultProductionGradeKey2026!#$StrictCryptoEnforcement" \
   -e Security__MasterEncryptionKeyHex="0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF" \
-  -e Smtp__Host="email-smtp.us-east-1.amazonaws.com" \
+  -e Smtp__Host="smtp.gmail.com" \
   -e Smtp__Port="587" \
   -e Smtp__EnableSsl="true" \
-  -e Smtp__Username="AKIA53CBVDEMD6TJNOLQ" \
-  -e Smtp__Password="AshX6dP4775bBX+wNY2/tDgfg8kgZU0NJHiVJ4qBeQHv" \
-  -e Smtp__From="sairavitejamalneedi@gmail.com" \
-  -e SMTP_HOST="email-smtp.us-east-1.amazonaws.com" \
+  -e Smtp__Username="23jr1a05b8@gmail.com" \
+  -e Smtp__Password="mvtxqvovugwydldo" \
+  -e Smtp__From="23jr1a05b8@gmail.com" \
+  -e SMTP_HOST="smtp.gmail.com" \
   -e SMTP_PORT="587" \
   -e SMTP_ENABLE_SSL="true" \
-  -e SMTP_USERNAME="AKIA53CBVDEMD6TJNOLQ" \
-  -e SMTP_PASSWORD="AshX6dP4775bBX+wNY2/tDgfg8kgZU0NJHiVJ4qBeQHv" \
-  -e SMTP_FROM="sairavitejamalneedi@gmail.com" \
+  -e SMTP_USERNAME="23jr1a05b8@gmail.com" \
+  -e SMTP_PASSWORD="mvtxqvovugwydldo" \
+  -e SMTP_FROM="23jr1a05b8@gmail.com" \
   --log-driver json-file \
   --log-opt max-size=50m \
   --log-opt max-file=3 \

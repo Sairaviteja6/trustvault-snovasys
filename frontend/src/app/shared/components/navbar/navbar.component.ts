@@ -259,15 +259,15 @@ import { AuthService } from '../../../core/services/auth.service';
       width: 30px;
       height: 30px;
       border-radius: 50%;
-      background: linear-gradient(90deg, #000000 0%, #3533cd 100%);
+      background: linear-gradient(135deg, #552612 0%, #b07f02 100%);
       color: #ffffff;
       font-weight: 700;
       font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      border: 1px solid rgba(176, 127, 2, 0.5);
-      box-shadow: 0 2px 8px rgba(53, 51, 205, 0.45);
+      border: 1px solid rgba(176, 127, 2, 0.7);
+      box-shadow: 0 2px 8px rgba(176, 127, 2, 0.35);
     }
     .user-meta {
       display: flex;
@@ -314,7 +314,7 @@ import { AuthService } from '../../../core/services/auth.service';
       width: 46px;
       height: 46px;
       border-radius: 50%;
-      background: linear-gradient(90deg, #000000 0%, #3533cd 100%);
+      background: linear-gradient(135deg, #552612 0%, #b07f02 100%);
       color: #ffffff;
       font-weight: 800;
       font-size: 1.25rem;
@@ -322,7 +322,7 @@ import { AuthService } from '../../../core/services/auth.service';
       align-items: center;
       justify-content: center;
       border: 1px solid #ffd166;
-      box-shadow: 0 4px 16px rgba(53, 51, 205, 0.5);
+      box-shadow: 0 4px 16px rgba(176, 127, 2, 0.45);
       flex-shrink: 0;
     }
     .profile-section {

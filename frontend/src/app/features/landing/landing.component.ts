@@ -1319,8 +1319,8 @@ import { AuthService } from '../../core/services/auth.service';
       border: 1px solid rgba(176, 127, 2, 0.45);
     }
     .role-card-owner {
-      border: 1px solid rgba(53, 51, 205, 0.50);
-      box-shadow: 0 14px 34px rgba(53, 51, 205, 0.18);
+      border: 1px solid rgba(176, 127, 2, 0.60);
+      box-shadow: 0 14px 34px rgba(176, 127, 2, 0.20);
     }
     .role-card-viewer {
       border: 1px solid rgba(176, 127, 2, 0.40);
@@ -1329,7 +1329,7 @@ import { AuthService } from '../../core/services/auth.service';
       position: absolute;
       top: -12px;
       right: 20px;
-      background: linear-gradient(90deg, #000000, #3533cd);
+      background: linear-gradient(135deg, #552612 0%, #b07f02 100%);
       color: white;
       font-size: 0.7rem;
       font-weight: 800;
@@ -1337,7 +1337,7 @@ import { AuthService } from '../../core/services/auth.service';
       letter-spacing: 0.05em;
       padding: 0.25rem 0.75rem;
       border-radius: 9999px;
-      border: 1px solid rgba(176, 127, 2, 0.4);
+      border: 1px solid rgba(176, 127, 2, 0.6);
     }
     .role-badge {
       font-size: 0.7rem;
@@ -1525,8 +1525,8 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
-      border-color: #3533cd !important;
-      box-shadow: 0 0 0 3px rgba(53, 51, 205, 0.35) !important;
+      border-color: #ffd166 !important;
+      box-shadow: 0 0 0 3px rgba(176, 127, 2, 0.40) !important;
       background: rgba(55, 22, 10, 0.90) !important;
     }
     .form-agreement {
