@@ -705,40 +705,41 @@ import { AuthService } from '../../core/services/auth.service';
   styles: [`
     .landing-page {
       min-height: 100vh;
-      color: #f8fafc;
+      color: #ffffff;
       position: relative;
       overflow-x: hidden;
-      background-color: #0b0f19;
+      background: #080503;
     }
 
-    /* Vibrant Multi-Color Aurora Ambient Mesh (Cool, Pleasant, Alive) */
+    /* Ambient Multi-Layer Mesh with #b07f02 60% Overlay & Electric #3533cd */
     .interactive-ambient-mesh {
       position: fixed;
       inset: -150px;
       pointer-events: none;
       z-index: 0;
       background: 
-        radial-gradient(circle 850px at 15% 15%, rgba(31, 115, 183, 0.16), transparent 55%),
-        radial-gradient(circle 750px at 85% 35%, rgba(24, 147, 122, 0.14), transparent 50%),
-        radial-gradient(circle 700px at 50% 75%, rgba(14, 165, 233, 0.12), transparent 50%),
-        radial-gradient(circle 600px at 20% 85%, rgba(49, 149, 123, 0.10), transparent 45%);
+        radial-gradient(circle 900px at 15% 15%, rgba(176, 127, 2, 0.45), transparent 55%),
+        radial-gradient(circle 800px at 85% 35%, rgba(53, 51, 205, 0.35), transparent 50%),
+        radial-gradient(circle 750px at 50% 75%, rgba(176, 127, 2, 0.30), transparent 55%),
+        radial-gradient(circle 650px at 20% 85%, rgba(53, 51, 205, 0.25), transparent 50%),
+        linear-gradient(135deg, rgba(176, 127, 2, 0.25) 0%, rgba(8, 5, 3, 0.95) 100%);
       transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform;
     }
 
-    /* Refined, Subtle Cursor Spotlight (TrustVault Logo Blue & Teal, Compact 250px) */
+    /* Refined Cursor Spotlight with Golden Amber & Electric Blue Glow */
     .interactive-cursor-spotlight {
       position: fixed;
-      top: -125px;
-      left: -125px;
-      width: 250px;
-      height: 250px;
+      top: -140px;
+      left: -140px;
+      width: 280px;
+      height: 280px;
       border-radius: 50%;
       pointer-events: none;
       z-index: 5;
-      background: radial-gradient(circle, rgba(31, 115, 183, 0.35) 0%, rgba(24, 147, 122, 0.20) 45%, transparent 70%);
+      background: radial-gradient(circle, rgba(176, 127, 2, 0.40) 0%, rgba(53, 51, 205, 0.25) 45%, transparent 70%);
       mix-blend-mode: screen;
-      opacity: 0.50;
+      opacity: 0.55;
       transition: transform 0.04s linear;
       will-change: transform;
     }
@@ -749,16 +750,16 @@ import { AuthService } from '../../core/services/auth.service';
       pointer-events: none;
       z-index: 0;
       background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
-      background-size: 54px 54px;
+        linear-gradient(rgba(176, 127, 2, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(176, 127, 2, 0.07) 1px, transparent 1px);
+      background-size: 56px 56px;
       transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform;
     }
 
     .hero-highlight {
-      color: #38bdf8;
-      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #34d399 100%);
+      color: #ffd166;
+      background: linear-gradient(135deg, #ffd166 0%, #b07f02 50%, #c7d2fe 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -769,16 +770,16 @@ import { AuthService } from '../../core/services/auth.service';
       z-index: 1;
     }
 
-    /* Header */
+    /* Sticky Navigation Header with #552612 60% Transparency */
     .landing-header {
       position: sticky;
       top: 0;
       z-index: 1000;
-      background: rgba(11, 15, 25, 0.82);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      background: rgba(85, 38, 18, 0.60);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid rgba(176, 127, 2, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(176, 127, 2, 0.12);
     }
     .nav-container {
       max-width: 1400px;
@@ -933,20 +934,21 @@ import { AuthService } from '../../core/services/auth.service';
       background: rgba(255, 255, 255, 0.25);
     }
 
-    /* Hero Preview Card */
+    /* Hero Preview Card: #552612 60% Transparency */
     .hero-preview-card {
-      padding: 2rem;
+      padding: 2.2rem;
       border-radius: 20px;
-      background: rgba(17, 24, 39, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
-      backdrop-filter: blur(20px);
+      background: rgba(85, 38, 18, 0.60);
+      border: 1px solid rgba(176, 127, 2, 0.38);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.70), 0 0 30px rgba(176, 127, 2, 0.15);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .hero-preview-card:hover {
       transform: translateY(-4px);
-      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.65);
-      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 35px 75px rgba(0, 0, 0, 0.80), 0 0 45px rgba(176, 127, 2, 0.35);
+      border-color: rgba(176, 127, 2, 0.70);
     }
     .preview-header {
       display: flex;
@@ -1134,21 +1136,22 @@ import { AuthService } from '../../core/services/auth.service';
       }
     }
     .workflow-card {
-      background: rgba(17, 24, 39, 0.82);
-      border: 1px solid rgba(255, 255, 255, 0.10);
+      background: rgba(85, 38, 18, 0.60);
+      border: 1px solid rgba(176, 127, 2, 0.38);
       border-radius: 18px;
       padding: 2rem 1.6rem;
       position: relative;
       display: flex;
       flex-direction: column;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-      backdrop-filter: blur(16px);
+      box-shadow: 0 14px 35px rgba(0, 0, 0, 0.55), 0 0 20px rgba(176, 127, 2, 0.12);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
     }
     .workflow-card:hover {
       transform: translateY(-6px);
-      border-color: rgba(31, 115, 183, 0.45);
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5), 0 0 30px rgba(24, 147, 122, 0.20);
+      border-color: rgba(176, 127, 2, 0.70);
+      box-shadow: 0 24px 55px rgba(0, 0, 0, 0.75), 0 0 35px rgba(176, 127, 2, 0.30);
     }
     .step-indicator {
       display: flex;
@@ -1481,17 +1484,18 @@ import { AuthService } from '../../core/services/auth.service';
       margin-top: 0.75rem;
     }
     .inquiry-card {
-      padding: 2.5rem 3rem;
+      padding: 2.75rem 3rem;
       border-radius: 20px;
-      background: rgba(17, 24, 39, 0.92);
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(20px);
+      background: rgba(85, 38, 18, 0.60);
+      border: 1px solid rgba(176, 127, 2, 0.38);
+      box-shadow: 0 25px 65px rgba(0, 0, 0, 0.75), 0 0 35px rgba(176, 127, 2, 0.16);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .inquiry-card:hover {
-      box-shadow: 0 35px 70px rgba(0, 0, 0, 0.7);
-      border-color: rgba(56, 189, 248, 0.6);
+      box-shadow: 0 35px 80px rgba(0, 0, 0, 0.85), 0 0 45px rgba(176, 127, 2, 0.30);
+      border-color: rgba(176, 127, 2, 0.70);
     }
     .form-grid {
       display: grid;
@@ -1499,17 +1503,17 @@ import { AuthService } from '../../core/services/auth.service';
       gap: 1.25rem;
     }
     .form-label {
-      color: #cbd5e1;
+      color: #ffffff;
       font-size: 0.825rem;
       font-weight: 600;
       margin-bottom: 0.35rem;
       display: block;
     }
     .form-input, .form-select, .form-textarea {
-      background: rgba(15, 23, 42, 0.85) !important;
-      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      background: rgba(45, 18, 8, 0.75) !important;
+      border: 1px solid rgba(176, 127, 2, 0.35) !important;
       color: #FFFFFF !important;
-      border-radius: 8px;
+      border-radius: 9px;
       padding: 0.75rem 1rem;
       width: 100%;
       box-sizing: border-box;
@@ -1518,8 +1522,9 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .form-input:focus, .form-select:focus, .form-textarea:focus {
       outline: none;
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.35) !important;
+      border-color: #3533cd !important;
+      box-shadow: 0 0 0 3px rgba(53, 51, 205, 0.35) !important;
+      background: rgba(55, 22, 10, 0.90) !important;
     }
     .form-agreement {
       display: flex;

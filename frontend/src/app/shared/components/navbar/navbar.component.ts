@@ -178,11 +178,11 @@ import { AuthService } from '../../../core/services/auth.service';
   `,
   styles: [`
     .navbar-header {
-      background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(20px) saturate(140%);
-      -webkit-backdrop-filter: blur(20px) saturate(140%);
-      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.03);
+      background: rgba(85, 38, 18, 0.60);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid rgba(176, 127, 2, 0.35);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(176, 127, 2, 0.12);
       position: sticky;
       top: 0;
       z-index: 1000;
@@ -201,28 +201,28 @@ import { AuthService } from '../../../core/services/auth.service';
       gap: 0.75rem;
     }
     .brand-logo-img {
-      height: 34px;
-      width: 34px;
-      border-radius: 8px;
+      height: 36px;
+      width: 36px;
+      border-radius: 9px;
       object-fit: cover;
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(176, 127, 2, 0.45);
+      box-shadow: 0 2px 10px rgba(176, 127, 2, 0.35);
     }
     .brand-title {
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       font-weight: 800;
       letter-spacing: -0.02em;
-      color: #0f172a;
+      color: #ffffff;
     }
     .env-badge {
       font-size: 0.65rem;
       font-weight: 700;
       letter-spacing: 0.08em;
-      background: #ecfdf5;
-      color: #059669;
-      border: 1px solid #a7f3d0;
-      padding: 2px 6px;
-      border-radius: 4px;
+      background: rgba(176, 127, 2, 0.25);
+      color: #ffd166;
+      border: 1px solid rgba(176, 127, 2, 0.5);
+      padding: 2px 7px;
+      border-radius: 6px;
     }
     .navbar-nav {
       display: flex;
@@ -233,95 +233,101 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       align-items: center;
       gap: 0.75rem;
-      background: #f1f5f9;
-      padding: 0.35rem 0.85rem 0.35rem 0.5rem;
+      background: rgba(45, 18, 8, 0.75);
+      padding: 0.35rem 0.95rem 0.35rem 0.55rem;
       border-radius: 9999px;
-      border: 1px solid rgba(15, 23, 42, 0.1);
+      border: 1px solid rgba(176, 127, 2, 0.35);
       cursor: pointer;
       user-select: none;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .user-chip:hover {
-      background: #e2e8f0;
-      border-color: rgba(34, 133, 172, 0.35);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+      background: rgba(85, 38, 18, 0.90);
+      border-color: #ffd166;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 18px rgba(176, 127, 2, 0.35);
     }
     .chevron-icon {
-      color: #64748b;
+      color: #ffd166;
       transition: transform 0.2s ease;
     }
     .user-chip:hover .chevron-icon {
-      color: #0f172a;
-      transform: translateY(1px);
+      color: #ffffff;
+      transform: translateY(2px);
     }
     .avatar-circle {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       border-radius: 50%;
-      background: var(--brand-gradient, linear-gradient(135deg, #2285AC, #31957B));
+      background: linear-gradient(90deg, #000000 0%, #3533cd 100%);
       color: #ffffff;
       font-weight: 700;
       font-size: 0.85rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 6px rgba(34, 133, 172, 0.35);
+      border: 1px solid rgba(176, 127, 2, 0.5);
+      box-shadow: 0 2px 8px rgba(53, 51, 205, 0.45);
     }
     .user-meta {
       display: flex;
       flex-direction: column;
-      line-height: 1.1;
+      line-height: 1.15;
     }
     .user-name {
       font-size: 0.825rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #ffffff;
     }
     .user-dept {
       font-size: 0.7rem;
-      color: #64748b;
+      color: #ffd166;
     }
     .btn-logout {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      color: #dc2626;
-      padding: 0.45rem 0.85rem;
-      border-radius: 8px;
+      gap: 0.45rem;
+      background: rgba(220, 38, 38, 0.22);
+      border: 1px solid rgba(239, 68, 68, 0.45);
+      color: #fca5a5;
+      padding: 0.45rem 0.95rem;
+      border-radius: 9px;
       font-size: 0.8rem;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .btn-logout:hover {
-      background: #fee2e2;
-      border-color: #f87171;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
+      background: #dc2626;
+      border-color: #ef4444;
+      color: #ffffff;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(239, 68, 68, 0.4);
     }
     .profile-modal-card {
-      max-width: 500px;
+      max-width: 520px;
+      background: rgba(75, 32, 14, 0.96) !important;
+      border: 1px solid rgba(176, 127, 2, 0.45) !important;
+      color: #ffffff !important;
     }
     .profile-modal-avatar {
-      width: 44px;
-      height: 44px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
-      background: var(--brand-gradient, linear-gradient(135deg, #2285AC, #31957B));
+      background: linear-gradient(90deg, #000000 0%, #3533cd 100%);
       color: #ffffff;
       font-weight: 800;
       font-size: 1.25rem;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(34, 133, 172, 0.35);
+      border: 1px solid #ffd166;
+      box-shadow: 0 4px 16px rgba(53, 51, 205, 0.5);
       flex-shrink: 0;
     }
     .profile-section {
-      background: #f8fafc;
-      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(45, 18, 8, 0.70);
+      border: 1px solid rgba(176, 127, 2, 0.30);
       border-radius: 12px;
       padding: 1rem;
     }
@@ -337,7 +343,7 @@ import { AuthService } from '../../../core/services/auth.service';
       gap: 0.5rem;
       font-size: 0.875rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #ffffff;
     }
     .profile-form-row {
       display: flex;
@@ -349,7 +355,7 @@ import { AuthService } from '../../../core/services/auth.service';
     }
     .divider {
       height: 1px;
-      background: rgba(15, 23, 42, 0.08);
+      background: rgba(176, 127, 2, 0.20);
       margin: 1.25rem 0;
     }
   `]

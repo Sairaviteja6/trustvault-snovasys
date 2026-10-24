@@ -1,4 +1,4 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
@@ -9,15 +9,111 @@ import { AuthService } from '../../../core/services/auth.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterModule],
   template: `
-    <div class="login-wrapper">
+    <div class="login-wrapper" (mousemove)="onMouseMove($event)">
+      <!-- Multi-Layer Luminous Background with #b07f02 60% Ambient Tone -->
+      <div 
+        class="ambient-mesh-bg"
+        [style.transform]="'translate3d(' + (-parallaxX * 0.4) + 'px, ' + (-parallaxY * 0.4) + 'px, 0)'"
+      ></div>
+
+      <!-- Floating Radiant Gradient Orbs (#b07f02 and #3533cd) -->
+      <div 
+        class="floating-orb orb-gold"
+        [style.transform]="'translate3d(' + (parallaxX * 0.7) + 'px, ' + (parallaxY * 0.7) + 'px, 0)'"
+      ></div>
+      <div 
+        class="floating-orb orb-electric"
+        [style.transform]="'translate3d(' + (-parallaxX * 0.6) + 'px, ' + (-parallaxY * 0.6) + 'px, 0)'"
+      ></div>
+      <div class="cyber-grid-lines"></div>
+
+      <!-- Floating 3D Crypto & AI Security Badges (Dribbble Crypto & KEEL AI Inspiration) -->
+      <div 
+        class="floating-badge badge-top-left"
+        [style.transform]="'translate3d(' + (-parallaxX * 1.2) + 'px, ' + (-parallaxY * 1.2) + 'px, 0)'"
+      >
+        <div class="badge-icon-box gold-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <div class="badge-content">
+          <div class="badge-header-row">
+            <span class="badge-label-gold">AES-256-GCM Hardware Cipher</span>
+            <span class="live-pulse-dot"></span>
+          </div>
+          <span class="badge-subtext">Bit-Level Invariant Encryption Verified</span>
+        </div>
+      </div>
+
+      <div 
+        class="floating-badge badge-top-right"
+        [style.transform]="'translate3d(' + (parallaxX * 1.1) + 'px, ' + (-parallaxY * 1.1) + 'px, 0)'"
+      >
+        <div class="badge-icon-box electric-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div class="badge-content">
+          <div class="badge-header-row">
+            <span class="badge-label-electric">Multi-Tenant Vault</span>
+            <span class="badge-pill-micro">Zero-Trust</span>
+          </div>
+          <span class="badge-subtext">Cross-Organization Boundary Isolation</span>
+        </div>
+      </div>
+
+      <div 
+        class="floating-badge badge-bottom-left"
+        [style.transform]="'translate3d(' + (-parallaxX * 0.9) + 'px, ' + (parallaxY * 0.9) + 'px, 0)'"
+      >
+        <div class="badge-icon-box gold-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+          </svg>
+        </div>
+        <div class="badge-content">
+          <span class="badge-label-white">SHA-256 Cryptographic Chain</span>
+          <span class="badge-mono-code font-mono">HASH: 0x8f4b...e921 [OK]</span>
+        </div>
+      </div>
+
+      <div 
+        class="floating-badge badge-bottom-right"
+        [style.transform]="'translate3d(' + (parallaxX * 1.3) + 'px, ' + (parallaxY * 1.3) + 'px, 0)'"
+      >
+        <div class="badge-icon-box electric-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="m4.93 4.93 4.24 4.24"/>
+            <path d="m14.83 9.17 4.24-4.24"/>
+            <path d="m14.83 14.83 4.24 4.24"/>
+            <path d="m9.17 14.83-4.24 4.24"/>
+            <circle cx="12" cy="12" r="4"/>
+          </svg>
+        </div>
+        <div class="badge-content">
+          <div class="badge-header-row">
+            <span class="badge-label-white">Cloud Sentinel Active</span>
+            <span class="badge-latency-pill">12ms Latency</span>
+          </div>
+          <span class="badge-subtext">Multi-AZ Load Balanced Node</span>
+        </div>
+      </div>
+
+      <!-- Core Glassmorphic Authentication Card: #552612 at 60% Transparency -->
       <div class="login-card">
         <div class="login-header">
-          <a routerLink="/" title="Return to TrustVault Home" style="display: inline-block; text-decoration: none;">
-            <img src="/images/trustvault-monogram.png" alt="TrustVault Logo" class="login-logo-img" />
+          <a routerLink="/" title="Return to TrustVault Home" class="logo-link">
+            <div class="logo-ring">
+              <img src="/images/trustvault-monogram.png" alt="TrustVault Logo" class="login-logo-img" />
+            </div>
           </a>
           <h1 class="login-title">TrustVault</h1>
           <p class="login-subtitle">Zero-Trust Cryptographic Document Platform</p>
-          <a routerLink="/" class="back-home-link">← Return to Home</a>
+          <a routerLink="/" class="back-home-link">&larr; Return to Home</a>
         </div>
 
         <div class="alert alert-danger" *ngIf="errorMessage()">
@@ -61,12 +157,19 @@ import { AuthService } from '../../../core/services/auth.service';
             />
           </div>
 
+          <!-- Gradient Button: #000000 to #3533cd. On Hover: #b07f02 background and Black Text -->
           <button 
             type="submit" 
-            class="btn btn-primary btn-block" 
+            class="btn btn-primary btn-block legend-btn" 
             [disabled]="isLoading() || !email || !password"
           >
-            <span *ngIf="!isLoading()">Authenticate Session</span>
+            <span *ngIf="!isLoading()" class="btn-text-flex">
+              <span>Authenticate Session</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
             <span *ngIf="isLoading()" class="spinner-text">
               <span class="spinner"></span> Verifying Invariants...
             </span>
@@ -76,7 +179,7 @@ import { AuthService } from '../../../core/services/auth.service';
         <!-- First-Time Onboarding / Set Permanent Password Mode -->
         <form *ngIf="isSetPasswordMode()" (ngSubmit)="onSetPasswordSubmit()">
           <div class="alert alert-info" style="font-size: 0.8rem; margin-bottom: 1rem;">
-            <strong>Account Setup:</strong> Please set your permanent security password to activate your personal workspace.
+            <strong>Account Setup:</strong> Please establish your permanent security password to activate your personal workspace.
           </div>
 
           <div class="form-group">
@@ -137,17 +240,23 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <button 
             type="submit" 
-            class="btn btn-primary btn-block" 
+            class="btn btn-primary btn-block legend-btn" 
             [disabled]="isLoading() || !email || !password || !newPassword || !confirmPassword"
           >
-            <span *ngIf="!isLoading()">Establish Permanent Password &rarr;</span>
+            <span *ngIf="!isLoading()" class="btn-text-flex">
+              <span>Establish Permanent Password</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </span>
             <span *ngIf="isLoading()" class="spinner-text">
               <span class="spinner"></span> Encrypting Credentials...
             </span>
           </button>
 
           <div style="text-align: center; margin-top: 1rem;">
-            <a href="javascript:void(0)" (click)="isSetPasswordMode.set(false)" style="font-size: 0.8rem; color: #64748b; text-decoration: none;">
+            <a href="javascript:void(0)" (click)="isSetPasswordMode.set(false)" style="font-size: 0.8rem; color: #ffd166; text-decoration: none;">
               &larr; Return to Standard Sign In
             </a>
           </div>
@@ -162,7 +271,7 @@ import { AuthService } from '../../../core/services/auth.service';
         </div>
 
         <div class="security-footer">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
             <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
           </svg>
@@ -177,118 +286,396 @@ import { AuthService } from '../../../core/services/auth.service';
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 1.5rem;
-      background: radial-gradient(ellipse at 50% 30%, rgba(31, 115, 183, 0.15) 0%, rgba(11, 15, 25, 0.95) 70%);
+      padding: 2rem 1.5rem;
       position: relative;
+      overflow: hidden;
+      background: #080503;
     }
+
+    /* Ambient multi-layer mesh with #b07f02 60% overlay */
+    .ambient-mesh-bg {
+      position: fixed;
+      inset: -120px;
+      pointer-events: none;
+      z-index: 1;
+      background: 
+        radial-gradient(circle 900px at 15% 15%, rgba(176, 127, 2, 0.50), transparent 60%),
+        radial-gradient(circle 800px at 85% 85%, rgba(53, 51, 205, 0.38), transparent 60%),
+        radial-gradient(circle 700px at 50% 50%, rgba(176, 127, 2, 0.30), transparent 70%),
+        linear-gradient(135deg, rgba(176, 127, 2, 0.40) 0%, rgba(8, 5, 3, 0.95) 100%);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    /* Glowing floating radiant orbs (#b07f02 amber and #3533cd electric indigo) */
+    .floating-orb {
+      position: fixed;
+      border-radius: 50%;
+      pointer-events: none;
+      filter: blur(120px);
+      z-index: 2;
+      opacity: 0.70;
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    .orb-gold {
+      width: 520px;
+      height: 520px;
+      top: 5%;
+      left: 10%;
+      background: radial-gradient(circle, #b07f02 0%, rgba(176, 127, 2, 0.3) 70%, transparent 100%);
+      animation: floatBreathGold 12s ease-in-out infinite alternate;
+    }
+
+    .orb-electric {
+      width: 580px;
+      height: 580px;
+      bottom: 5%;
+      right: 8%;
+      background: radial-gradient(circle, #3533cd 0%, rgba(53, 51, 205, 0.3) 70%, transparent 100%);
+      animation: floatBreathElectric 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatBreathGold {
+      0% { transform: translateY(0) scale(1); opacity: 0.65; }
+      100% { transform: translateY(-40px) scale(1.15); opacity: 0.85; }
+    }
+
+    @keyframes floatBreathElectric {
+      0% { transform: translateY(0) scale(1.1); opacity: 0.75; }
+      100% { transform: translateY(45px) scale(0.95); opacity: 0.55; }
+    }
+
+    .cyber-grid-lines {
+      position: fixed;
+      inset: -50px;
+      pointer-events: none;
+      z-index: 2;
+      background-image: 
+        linear-gradient(rgba(176, 127, 2, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(176, 127, 2, 0.08) 1px, transparent 1px);
+      background-size: 58px 58px;
+      opacity: 0.85;
+    }
+
+    /* Floating 3D Crypto & AI Security Badges (Dribbble Reference Quality) */
+    .floating-badge {
+      position: fixed;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      gap: 0.95rem;
+      padding: 0.95rem 1.35rem;
+      border-radius: 16px;
+      background: rgba(85, 38, 18, 0.60);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border: 1px solid rgba(176, 127, 2, 0.40);
+      box-shadow: 0 16px 36px -6px rgba(0, 0, 0, 0.7), 0 0 25px rgba(176, 127, 2, 0.16);
+      color: #ffffff;
+      pointer-events: none;
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+
+    .badge-top-left {
+      top: 12%;
+      left: 6%;
+      animation: badgeDriftA 8s ease-in-out infinite alternate;
+    }
+
+    .badge-top-right {
+      top: 14%;
+      right: 6%;
+      animation: badgeDriftB 9s ease-in-out infinite alternate;
+    }
+
+    .badge-bottom-left {
+      bottom: 12%;
+      left: 7%;
+      animation: badgeDriftB 8.5s ease-in-out infinite alternate;
+    }
+
+    .badge-bottom-right {
+      bottom: 14%;
+      right: 7%;
+      animation: badgeDriftA 9.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes badgeDriftA {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(-14px) rotate(0.8deg); }
+    }
+
+    @keyframes badgeDriftB {
+      0% { transform: translateY(0px) rotate(0deg); }
+      100% { transform: translateY(16px) rotate(-0.8deg); }
+    }
+
+    .badge-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .badge-icon-box.gold-icon {
+      background: rgba(176, 127, 2, 0.25);
+      border: 1px solid rgba(176, 127, 2, 0.60);
+      color: #ffd166;
+      box-shadow: 0 0 16px rgba(176, 127, 2, 0.35);
+    }
+
+    .badge-icon-box.electric-icon {
+      background: rgba(53, 51, 205, 0.30);
+      border: 1px solid rgba(53, 51, 205, 0.70);
+      color: #c7d2fe;
+      box-shadow: 0 0 18px rgba(53, 51, 205, 0.45);
+    }
+
+    .badge-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .badge-header-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .badge-label-gold {
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #ffd166;
+      letter-spacing: -0.01em;
+    }
+
+    .badge-label-electric {
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #c7d2fe;
+      letter-spacing: -0.01em;
+    }
+
+    .badge-label-white {
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: -0.01em;
+    }
+
+    .badge-subtext {
+      font-size: 0.725rem;
+      color: rgba(255, 255, 255, 0.80);
+    }
+
+    .badge-mono-code {
+      font-size: 0.725rem;
+      color: #ffd166;
+      background: rgba(0, 0, 0, 0.4);
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid rgba(176, 127, 2, 0.3);
+    }
+
+    .live-pulse-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ffd166;
+      box-shadow: 0 0 10px #ffd166;
+      animation: pulseGold 2s infinite;
+    }
+
+    @keyframes pulseGold {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0.6; }
+    }
+
+    .badge-pill-micro {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(53, 51, 205, 0.4);
+      border: 1px solid rgba(53, 51, 205, 0.6);
+      color: #ffffff;
+    }
+
+    .badge-latency-pill {
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 999px;
+      background: rgba(16, 185, 129, 0.25);
+      border: 1px solid rgba(16, 185, 129, 0.5);
+      color: #34d399;
+    }
+
+    /* Core Glassmorphic Authentication Card: #552612 at 60% Transparency */
     .login-card {
-      background: rgba(17, 24, 39, 0.85);
-      backdrop-filter: blur(24px) saturate(160%);
-      -webkit-backdrop-filter: blur(24px) saturate(160%);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 20px;
-      padding: 2.5rem;
+      position: relative;
+      z-index: 10;
+      background: rgba(85, 38, 18, 0.60);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border: 1px solid rgba(176, 127, 2, 0.40);
+      border-radius: 22px;
+      padding: 2.75rem 2.4rem;
       width: 100%;
-      max-width: 440px;
-      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6), 0 0 40px rgba(31, 115, 183, 0.18);
+      max-width: 450px;
+      box-shadow: 
+        0 30px 80px -15px rgba(0, 0, 0, 0.85), 
+        0 0 50px rgba(176, 127, 2, 0.20),
+        0 0 25px rgba(53, 51, 205, 0.25);
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
+
     .login-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.7), 0 0 50px rgba(24, 147, 122, 0.25);
-      border-color: rgba(56, 189, 248, 0.35);
+      border-color: rgba(176, 127, 2, 0.70);
+      box-shadow: 
+        0 35px 90px -10px rgba(0, 0, 0, 0.90), 
+        0 0 65px rgba(176, 127, 2, 0.35),
+        0 0 35px rgba(53, 51, 205, 0.35);
     }
+
     .login-header {
       text-align: center;
       margin-bottom: 2rem;
     }
+
+    .logo-link {
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    .logo-ring {
+      display: inline-flex;
+      padding: 4px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(176, 127, 2, 0.6), rgba(53, 51, 205, 0.6));
+      box-shadow: 0 0 24px rgba(176, 127, 2, 0.45);
+      margin-bottom: 0.85rem;
+      transition: transform 0.25s ease;
+    }
+
+    .logo-ring:hover {
+      transform: scale(1.08) rotate(3deg);
+    }
+
     .login-logo-img {
       height: 52px;
       width: 52px;
       border-radius: 12px;
       object-fit: cover;
-      margin-bottom: 0.75rem;
-      border: 1px solid rgba(255, 255, 255, 0.20);
-      box-shadow: 0 4px 18px rgba(31, 115, 183, 0.4);
-      transition: transform 0.25s ease;
+      display: block;
     }
-    .login-logo-img:hover {
-      transform: scale(1.06);
-    }
+
     .login-title {
-      font-size: 1.75rem;
+      font-size: 1.85rem;
       font-weight: 800;
       color: #ffffff;
       letter-spacing: -0.03em;
     }
+
     .login-subtitle {
       font-size: 0.825rem;
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.85);
       margin-top: 0.25rem;
     }
+
     .back-home-link {
       display: inline-block;
       margin-top: 0.5rem;
-      font-size: 0.75rem;
-      color: #38bdf8;
+      font-size: 0.775rem;
+      color: #ffd166;
       text-decoration: none;
       font-weight: 600;
-      transition: color 0.15s;
+      transition: all 0.2s;
     }
+
     .back-home-link:hover {
-      color: #34d399;
+      color: #ffffff;
       text-decoration: underline;
+      transform: translateX(-2px);
     }
+
     .form-label {
-      color: #cbd5e1;
+      color: #ffffff;
       font-size: 0.82rem;
       font-weight: 600;
       margin-bottom: 0.35rem;
       display: block;
     }
+
     .form-input {
-      background: rgba(15, 23, 42, 0.7) !important;
-      border: 1px solid rgba(255, 255, 255, 0.14) !important;
+      background: rgba(45, 18, 8, 0.80) !important;
+      border: 1px solid rgba(176, 127, 2, 0.38) !important;
       color: #ffffff !important;
-      border-radius: 10px;
-      padding: 0.75rem 1rem;
+      border-radius: 11px;
+      padding: 0.8rem 1rem;
       width: 100%;
       box-sizing: border-box;
-      transition: all 0.2s;
+      font-size: 0.925rem;
+      transition: all 0.22s;
     }
+
     .form-input:focus {
       outline: none;
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2) !important;
+      border-color: #3533cd !important;
+      box-shadow: 0 0 0 3px rgba(53, 51, 205, 0.40) !important;
+      background: rgba(55, 22, 10, 0.95) !important;
     }
-    .btn-block {
+
+    /* Legendary Button: #000000 to #3533cd gradient. On Hover -> #b07f02 with Black Text */
+    .legend-btn {
       width: 100%;
-      padding: 0.8rem;
+      padding: 0.85rem;
       font-size: 0.95rem;
-      margin-top: 0.5rem;
-      background: linear-gradient(135deg, #1F73B7 0%, #18937A 100%);
-      border: none;
-      border-radius: 10px;
-      color: #ffffff;
+      margin-top: 0.6rem;
+      background: linear-gradient(90deg, #000000 0%, #3533cd 100%) !important;
+      border: 1px solid rgba(53, 51, 205, 0.60) !important;
+      border-radius: 11px;
+      color: #ffffff !important;
       font-weight: 700;
       cursor: pointer;
-      box-shadow: 0 8px 24px rgba(31, 115, 183, 0.35);
-      transition: all 0.2s ease;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 20px rgba(53, 51, 205, 0.35);
+      transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .btn-block:hover:not(:disabled) {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 28px rgba(24, 147, 122, 0.45);
+
+    .legend-btn:hover:not(:disabled) {
+      transform: translateY(-2px) scale(1.02);
+      background: #b07f02 !important;
+      color: #000000 !important;
+      font-weight: 700 !important;
+      border-color: #ffd166 !important;
+      box-shadow: 0 12px 32px rgba(176, 127, 2, 0.65), 0 0 25px rgba(255, 209, 102, 0.45) !important;
     }
-    .btn-block:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
+
+    .legend-btn:hover:not(:disabled) svg {
+      stroke: #000000 !important;
     }
+
+    .btn-text-flex {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
     .spinner-text {
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
     }
+
     .spinner {
       width: 16px;
       height: 16px;
@@ -297,41 +684,54 @@ import { AuthService } from '../../../core/services/auth.service';
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
+
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
+
     .info-box {
       margin-top: 1.75rem;
-      padding: 1rem;
-      background: rgba(30, 41, 59, 0.55);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
+      padding: 1.05rem;
+      background: rgba(45, 18, 8, 0.60);
+      border: 1px solid rgba(176, 127, 2, 0.30);
+      border-radius: 13px;
     }
+
     .info-title {
       font-size: 0.775rem;
       font-weight: 700;
-      color: #38bdf8;
+      color: #ffd166;
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      margin-bottom: 0.25rem;
+      margin-bottom: 0.3rem;
     }
+
     .info-desc {
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.85);
       line-height: 1.45;
     }
+
     .info-desc strong {
-      color: #f1f5f9;
+      color: #ffffff;
     }
+
     .security-footer {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.4rem;
-      font-size: 0.7rem;
-      color: #64748b;
+      gap: 0.45rem;
+      font-size: 0.725rem;
+      color: rgba(255, 255, 255, 0.70);
       margin-top: 1.5rem;
       text-align: center;
+    }
+
+    /* Responsive Handling for Mobile Screens */
+    @media (max-width: 1100px) {
+      .floating-badge {
+        display: none;
+      }
     }
   `]
 })
@@ -347,6 +747,20 @@ export class LoginComponent implements OnInit {
   isSetPasswordMode = signal(false);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+
+  // Dynamic Parallax Variables
+  mouseX = 0;
+  mouseY = 0;
+  parallaxX = 0;
+  parallaxY = 0;
+
+  onMouseMove(e: MouseEvent): void {
+    const { innerWidth, innerHeight } = window;
+    this.mouseX = e.clientX;
+    this.mouseY = e.clientY;
+    this.parallaxX = ((e.clientX - innerWidth / 2) / (innerWidth / 2)) * 20;
+    this.parallaxY = ((e.clientY - innerHeight / 2) / (innerHeight / 2)) * 20;
+  }
 
   ngOnInit(): void {
     const params = this.route.snapshot.queryParams;
@@ -420,4 +834,3 @@ export class LoginComponent implements OnInit {
     });
   }
 }
-
