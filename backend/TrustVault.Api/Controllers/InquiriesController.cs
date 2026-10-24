@@ -101,6 +101,14 @@ public class InquiriesController : ControllerBase
         return Ok(list);
     }
 
+    [HttpGet("email-outbox")]
+    [Authorize(Roles = "Admin")]
+    public IActionResult GetEmailOutbox()
+    {
+        var emails = _emailService.GetRecentDispatchedEmails();
+        return Ok(emails);
+    }
+
     public record ApproveInquiryRequest(string? CustomPassword, string? AssignedRole);
 
     [HttpPost("{id}/approve")]

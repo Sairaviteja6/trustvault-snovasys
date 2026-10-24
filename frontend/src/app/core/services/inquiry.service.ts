@@ -88,4 +88,8 @@ export class InquiryService {
       })
     );
   }
+
+  getOutboxEmails(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.baseUrl}/email-outbox`);
+  }
 }

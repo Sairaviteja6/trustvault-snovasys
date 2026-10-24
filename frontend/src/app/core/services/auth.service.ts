@@ -27,7 +27,9 @@ export class AuthService {
     return this.http.post<AuthResponse>(`${this.baseUrl}/login`, { email, password }).pipe(
       tap(res => {
         this.saveAuth(res);
-        this.redirectByRole(res.user.role);
+        if (!res.user?.mustChangePassword) {
+          this.redirectByRole(res.user.role);
+        }
       })
     );
   }

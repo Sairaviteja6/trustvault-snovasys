@@ -8,9 +8,9 @@
   --brand-gold-glow: rgba(176, 127, 2, 0.35);
   
   --brand-espresso: #552612;
-  /* 60% Transparency for containers (Translucent frosted glass over warm backdrop) */
-  --brand-container-bg: rgba(148, 93, 70, 0.2);            
-  --brand-container-border: rgba(176, 127, 2, 0.32);       /* Subtle golden border */
+  /* Exact 60% Translucent Espresso Glass Container matching Login card */
+  --brand-container-bg: rgba(85, 38, 18, 0.48);            
+  --brand-container-border: rgba(176, 127, 2, 0.35);       /* Subtle golden border */
   --brand-container-hover-border: rgba(176, 127, 2, 0.60);
   
   --brand-electric: #3533cd;                              /* Electric Royal Blue Accent */
@@ -401,9 +401,11 @@ body {
 }
 
 .modal-card {
-  background: rgba(70, 30, 14, 0.94);
+  background: rgba(85, 38, 18, 0.72);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
   border: 1px solid rgba(176, 127, 2, 0.45);
-  border-radius: 18px;
+  border-radius: 20px;
   width: 100%;
   max-width: 620px;
   max-height: 90vh;

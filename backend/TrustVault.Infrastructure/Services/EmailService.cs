@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Mail;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using TrustVault.Core.Interfaces;
@@ -292,6 +293,13 @@ public class EmailService : IEmailService
         return await SendMailInternalAsync(recipientEmail, subject, body);
     }
 
+    private static readonly System.Collections.Concurrent.ConcurrentQueue<DispatchedEmailInfo> _recentEmails = new();
+
+    public IEnumerable<DispatchedEmailInfo> GetRecentDispatchedEmails()
+    {
+        return _recentEmails.ToArray().OrderByDescending(e => e.TimestampUtc);
+    }
+
     private async Task<bool> SendMailInternalAsync(string toEmail, string subject, string htmlBody)
     {
         var smtpHost = Environment.GetEnvironmentVariable("SMTP_HOST") ?? _config["Smtp:Host"];
@@ -300,12 +308,15 @@ public class EmailService : IEmailService
         var smtpPass = Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? _config["Smtp:Password"];
         var fromEmail = Environment.GetEnvironmentVariable("SMTP_FROM") ?? _config["Smtp:From"] ?? "noreply@trustvault.com";
 
+        var emailId = Guid.NewGuid().ToString("N")[..8];
+        var outboxStatus = "Queued in Outbox";
+
         // Record outgoing email to outbox directory for local inspection & auditing
         try
         {
             var outboxDir = Path.Combine(AppContext.BaseDirectory, "OutboxEmails");
             Directory.CreateDirectory(outboxDir);
-            var safeFile = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid().ToString().Substring(0, 8)}.html";
+            var safeFile = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{emailId}.html";
             var filePath = Path.Combine(outboxDir, safeFile);
             var fileContent = $"<!-- TO: {toEmail} | SUBJECT: {subject} | DATE: {DateTime.UtcNow} -->\n" + htmlBody;
             await File.WriteAllTextAsync(filePath, fileContent);
@@ -316,8 +327,11 @@ public class EmailService : IEmailService
             _logger.LogWarning(ex, "Failed to write email to Outbox directory.");
         }
 
-        // If SMTP server is configured, attempt network delivery
-        if (!string.IsNullOrWhiteSpace(smtpHost) && int.TryParse(smtpPortStr, out var port))
+        // Only attempt network delivery if SMTP credentials (host, port, username, password) are explicitly provided
+        if (!string.IsNullOrWhiteSpace(smtpHost) &&
+            int.TryParse(smtpPortStr, out var port) &&
+            !string.IsNullOrWhiteSpace(smtpUser) &&
+            !string.IsNullOrWhiteSpace(smtpPass))
         {
             try
             {
@@ -325,10 +339,7 @@ public class EmailService : IEmailService
                 client.EnableSsl = bool.TryParse(_config["Smtp:EnableSsl"], out var ssl) && ssl;
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
                 client.UseDefaultCredentials = false;
-                if (!string.IsNullOrWhiteSpace(smtpUser) && !string.IsNullOrWhiteSpace(smtpPass))
-                {
-                    client.Credentials = new NetworkCredential(smtpUser, smtpPass);
-                }
+                client.Credentials = new NetworkCredential(smtpUser, smtpPass);
 
                 using var message = new MailMessage(fromEmail, toEmail)
                 {
@@ -338,17 +349,33 @@ public class EmailService : IEmailService
                 };
 
                 await client.SendMailAsync(message);
+                outboxStatus = "Dispatched via SMTP Relay";
                 _logger.LogInformation("Email successfully dispatched via SMTP to {ToEmail}: {Subject}", toEmail, subject);
+
+                RecordEmail(emailId, toEmail, subject, outboxStatus, htmlBody);
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to dispatch email via SMTP to {ToEmail}. Falling back to Outbox file.", toEmail);
+                outboxStatus = $"SMTP Relay Failed ({ex.Message}) — Saved to Outbox";
+                _logger.LogError(ex, "Failed to dispatch email via SMTP to {ToEmail}. Saved to Outbox.", toEmail);
+                RecordEmail(emailId, toEmail, subject, outboxStatus, htmlBody);
                 return false;
             }
         }
+        else
+        {
+            outboxStatus = "Stored in Outbox (Configure SMTP_USERNAME/SMTP_PASSWORD in env to enable live network delivery)";
+            _logger.LogInformation("Email queued in Outbox for {ToEmail}: {Subject} (SMTP auth not configured).", toEmail, subject);
+            RecordEmail(emailId, toEmail, subject, outboxStatus, htmlBody);
+            return true;
+        }
+    }
 
-        _logger.LogInformation("SMTP Host not specified in appsettings.json. Outbox file written successfully for {ToEmail}.", toEmail);
-        return true;
+    private static void RecordEmail(string id, string toEmail, string subject, string status, string htmlBody)
+    {
+        _recentEmails.Enqueue(new DispatchedEmailInfo(id, toEmail, subject, DateTime.UtcNow, status, htmlBody));
+        // Keep up to 100 recent emails in buffer
+        while (_recentEmails.Count > 100 && _recentEmails.TryDequeue(out _)) { }
     }
 }
