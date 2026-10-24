@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$baseUrl = "https://browser-fawn-sigma.vercel.app"
+$baseUrl = "https://trustvault-snovasys.vercel.app"
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " LIVE VERCEL HTTPS END-TO-END VERIFICATION: $baseUrl" -ForegroundColor Cyan
