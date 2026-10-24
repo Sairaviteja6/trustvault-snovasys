@@ -16,7 +16,7 @@ Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular 19**.
 | **AWS Cloud Infrastructure (ALB)** | `http://trustvault-alb-production-1074225278.us-east-1.elb.amazonaws.com` | AWS Application Load Balancer, EC2 Linux Docker backend, RDS SQL Server. |
 | **GitHub Repository** | [https://github.com/Sairaviteja6/trustvault-snovasys](https://github.com/Sairaviteja6/trustvault-snovasys) | Clean commit history spanning full sprint week. |
 
-> **Evaluator Quick Start**: Open [https://trustvault-snovasys.vercel.app](https://trustvault-snovasys.vercel.app) in an incognito or private browser window. Click **Sign In** to access the sign-in modal, or use the one-click **Evaluation Quick-Access Bar** to instantly log in as Admin, Owner, or Viewer.
+> **Evaluator Quick Start**: Open [https://trustvault-snovasys.vercel.app](https://trustvault-snovasys.vercel.app) in an incognito or private browser window. Click **Sign In** to log in using the Master Administrator credentials (`admin@trustvault.com` / `Admin@12345!`).
 
 ---
 
@@ -61,16 +61,18 @@ TrustVault enforces security at the protocol and storage layers, not just UI vis
 
 ---
 
-## 🔑 Seed User Accounts & Roles
+## 🔑 Production Authentication & Credentials
 
-The system seeds three primary roles out of the box with zero setup required:
+TrustVault operates on a zero-trust model with a pre-seeded Master Administrator account. All subsequent Document Owners and Viewers are provisioned dynamically through the Admin Governance Console or the Enterprise Inquiry Workflow:
 
 | Role | Email | Password | Permissions & Scope |
 |---|---|---|---|
-| **Administrator** | `admin@trustvault.com` | `Admin@12345!` | Manages user accounts, reviews full audit logs, verifies cryptographic chain integrity. **Cannot view or download documents** unless explicitly granted. |
-| **Document Owner** | `owner@trustvault.com` | `Owner@12345!` | Uploads confidential documents, organizes user tags, grants `Read`/`Edit` permissions to named individuals, revokes access immediately. |
-| **Viewer (Alice)** | `alice@trustvault.com` | `Viewer@12345!` | Finance Department viewer. Pre-granted `READ` access to *Enterprise Master Services Agreement*. |
-| **Viewer (Bob)** | `bob@trustvault.com` | `Viewer@12345!` | Engineering Department viewer. Zero access to private owner files. Used for adversarial testing. |
+| **Master Administrator** | `admin@trustvault.com` | `Admin@12345!` | Manages user accounts, provisions Document Owners, reviews immutable audit logs, and cryptographically verifies the SHA-256 chain integrity. **Cannot view or download confidential documents** unless explicitly granted. |
+
+> **Role Creation Workflow**:
+> - Log in as **Master Administrator** (`admin@trustvault.com`).
+> - Navigate to **User Management** in the Admin Dashboard to provision Document Owners and Viewers.
+> - Document Owners can then log in to upload confidential documents, define permissions, and grant/revoke access to named users.
 
 ---
 
