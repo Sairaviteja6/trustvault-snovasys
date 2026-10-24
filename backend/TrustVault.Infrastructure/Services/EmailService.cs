@@ -336,7 +336,8 @@ public class EmailService : IEmailService
             try
             {
                 using var client = new SmtpClient(smtpHost, port);
-                client.EnableSsl = bool.TryParse(_config["Smtp:EnableSsl"], out var ssl) && ssl;
+                var sslConfig = Environment.GetEnvironmentVariable("SMTP_ENABLE_SSL") ?? _config["Smtp:EnableSsl"];
+                client.EnableSsl = string.IsNullOrWhiteSpace(sslConfig) || (bool.TryParse(sslConfig, out var ssl) && ssl);
                 client.DeliveryMethod = SmtpDeliveryMethod.Network;
                 client.UseDefaultCredentials = false;
                 client.Credentials = new NetworkCredential(smtpUser, smtpPass);

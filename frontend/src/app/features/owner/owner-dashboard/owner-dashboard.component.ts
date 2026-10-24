@@ -761,17 +761,48 @@ import {
           </div>
           <button class="btn btn-primary btn-sm" (click)="onGrantIndividual()">Grant Permissions</button>
 
-          <!-- Section 3: Bulk Grant by Tag -->
-          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-            <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem;">Bulk Grant by Tag Group</h4>
-            <div class="grid-cols-2">
+          <!-- Section 3: Bulk Grant by Tag Group -->
+          <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+              <h4 style="font-size: 0.95rem; font-weight: 700; color: #fff; margin: 0;">Bulk Grant by Tag Group</h4>
+              <span class="badge badge-info" *ngIf="uniqueTags.length > 0">{{ uniqueTags.length }} tag group(s) available</span>
+            </div>
+            <p style="font-size: 0.8rem; color: #cbd5e1; margin-bottom: 0.75rem;">
+              Select a tag group to automatically grant document permissions to all associated viewers at once.
+            </p>
+
+            <div class="grid-cols-2" style="gap: 1rem; align-items: flex-end;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label">Select Tag Group</label>
+                <div style="display: flex; gap: 0.5rem;">
+                  <select class="form-select" [(ngModel)]="tagToGrant" style="flex: 1;">
+                    <option value="">-- Choose Existing Tag --</option>
+                    <option *ngFor="let tg of uniqueTags" [value]="tg">{{ tg }}</option>
+                  </select>
+                  <input type="text" class="form-input" [(ngModel)]="tagToGrant" placeholder="or enter new/custom tag" style="flex: 1;" />
+                </div>
+              </div>
+
               <div>
-                <label class="form-label">Select Tag</label>
-                <input type="text" class="form-input" [(ngModel)]="tagToGrant" placeholder="e.g. Finance, Developer" />
+                <button class="btn btn-primary btn-sm" [disabled]="!tagToGrant || !activeDoc" (click)="onGrantByTag()">
+                  Grant to All in Tag ({{ taggedViewersForSelectedTag.length }} Viewers)
+                </button>
               </div>
-              <div style="display: flex; align-items: flex-end;">
-                <button class="btn btn-secondary btn-sm" (click)="onGrantByTag()">Bulk Grant to Tag</button>
+            </div>
+
+            <!-- List of viewers belonging to the selected tag -->
+            <div *ngIf="tagToGrant && taggedViewersForSelectedTag.length > 0" style="margin-top: 0.85rem; padding: 0.75rem; border-radius: 8px; background: rgba(85,38,18,0.5); border: 1px solid rgba(176,127,2,0.3);">
+              <div style="font-size: 0.8rem; font-weight: 600; color: #fbbf24; margin-bottom: 0.35rem;">
+                Target Viewers who will receive access ({{ taggedViewersForSelectedTag.length }}):
               </div>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                <span class="chip" *ngFor="let tv of taggedViewersForSelectedTag" style="background: rgba(255,255,255,0.12); color: #fff; padding: 0.25rem 0.6rem; border-radius: 4px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.2);">
+                  <strong>{{ tv.username }}</strong> &lt;{{ tv.email }}&gt;
+                </span>
+              </div>
+            </div>
+            <div *ngIf="tagToGrant && taggedViewersForSelectedTag.length === 0" style="margin-top: 0.65rem; font-size: 0.775rem; color: #94a3b8; font-style: italic;">
+              No viewers are currently tagged with "{{ tagToGrant }}". You can assign viewers to this tag in the Viewer Management table below.
             </div>
           </div>
         </div>
@@ -1019,6 +1050,22 @@ export class OwnerDashboardComponent implements OnInit {
   // New tag state
   newTagUserId = '';
   newTagName = '';
+
+  get uniqueTags(): string[] {
+    const set = new Set<string>();
+    this.tags().forEach(t => {
+      if (t.tagName && t.tagName.trim()) {
+        set.add(t.tagName.trim());
+      }
+    });
+    return Array.from(set).sort();
+  }
+
+  get taggedViewersForSelectedTag(): UserTagDto[] {
+    if (!this.tagToGrant) return [];
+    const target = this.tagToGrant.trim().toLowerCase();
+    return this.tags().filter(t => t.tagName.trim().toLowerCase() === target);
+  }
 
   ngOnInit(): void {
     this.loadAll();
