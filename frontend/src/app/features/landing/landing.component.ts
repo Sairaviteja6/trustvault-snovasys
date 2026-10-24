@@ -708,21 +708,22 @@ import { AuthService } from '../../core/services/auth.service';
       color: #ffffff;
       position: relative;
       overflow-x: hidden;
-      background: #080503;
+      background: 
+        linear-gradient(135deg, rgba(176, 127, 2, 0.20) 0%, rgba(85, 38, 18, 0.30) 100%),
+        url('/images/executive-office-bg.png') center/cover fixed no-repeat,
+        #15100b;
     }
 
-    /* Ambient Multi-Layer Mesh with #b07f02 60% Overlay & Electric #3533cd */
+    /* Ambient Soft Warm Light Mesh with 60% Transparency, keeping photo visible */
     .interactive-ambient-mesh {
       position: fixed;
       inset: -150px;
       pointer-events: none;
       z-index: 0;
       background: 
-        radial-gradient(circle 900px at 15% 15%, rgba(176, 127, 2, 0.45), transparent 55%),
-        radial-gradient(circle 800px at 85% 35%, rgba(53, 51, 205, 0.35), transparent 50%),
-        radial-gradient(circle 750px at 50% 75%, rgba(176, 127, 2, 0.30), transparent 55%),
-        radial-gradient(circle 650px at 20% 85%, rgba(53, 51, 205, 0.25), transparent 50%),
-        linear-gradient(135deg, rgba(176, 127, 2, 0.25) 0%, rgba(8, 5, 3, 0.95) 100%);
+        radial-gradient(circle 800px at 15% 15%, rgba(176, 127, 2, 0.18), transparent 55%),
+        radial-gradient(circle 700px at 85% 35%, rgba(53, 51, 205, 0.14), transparent 50%),
+        radial-gradient(circle 650px at 50% 75%, rgba(176, 127, 2, 0.14), transparent 55%);
       transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform;
     }
@@ -843,8 +844,8 @@ import { AuthService } from '../../core/services/auth.service';
     /* Hero Section */
     .hero-section {
       padding: 6.5rem 0 5.5rem;
-      background: linear-gradient(180deg, rgba(11, 15, 25, 0.80) 0%, rgba(15, 23, 42, 0.90) 100%), url('/images/executive-office-bg.png') center/cover no-repeat;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      background: transparent;
+      border-bottom: 1px solid rgba(176, 127, 2, 0.20);
       position: relative;
     }
     .hero-container {
@@ -857,9 +858,11 @@ import { AuthService } from '../../core/services/auth.service';
       display: inline-flex;
       align-items: center;
       gap: 0.5rem;
-      background: rgba(30, 41, 59, 0.85);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: #38bdf8;
+      background: rgba(85, 38, 18, 0.48);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(176, 127, 2, 0.45);
+      color: #ffd166;
       font-size: 0.75rem;
       font-weight: 700;
       padding: 0.45rem 1rem;
@@ -868,11 +871,11 @@ import { AuthService } from '../../core/services/auth.service';
       text-transform: uppercase;
       margin-bottom: 1.5rem;
       transition: all 0.2s ease;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.35);
     }
     .hero-badge:hover {
-      background: rgba(45, 55, 72, 0.95);
-      border-color: #38bdf8;
+      background: rgba(85, 38, 18, 0.70);
+      border-color: #ffd166;
     }
     .badge-dot {
       width: 7px;
@@ -982,15 +985,16 @@ import { AuthService } from '../../core/services/auth.service';
       margin-bottom: 1.5rem;
     }
     .preview-stat {
-      background: rgba(15, 23, 42, 0.75);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(85, 38, 18, 0.48);
+      border: 1px solid rgba(176, 127, 2, 0.35);
       border-radius: 12px;
       padding: 1rem;
+      backdrop-filter: blur(16px);
       transition: all 0.2s ease;
     }
     .preview-stat:hover {
-      background: rgba(30, 41, 59, 0.9);
-      border-color: rgba(56, 189, 248, 0.35);
+      background: rgba(85, 38, 18, 0.70);
+      border-color: rgba(176, 127, 2, 0.60);
       transform: translateY(-2px);
     }
     .stat-number {
@@ -1001,7 +1005,7 @@ import { AuthService } from '../../core/services/auth.service';
     }
     .stat-label {
       font-size: 0.75rem;
-      color: #94a3b8;
+      color: rgba(255, 255, 255, 0.85);
       margin-top: 0.2rem;
     }
     .core-image-wrapper {
@@ -1009,9 +1013,9 @@ import { AuthService } from '../../core/services/auth.service';
       border-radius: 14px;
       overflow: hidden;
       margin-bottom: 1.5rem;
-      border: 1px solid rgba(56, 189, 248, 0.35);
+      border: 1px solid rgba(176, 127, 2, 0.40);
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-      background: #0b0f19;
+      background: rgba(85, 38, 18, 0.50);
     }
     .core-image {
       width: 100%;
@@ -1027,9 +1031,9 @@ import { AuthService } from '../../core/services/auth.service';
       position: absolute;
       bottom: 12px;
       left: 12px;
-      background: rgba(15, 23, 42, 0.9);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(16, 185, 129, 0.6);
+      background: rgba(85, 38, 18, 0.80);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(176, 127, 2, 0.55);
       padding: 0.35rem 0.75rem;
       border-radius: 9999px;
       display: flex;

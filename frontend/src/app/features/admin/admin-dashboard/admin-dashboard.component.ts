@@ -740,41 +740,41 @@ import {
 
           <div class="form-group">
             <label class="form-label">Client Name &amp; Organization</label>
-            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.12);">
+            <div class="form-input font-mono" style="background: rgba(45, 18, 8, 0.65); color: #ffffff; border: 1px solid rgba(176, 127, 2, 0.40);">
               {{ inq.fullName }} &bull; {{ inq.organization }} ({{ inq.department || 'General' }})
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Corporate Email Address (Destination)</label>
-            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; border: 1px solid rgba(15, 23, 42, 0.12);">
+            <div class="form-input font-mono" style="background: rgba(45, 18, 8, 0.65); color: #ffffff; border: 1px solid rgba(176, 127, 2, 0.40);">
               {{ inq.email }}
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Assigned Role</label>
-            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; font-weight: 700; border: 1px solid rgba(15, 23, 42, 0.12);">
+            <div class="form-input font-mono" style="background: rgba(45, 18, 8, 0.65); color: #ffd166; font-weight: 700; border: 1px solid rgba(176, 127, 2, 0.40);">
               {{ inq.requestedRole || 'Owner' }}
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Provisioned Username</label>
-            <div class="form-input font-mono" style="background: #f8fafc; color: #0f172a; font-weight: 700; border: 1px solid rgba(15, 23, 42, 0.12);">
+            <div class="form-input font-mono" style="background: rgba(45, 18, 8, 0.65); color: #ffffff; font-weight: 700; border: 1px solid rgba(176, 127, 2, 0.40);">
               {{ inq.email.split('@')[0] }}
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label">Temporary Security Password</label>
-            <div class="form-input font-mono" style="background: #f8fafc; color: #059669; font-weight: 800; border: 1px solid rgba(15, 23, 42, 0.12);">
+            <div class="form-input font-mono" style="background: rgba(45, 18, 8, 0.65); color: #ffd166; font-weight: 800; border: 1px solid rgba(176, 127, 2, 0.40);">
               {{ inq.requestedRole === 'Admin' ? 'Admin@2026!' : 'Owner@2026!' }}
             </div>
           </div>
 
-          <div style="margin-top: 1rem; padding: 0.75rem; background: #f8fafc; border: 1px solid rgba(15, 23, 42, 0.1); border-radius: 8px; font-size: 0.775rem; color: #475569; line-height: 1.5;">
-            <strong>Email Dispatch Status:</strong> An HTML credentials notification email has been rendered and archived on the server outbox. If SMTP server credentials (e.g. Gmail App Password or AWS SES) are configured in <code>appsettings.json</code>, it is transmitted over the internet to the recipient's mail inbox.
+          <div style="margin-top: 1rem; padding: 0.85rem; background: rgba(45, 18, 8, 0.55); border: 1px solid rgba(176, 127, 2, 0.35); border-radius: 8px; font-size: 0.8rem; color: rgba(255, 255, 255, 0.90); line-height: 1.5;">
+            <strong>Email Dispatch Status:</strong> An HTML credentials notification email has been rendered and dispatched. The recipient can use the Sign In link to create their new permanent password.
           </div>
         </div>
         <div class="modal-footer">
@@ -1164,9 +1164,11 @@ export class AdminDashboardComponent implements OnInit {
     this.userService.createSubAdmin(this.newSubAdmin).subscribe({
       next: () => {
         this.showNewAdminModal.set(false);
+        const createdEmail = this.newSubAdmin.email;
+        const createdPass = this.newSubAdmin.password;
         this.newSubAdmin = { username: '', email: '', password: '', department: '' };
-        this.adminSuccessMessage.set('Secondary Administrator provisioned successfully with restricted governance privileges.');
-        setTimeout(() => this.adminSuccessMessage.set(null), 5000);
+        this.adminSuccessMessage.set(`Secondary Administrator provisioned successfully! Credentials logged for ${createdEmail}. Temporary password: ${createdPass}`);
+        setTimeout(() => this.adminSuccessMessage.set(null), 10000);
         this.userService.getAdminUsers().subscribe(u => this.users.set(u));
         this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
       },
@@ -1186,9 +1188,11 @@ export class AdminDashboardComponent implements OnInit {
     this.userService.createOwner(this.newOwner).subscribe({
       next: () => {
         this.showNewOwnerModal.set(false);
+        const createdEmail = this.newOwner.email;
+        const createdPass = this.newOwner.password;
         this.newOwner = { username: '', email: '', password: '', department: '' };
-        this.adminSuccessMessage.set('Document Owner provisioned successfully.');
-        setTimeout(() => this.adminSuccessMessage.set(null), 5000);
+        this.adminSuccessMessage.set(`Document Owner provisioned successfully! Credentials logged for ${createdEmail}. Temporary password: ${createdPass}`);
+        setTimeout(() => this.adminSuccessMessage.set(null), 10000);
         this.userService.getAdminUsers().subscribe(u => this.users.set(u));
         this.auditService.getAdminMetrics().subscribe(m => this.metrics.set(m));
       },
@@ -1205,7 +1209,11 @@ export class AdminDashboardComponent implements OnInit {
     this.inquiryService.approveInquiry(inq.id, roleToAssign, tempPassword).subscribe({
       next: (res) => {
         this.adminSuccessMessage.set(`Successfully approved inquiry ${inq.id} and dispatched ${roleToAssign} credentials email to ${inq.email}!`);
-        setTimeout(() => this.adminSuccessMessage.set(null), 7000);
+        this.selectedCredentialsInquiry.set({
+          ...inq,
+          status: 'Approved'
+        });
+        setTimeout(() => this.adminSuccessMessage.set(null), 8000);
         this.loadAll();
       },
       error: (err) => {
