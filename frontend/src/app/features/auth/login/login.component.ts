@@ -48,6 +48,14 @@ import { AuthService } from '../../../core/services/auth.service';
           <a routerLink="/" class="back-home-link">&larr; Return to Home</a>
         </div>
 
+        <!-- Success Message Banner -->
+        <div class="alert alert-success" *ngIf="successMessage()" style="display: flex; align-items: center; gap: 0.5rem; background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.5); color: #6ee7b7; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.85rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          <span>{{ successMessage() }}</span>
+        </div>
+
         <!-- Error Message Banner -->
         <div class="alert alert-danger" *ngIf="errorMessage()">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -67,7 +75,7 @@ import { AuthService } from '../../../core/services/auth.service';
               name="email" 
               type="text" 
               class="form-input" 
-              placeholder="admin (or admin@trustvault.com)" 
+              placeholder="e.g. admin or user@company.com" 
               [(ngModel)]="email" 
               required 
               autocomplete="username"
@@ -77,17 +85,35 @@ import { AuthService } from '../../../core/services/auth.service';
 
           <div class="form-group">
             <label class="form-label" for="password">Password</label>
-            <input 
-              id="password" 
-              name="password" 
-              type="password" 
-              class="form-input" 
-              placeholder="••••••••••••" 
-              [(ngModel)]="password" 
-              required 
-              autocomplete="current-password"
-              [disabled]="isLoading()"
-            />
+            <div style="position: relative;">
+              <input 
+                id="password" 
+                name="password" 
+                [type]="showPassword() ? 'text' : 'password'" 
+                class="form-input" 
+                placeholder="••••••••••••" 
+                [(ngModel)]="password" 
+                required 
+                autocomplete="current-password"
+                [disabled]="isLoading()"
+                style="padding-right: 2.75rem;"
+              />
+              <button 
+                type="button" 
+                (click)="showPassword.set(!showPassword())"
+                style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #ffd166; cursor: pointer; padding: 0.25rem; display: flex; align-items: center;"
+                [title]="showPassword() ? 'Hide password' : 'Show password'"
+              >
+                <svg *ngIf="!showPassword()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showPassword()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
           </div>
 
           <!-- Linear gradient 90°: #000000 to #3533cd. On Hover: #b07f02 Background with Black Text -->
@@ -109,78 +135,118 @@ import { AuthService } from '../../../core/services/auth.service';
           </button>
         </form>
 
-        <!-- First-Time Onboarding / Set Permanent Password Mode -->
+        <!-- First-Time Onboarding / Create Permanent Password Mode -->
         <form *ngIf="isSetPasswordMode()" (ngSubmit)="onSetPasswordSubmit()">
-          <div class="alert alert-info" style="font-size: 0.8rem; margin-bottom: 1rem;">
-            <strong>Account Setup:</strong> Please set your permanent security password to activate your personal workspace.
+          <div style="background: rgba(176,127,2,0.15); border: 1px solid rgba(176,127,2,0.4); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem;">
+            <div style="font-size: 0.9rem; font-weight: 700; color: #ffd166; margin-bottom: 0.25rem;">Create Permanent Password</div>
+            <div style="font-size: 0.775rem; color: #e2e8f0;">
+              Account: <strong style="color: #fff;">{{ email }}</strong>
+            </div>
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="setEmail">Account Email or Username</label>
-            <input 
-              id="setEmail" 
-              name="setEmail" 
-              type="text" 
-              class="form-input" 
-              placeholder="e.g. user@company.com" 
-              [(ngModel)]="email" 
-              required 
-              [disabled]="isLoading()"
-            />
-          </div>
+            <label class="form-label" for="newPassword">Create New Password</label>
+            <div style="position: relative;">
+              <input 
+                id="newPassword" 
+                name="newPassword" 
+                [type]="showNewPassword() ? 'text' : 'password'" 
+                class="form-input" 
+                placeholder="Enter your new permanent password" 
+                [(ngModel)]="newPassword" 
+                required 
+                [disabled]="isLoading()"
+                style="padding-right: 2.75rem;"
+              />
+              <button 
+                type="button" 
+                (click)="showNewPassword.set(!showNewPassword())"
+                style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #ffd166; cursor: pointer; padding: 0.25rem; display: flex; align-items: center;"
+              >
+                <svg *ngIf="!showNewPassword()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showNewPassword()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label" for="tempPassword">Temporary Access Code</label>
-            <input 
-              id="tempPassword" 
-              name="tempPassword" 
-              type="password" 
-              class="form-input" 
-              placeholder="Temporary code from email" 
-              [(ngModel)]="password" 
-              required 
-              [disabled]="isLoading()"
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="newPassword">New Permanent Password</label>
-            <input 
-              id="newPassword" 
-              name="newPassword" 
-              type="password" 
-              class="form-input" 
-              placeholder="Min 8 characters" 
-              [(ngModel)]="newPassword" 
-              required 
-              [disabled]="isLoading()"
-            />
+            <!-- Password Strength Bar -->
+            <div *ngIf="newPassword" style="margin-top: 0.5rem;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; font-size: 0.75rem;">
+                <span style="color: #cbd5e1;">Password Strength:</span>
+                <span [style.color]="passwordStrength.color" style="font-weight: 700;">{{ passwordStrength.label }}</span>
+              </div>
+              <div style="height: 4px; width: 100%; background: rgba(255,255,255,0.15); border-radius: 2px; overflow: hidden;">
+                <div [style.width]="passwordStrength.width" [style.background]="passwordStrength.color" style="height: 100%; transition: width 0.3s ease, background 0.3s ease;"></div>
+              </div>
+              <!-- Requirement Badges -->
+              <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.4rem; font-size: 0.725rem;">
+                <span [style.color]="hasMinLength ? '#10b981' : '#94a3b8'" style="display: flex; align-items: center; gap: 0.2rem;">
+                  <span>{{ hasMinLength ? '✓' : '○' }}</span> 8+ chars
+                </span>
+                <span [style.color]="hasUpper ? '#10b981' : '#94a3b8'" style="display: flex; align-items: center; gap: 0.2rem;">
+                  <span>{{ hasUpper ? '✓' : '○' }}</span> Uppercase
+                </span>
+                <span [style.color]="hasNumberOrSymbol ? '#10b981' : '#94a3b8'" style="display: flex; align-items: center; gap: 0.2rem;">
+                  <span>{{ hasNumberOrSymbol ? '✓' : '○' }}</span> Number/Symbol
+                </span>
+              </div>
+            </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="confirmPassword">Confirm New Password</label>
-            <input 
-              id="confirmPassword" 
-              name="confirmPassword" 
-              type="password" 
-              class="form-input" 
-              placeholder="Re-type new password" 
-              [(ngModel)]="confirmPassword" 
-              required 
-              [disabled]="isLoading()"
-            />
+            <div style="position: relative;">
+              <input 
+                id="confirmPassword" 
+                name="confirmPassword" 
+                [type]="showConfirmPassword() ? 'text' : 'password'" 
+                class="form-input" 
+                placeholder="Re-enter your new password" 
+                [(ngModel)]="confirmPassword" 
+                required 
+                [disabled]="isLoading()"
+                style="padding-right: 2.75rem;"
+              />
+              <button 
+                type="button" 
+                (click)="showConfirmPassword.set(!showConfirmPassword())"
+                style="position: absolute; right: 0.75rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: #ffd166; cursor: pointer; padding: 0.25rem; display: flex; align-items: center;"
+              >
+                <svg *ngIf="!showConfirmPassword()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg *ngIf="showConfirmPassword()" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+            <div *ngIf="confirmPassword" style="font-size: 0.725rem; margin-top: 0.35rem;">
+              <span *ngIf="passwordsMatch" style="color: #10b981;">✓ Passwords match</span>
+              <span *ngIf="!passwordsMatch" style="color: #ef4444;">✗ Passwords do not match</span>
+            </div>
           </div>
 
           <button 
             type="submit" 
             class="btn btn-primary btn-block custom-gradient-btn" 
-            [disabled]="isLoading() || !email || !password || !newPassword || !confirmPassword"
+            [disabled]="isLoading() || !newPassword || !confirmPassword || !passwordsMatch || !hasMinLength"
           >
             <span *ngIf="!isLoading()" class="btn-text-content">
-              <span>Save Password &amp; Continue</span>
+              <span>Save Password &amp; Proceed to Sign In</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
             </span>
             <span *ngIf="isLoading()" class="spinner-text">
-              <span class="spinner"></span> Encrypting...
+              <span class="spinner"></span> Saving Password...
             </span>
           </button>
 
@@ -190,17 +256,6 @@ import { AuthService } from '../../../core/services/auth.service';
             </a>
           </div>
         </form>
-
-        <!-- Help Info Box with Default Credentials Helper -->
-        <div class="credential-help-box">
-          <div class="credential-help-title">Default Administrator Credentials:</div>
-          <div class="credential-help-row">
-            <span>Username: <strong class="copy-text">admin</strong> (or <strong class="copy-text">admin&#64;trustvault.com</strong>)</span>
-          </div>
-          <div class="credential-help-row">
-            <span>Password: <strong class="copy-text">Admin&#64;12345!</strong></span>
-          </div>
-        </div>
 
         <div class="security-footer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2">
@@ -483,37 +538,6 @@ import { AuthService } from '../../../core/services/auth.service';
       to { transform: rotate(360deg); }
     }
 
-    /* Clean Credential Help Box */
-    .credential-help-box {
-      margin-top: 1.5rem;
-      padding: 0.85rem 1rem;
-      background: rgba(45, 18, 8, 0.45);
-      border: 1px solid rgba(176, 127, 2, 0.28);
-      border-radius: 11px;
-      font-size: 0.775rem;
-      color: rgba(255, 255, 255, 0.88);
-      line-height: 1.5;
-    }
-
-    .credential-help-title {
-      font-weight: 700;
-      color: #ffd166;
-      margin-bottom: 0.3rem;
-      text-transform: uppercase;
-      font-size: 0.725rem;
-      letter-spacing: 0.04em;
-    }
-
-    .credential-help-row {
-      margin-top: 0.15rem;
-    }
-
-    .copy-text {
-      color: #ffffff;
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-    }
-
     .security-footer {
       display: flex;
       align-items: center;
@@ -535,15 +559,45 @@ export class LoginComponent implements OnInit {
   password = '';
   newPassword = '';
   confirmPassword = '';
+
   isSetPasswordMode = signal(false);
   isLoading = signal(false);
   errorMessage = signal<string | null>(null);
+  successMessage = signal<string | null>(null);
+
+  showPassword = signal(false);
+  showNewPassword = signal(false);
+  showConfirmPassword = signal(false);
 
   // Gentle Mouse Parallax
   mouseX = 0;
   mouseY = 0;
   parallaxX = 0;
   parallaxY = 0;
+
+  get passwordStrength(): { score: number; label: string; color: string; width: string } {
+    const p = this.newPassword || '';
+    if (!p) return { score: 0, label: '', color: '', width: '0%' };
+    
+    let score = 0;
+    if (p.length >= 8) score++;
+    if (/[A-Z]/.test(p)) score++;
+    if (/[0-9]/.test(p)) score++;
+    if (/[^A-Za-z0-9]/.test(p)) score++;
+
+    switch (score) {
+      case 1: return { score: 1, label: 'Weak', color: '#ef4444', width: '25%' };
+      case 2: return { score: 2, label: 'Fair', color: '#f59e0b', width: '50%' };
+      case 3: return { score: 3, label: 'Good', color: '#3b82f6', width: '75%' };
+      case 4: return { score: 4, label: 'Strong', color: '#10b981', width: '100%' };
+      default: return { score: 0, label: 'Too short', color: '#ef4444', width: '15%' };
+    }
+  }
+
+  get hasMinLength(): boolean { return (this.newPassword || '').length >= 8; }
+  get hasUpper(): boolean { return /[A-Z]/.test(this.newPassword || ''); }
+  get hasNumberOrSymbol(): boolean { return /[0-9]|[^A-Za-z0-9]/.test(this.newPassword || ''); }
+  get passwordsMatch(): boolean { return !!this.newPassword && this.newPassword === this.confirmPassword; }
 
   onMouseMove(e: MouseEvent): void {
     const { innerWidth, innerHeight } = window;
@@ -557,8 +611,8 @@ export class LoginComponent implements OnInit {
     const params = this.route.snapshot.queryParams;
     if (params['action'] === 'set-password') {
       this.isSetPasswordMode.set(true);
-      if (params['email']) this.email = params['email'];
-      if (params['temp']) this.password = params['temp'];
+      if (params['email']) this.email = params['email'].trim();
+      if (params['temp']) this.password = params['temp'].trim();
     } else if (this.authService.isAuthenticated()) {
       const role = this.authService.userRole();
       if (role) {
@@ -568,12 +622,16 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit(): void {
-    if (!this.email || !this.password) return;
+    const cleanEmail = this.email?.trim();
+    const cleanPassword = this.password?.trim();
+
+    if (!cleanEmail || !cleanPassword) return;
 
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.successMessage.set(null);
 
-    this.authService.login(this.email, this.password).subscribe({
+    this.authService.login(cleanEmail, cleanPassword).subscribe({
       next: (res) => {
         this.isLoading.set(false);
         if (res.user?.mustChangePassword) {
@@ -585,6 +643,8 @@ export class LoginComponent implements OnInit {
         this.isLoading.set(false);
         if (err.status === 0) {
           this.errorMessage.set('Cannot reach TrustVault API at http://localhost:5000. Please ensure the backend is running.');
+        } else if (err.status === 429) {
+          this.errorMessage.set('Too many authentication attempts. Please wait a moment before trying again.');
         } else {
           const serverMsg = err.error?.message || err.error?.error;
           this.errorMessage.set(serverMsg || 'Authentication failed. Please verify your username/email and password.');
@@ -594,14 +654,21 @@ export class LoginComponent implements OnInit {
   }
 
   onSetPasswordSubmit(): void {
-    if (!this.email || !this.password || !this.newPassword) return;
+    const cleanEmail = this.email?.trim();
+    const cleanCurrent = this.password?.trim();
+    const cleanNew = this.newPassword?.trim();
 
-    if (this.newPassword.length < 8) {
+    if (!cleanEmail || !cleanCurrent || !cleanNew) {
+      this.errorMessage.set('Please provide all password details.');
+      return;
+    }
+
+    if (cleanNew.length < 8) {
       this.errorMessage.set('New password must be at least 8 characters long.');
       return;
     }
 
-    if (this.newPassword !== this.confirmPassword) {
+    if (cleanNew !== this.confirmPassword?.trim()) {
       this.errorMessage.set('New passwords do not match. Please re-enter.');
       return;
     }
@@ -610,12 +677,18 @@ export class LoginComponent implements OnInit {
     this.errorMessage.set(null);
 
     this.authService.setPassword({
-      email: this.email,
-      currentPassword: this.password,
-      newPassword: this.newPassword
+      email: cleanEmail,
+      currentPassword: cleanCurrent,
+      newPassword: cleanNew
     }).subscribe({
       next: () => {
         this.isLoading.set(false);
+        this.isSetPasswordMode.set(false);
+        this.successMessage.set('✓ Permanent password created successfully! Please sign in with your new password.');
+        this.password = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
+        this.router.navigate([], { queryParams: {} });
       },
       error: (err) => {
         this.isLoading.set(false);

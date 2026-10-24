@@ -40,7 +40,11 @@ public class AuthController : ControllerBase
             u.Email.ToLower() == identifier || 
             u.Username.ToLower() == identifier);
 
-        if (user == null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+        var isPassValid = user != null && (
+            BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash) ||
+            BCrypt.Net.BCrypt.Verify(request.Password.Trim(), user.PasswordHash));
+
+        if (user == null || !user.IsActive || !isPassValid)
         {
             await _auditService.LogAsync(
                 AuditAction.UserLogin,
@@ -100,14 +104,20 @@ public class AuthController : ControllerBase
         }
 
         var normalizedEmail = request.Email.Trim().ToLowerInvariant();
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == normalizedEmail);
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => 
+            u.Email.ToLower() == normalizedEmail || 
+            u.Username.ToLower() == normalizedEmail);
 
-        if (user == null || !user.IsActive || !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+        var isCurrentValid = user != null && (
+            BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash) ||
+            BCrypt.Net.BCrypt.Verify(request.CurrentPassword.Trim(), user.PasswordHash));
+
+        if (user == null || !user.IsActive || !isCurrentValid)
         {
             return Unauthorized(new { message = "Invalid email or temporary password." });
         }
 
-        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword.Trim());
         user.MustChangePassword = false;
 
         var (accessToken, expiration) = _tokenService.GenerateAccessToken(user);

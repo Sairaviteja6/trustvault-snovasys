@@ -47,14 +47,20 @@ builder.Services.AddRateLimiter(options =>
 
     // Strict fixed window limiter for login endpoint
     options.AddPolicy("LoginRateLimit", httpContext =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+    {
+        var clientIp = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').FirstOrDefault()?.Trim()
+                       ?? httpContext.Connection.RemoteIpAddress?.ToString()
+                       ?? "unknown";
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: clientIp,
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = 120,
                 Window = TimeSpan.FromMinutes(1),
                 QueueLimit = 0
-            }));
+            });
+    });
 });
 
 // 4. JWT Authentication Setup (Item 2 & 3 on Verification Checklist)
