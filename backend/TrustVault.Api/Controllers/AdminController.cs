@@ -569,13 +569,54 @@ public class AdminController : ControllerBase
         var userRole = user.Role.ToString();
         var org = user.Organization ?? user.Department ?? "Corporate Vault";
 
-        // Clean up associated grants and user tags
+        // 1. Unlink Client Inquiries
+        var inquiries = await _dbContext.ClientInquiries.Where(i => i.ProvisionedUserId == userId).ToListAsync();
+        foreach (var inq in inquiries) 
+        { 
+            inq.ProvisionedUserId = null; 
+        }
+
+        // 2. Clean up Document Grants (received or granted)
         var grants = await _dbContext.DocumentGrants.Where(g => g.UserId == userId || g.GrantedByUserId == userId).ToListAsync();
         _dbContext.DocumentGrants.RemoveRange(grants);
 
+        // 3. Clean up User Tags (assigned or created by this user)
         var userTags = await _dbContext.UserTags.Where(t => t.UserId == userId || t.OwnerId == userId).ToListAsync();
         _dbContext.UserTags.RemoveRange(userTags);
 
+        // 4. Clean up Documents owned by this user (including child snapshots and grants)
+        var ownedDocs = await _dbContext.Documents
+            .Include(d => d.Snapshots)
+            .Include(d => d.Grants)
+            .Where(d => d.OwnerId == userId)
+            .ToListAsync();
+
+        foreach (var doc in ownedDocs)
+        {
+            if (doc.Grants != null && doc.Grants.Any())
+            {
+                _dbContext.DocumentGrants.RemoveRange(doc.Grants);
+            }
+            if (doc.Snapshots != null && doc.Snapshots.Any())
+            {
+                _dbContext.DocumentSnapshots.RemoveRange(doc.Snapshots);
+            }
+            var docAudits = await _dbContext.AuditLogs.Where(a => a.DocumentId == doc.Id).ToListAsync();
+            foreach (var a in docAudits) 
+            { 
+                a.DocumentId = null; 
+            }
+            _dbContext.Documents.Remove(doc);
+        }
+
+        // 5. Unlink Audit Logs referencing this user (preserves blockchain hash integrity while allowing user deletion)
+        var userAudits = await _dbContext.AuditLogs.Where(a => a.UserId == userId).ToListAsync();
+        foreach (var a in userAudits) 
+        { 
+            a.UserId = null; 
+        }
+
+        // 6. Permanently delete the user entity
         _dbContext.Users.Remove(user);
         await _dbContext.SaveChangesAsync();
 

@@ -13,26 +13,15 @@ import { DocumentContentResponse, DocumentResponse, DocumentSnapshotDto } from '
     <div class="container">
       <div class="section-header">
         <div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
-              Enterprise Tenant &rsaquo; prod-vault-viewer-us1
-            </span>
-            <span class="badge badge-success" style="font-size: 0.7rem; font-weight: 600;">
-              <span class="live-dot" style="width: 5px; height: 5px;"></span> KMS Hardware Enclave: Active
-            </span>
-            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
-              Viewer Session
-            </span>
-          </div>
           <h1 class="section-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1F73B7" stroke-width="2.2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2.2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
             Document Workspace
           </h1>
           <p class="section-subtitle">
-            Access, inspect, and collaborate on confidential zero-knowledge documents shared with your identity.
+            Access, inspect, and collaborate on confidential documents shared with your identity.
           </p>
         </div>
         <button class="btn btn-secondary btn-sm" (click)="loadDocuments()">

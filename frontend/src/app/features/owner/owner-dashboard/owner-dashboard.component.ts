@@ -26,19 +26,8 @@ import {
     <div class="container">
       <div class="section-header">
         <div>
-          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;">
-            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
-              Enterprise Tenant &rsaquo; prod-vault-owner-us1
-            </span>
-            <span class="badge badge-success" style="font-size: 0.7rem; font-weight: 600;">
-              <span class="live-dot" style="width: 5px; height: 5px;"></span> KMS Hardware Enclave: Active
-            </span>
-            <span class="badge badge-info" style="font-size: 0.7rem; font-weight: 600;">
-              Verified Mainnet
-            </span>
-          </div>
           <h1 class="section-title">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#18937A" stroke-width="2.2">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2.2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
               <polyline points="14 2 14 8 20 8"/>
               <line x1="16" y1="13" x2="8" y2="13"/>
@@ -47,7 +36,7 @@ import {
             Document Workspace
           </h1>
           <p class="section-subtitle">
-            Manage zero-knowledge confidential files, discrete caller grants, deterministic snapshots, and inspect immutable access audit trails.
+            Manage confidential files, access permissions, document revisions, and inspect access logs.
           </p>
         </div>
         <div class="action-buttons">
@@ -74,7 +63,6 @@ import {
               <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <span>Upload Document</span>
-            <span class="badge badge-success" style="font-size: 0.65rem; padding: 1px 5px; background: rgba(255,255,255,0.2); color: #fff; border: none;">E2EE</span>
           </button>
         </div>
       </div>
