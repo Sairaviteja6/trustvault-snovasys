@@ -1,5 +1,20 @@
 
 <div class="app-shell">
+  <!-- Global Interactive Mouse Glow Spotlight & Precision Cursor Follower -->
+  <div 
+    class="global-cursor-spotlight"
+    [style.transform]="'translate3d(' + mouseX() + 'px, ' + mouseY() + 'px, 0)'"
+  ></div>
+  <div 
+    class="global-cursor-ring"
+    [class.cursor-hover]="isHoveringClickable()"
+    [style.transform]="'translate3d(' + mouseX() + 'px, ' + mouseY() + 'px, 0)'"
+  ></div>
+  <div 
+    class="global-cursor-dot"
+    [style.transform]="'translate3d(' + mouseX() + 'px, ' + mouseY() + 'px, 0)'"
+  ></div>
+
   <app-navbar></app-navbar>
   <main class="main-content">
     <router-outlet></router-outlet>

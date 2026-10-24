@@ -54,6 +54,27 @@
 html {
   background-color: var(--bg-primary);
   min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+/* Custom Luxury Gold Scrollbars */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: #120e0a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(176, 127, 2, 0.35);
+  border-radius: 5px;
+  border: 2px solid #120e0a;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(176, 127, 2, 0.70);
 }
 
 body {
@@ -132,15 +153,16 @@ body {
   border-radius: 11px;
   border: 1px solid rgba(53, 51, 205, 0.45);
   cursor: pointer;
-  transition: all 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.10s cubic-bezier(0.16, 1, 0.3, 1), background 0.14s ease, box-shadow 0.14s ease, color 0.14s ease;
   text-decoration: none;
   background: var(--btn-gradient);
   color: #ffffff;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.4), 0 0 16px rgba(53, 51, 205, 0.30);
+  user-select: none;
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-3px) scale(1.02);
+  transform: translateY(-2px) scale(1.02);
   background: var(--btn-hover-bg) !important;
   color: var(--btn-hover-text) !important;
   font-weight: 700 !important;
@@ -152,8 +174,10 @@ body {
   stroke: #000000 !important;
 }
 
+/* Immediate tactile click feedback */
 .btn:active:not(:disabled) {
-  transform: translateY(-1px) scale(0.995);
+  transform: scale(0.95) translateY(1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5) !important;
 }
 
 .btn-primary {

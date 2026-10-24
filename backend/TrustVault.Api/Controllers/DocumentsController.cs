@@ -345,9 +345,15 @@ public class DocumentsController : ControllerBase
     {
         var (userId, userRole, userEmail) = GetCurrentUser();
 
-        // Enforce discrete READ permission
+        // Enforce discrete READ or EDIT permission
         var authResult = await _authorizationService.EvaluateAccessAsync(
             id, userId, userRole, userEmail, PermissionType.Read, GetIpAddress(), GetUserAgent(), "ReadContent");
+
+        if (!authResult.IsAuthorized)
+        {
+            authResult = await _authorizationService.EvaluateAccessAsync(
+                id, userId, userRole, userEmail, PermissionType.Edit, GetIpAddress(), GetUserAgent(), "ReadContentForEdit");
+        }
 
         if (!authResult.IsAuthorized || authResult.Document == null)
         {
