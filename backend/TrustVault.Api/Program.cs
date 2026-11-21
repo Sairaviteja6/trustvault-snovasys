@@ -14,9 +14,15 @@ using TrustVault.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Dynamic port binding for cloud platforms (Railway, Render, Koyeb, Docker)
-var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
-builder.WebHost.UseUrls($"http://+:{port}");
+// Multi-port binding to support any cloud proxy (Railway port 5000/8080, Docker, Render)
+var listenPorts = new HashSet<string> { "5000", "8080" };
+var envPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(envPort))
+{
+    listenPorts.Add(envPort);
+}
+var urls = listenPorts.Select(p => $"http://0.0.0.0:{p}").ToArray();
+builder.WebHost.UseUrls(urls);
 
 // 1. Database Configuration (SQL Server with In-Memory fallback for CI/tests/zero-config)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
