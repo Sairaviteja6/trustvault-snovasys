@@ -265,19 +265,19 @@ import { AuthService } from '../../../core/services/auth.service';
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
             <button type="button" class="seed-btn" (click)="fill('admin@trustvault.com', 'Admin@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
               <div style="font-size: 0.75rem; font-weight: 700; color: #ef4444;">🛡️ Master Admin</div>
-              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">admin@trustvault.com</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">admin&#64;trustvault.com</div>
             </button>
             <button type="button" class="seed-btn" (click)="fill('owner@trustvault.com', 'Owner@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
               <div style="font-size: 0.75rem; font-weight: 700; color: #fbbf24;">👑 Document Owner</div>
-              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">owner@trustvault.com</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">owner&#64;trustvault.com</div>
             </button>
             <button type="button" class="seed-btn" (click)="fill('alice@trustvault.com', 'Viewer@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
               <div style="font-size: 0.75rem; font-weight: 700; color: #38bdf8;">👁️ Viewer (Alice - Granted)</div>
-              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">alice@trustvault.com</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">alice&#64;trustvault.com</div>
             </button>
             <button type="button" class="seed-btn" (click)="fill('bob@trustvault.com', 'Viewer@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
               <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">🚫 Viewer (Bob - Denied)</div>
-              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">bob@trustvault.com</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">bob&#64;trustvault.com</div>
             </button>
           </div>
         </div>
