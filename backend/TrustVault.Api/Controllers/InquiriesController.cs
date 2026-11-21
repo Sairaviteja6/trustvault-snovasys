@@ -10,6 +10,7 @@ namespace TrustVault.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/inquiries")]
+[Route("api/inquiries")]
 public class InquiriesController : ControllerBase
 {
     private readonly TrustVaultDbContext _context;

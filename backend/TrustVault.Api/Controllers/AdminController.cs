@@ -13,6 +13,7 @@ namespace TrustVault.Api.Controllers;
 [Authorize(Roles = "Admin")]
 [ApiController]
 [Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 public class AdminController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;

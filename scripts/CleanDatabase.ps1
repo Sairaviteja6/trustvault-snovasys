@@ -1,4 +1,4 @@
-$baseUrl = "https://trustvault-snovasys.vercel.app"
+$baseUrl = if ($env:API_BASE_URL) { $env:API_BASE_URL } else { "http://localhost:5000" }
 
 Write-Host "Authenticating as Master Admin..." -ForegroundColor Cyan
 $loginRes = Invoke-RestMethod -Uri "$baseUrl/api/v1/auth/login" -Method Post -Body '{"email":"admin@trustvault.com","password":"Admin@12345!"}' -ContentType "application/json"

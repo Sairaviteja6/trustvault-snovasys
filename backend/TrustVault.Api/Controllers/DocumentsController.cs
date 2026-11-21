@@ -14,6 +14,7 @@ namespace TrustVault.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 public class DocumentsController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
@@ -465,6 +466,15 @@ public class DocumentsController : ControllerBase
         doc.FileSizeBytes = newBytes.Length;
         doc.FileHashSha256 = newSha256;
         doc.UpdatedAt = DateTime.UtcNow;
+
+        if (doc.ContentType.Contains("pdf", StringComparison.OrdinalIgnoreCase) && !(request.Content ?? string.Empty).StartsWith("%PDF"))
+        {
+            doc.ContentType = "text/plain";
+            if (doc.OriginalFileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase))
+            {
+                doc.OriginalFileName = Path.GetFileNameWithoutExtension(doc.OriginalFileName) + ".txt";
+            }
+        }
 
         await _dbContext.SaveChangesAsync();
 

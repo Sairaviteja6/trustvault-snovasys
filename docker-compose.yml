@@ -4,6 +4,7 @@ services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
     container_name: trustvault-sqlserver
+    restart: always
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=TrustVault@StrongPass2026!
@@ -23,6 +24,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: trustvault-api
+    restart: always
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -31,10 +33,22 @@ services:
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TrustVaultDb;User Id=sa;Password=TrustVault@StrongPass2026!;TrustServerCertificate=True;
       - Jwt__Secret=SuperSecretTrustVaultProductionGradeKey2026!#$StrictCryptoEnforcement
       - Security__MasterEncryptionKeyHex=0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF
+      - Storage__EncryptedBlobDirectory=/app/Storage/encrypted_blobs
     ports:
       - "5000:5000"
     volumes:
       - encrypted-blobs:/app/Storage/encrypted_blobs
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: trustvault-web
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
 
 volumes:
   sqlserver-data:

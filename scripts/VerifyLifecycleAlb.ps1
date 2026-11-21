@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$baseUrl = "http://localhost:5000"
+$baseUrl = if ($env:API_BASE_URL) { $env:API_BASE_URL } else { "http://localhost:5000" }
 
 Write-Host "==========================================================" -ForegroundColor Cyan
 Write-Host " LIVE AWS ALB END-TO-END VERIFICATION: $baseUrl" -ForegroundColor Cyan

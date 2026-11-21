@@ -257,6 +257,31 @@ import { AuthService } from '../../../core/services/auth.service';
           </div>
         </form>
 
+        <!-- One-Click Evaluation Persona Quick-Fill -->
+        <div class="seed-section" *ngIf="!isSetPasswordMode()" style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid rgba(176, 127, 2, 0.3);">
+          <div style="font-size: 0.72rem; font-weight: 700; color: #ffd166; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; text-align: center;">
+            ⚡ Quick-Fill Evaluation Personas
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <button type="button" class="seed-btn" (click)="fill('admin@trustvault.com', 'Admin@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #ef4444;">🛡️ Master Admin</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">admin@trustvault.com</div>
+            </button>
+            <button type="button" class="seed-btn" (click)="fill('owner@trustvault.com', 'Owner@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #fbbf24;">👑 Document Owner</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">owner@trustvault.com</div>
+            </button>
+            <button type="button" class="seed-btn" (click)="fill('alice@trustvault.com', 'Viewer@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #38bdf8;">👁️ Viewer (Alice - Granted)</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">alice@trustvault.com</div>
+            </button>
+            <button type="button" class="seed-btn" (click)="fill('bob@trustvault.com', 'Viewer@12345!')" style="background: rgba(30, 20, 15, 0.7); border: 1px solid rgba(176, 127, 2, 0.4); border-radius: 8px; padding: 0.5rem 0.6rem; text-align: left; cursor: pointer; transition: all 0.2s;">
+              <div style="font-size: 0.75rem; font-weight: 700; color: #94a3b8;">🚫 Viewer (Bob - Denied)</div>
+              <div style="font-size: 0.68rem; color: #cbd5e1; font-family: monospace;">bob@trustvault.com</div>
+            </button>
+          </div>
+        </div>
+
         <div class="security-footer">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2">
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
@@ -619,6 +644,12 @@ export class LoginComponent implements OnInit {
         this.authService.redirectByRole(role);
       }
     }
+  }
+
+  fill(emailVal: string, passVal: string): void {
+    this.email = emailVal;
+    this.password = passVal;
+    this.errorMessage.set(null);
   }
 
   onSubmit(): void {

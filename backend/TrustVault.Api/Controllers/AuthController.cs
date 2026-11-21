@@ -13,6 +13,7 @@ namespace TrustVault.Api.Controllers;
 
 [ApiController]
 [Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 public class AuthController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;

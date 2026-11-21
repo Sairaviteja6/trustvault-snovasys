@@ -13,6 +13,7 @@ namespace TrustVault.Api.Controllers;
 [Authorize(Roles = "Owner")]
 [ApiController]
 [Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 public class OwnerController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;

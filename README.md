@@ -8,15 +8,16 @@ Built with **ASP.NET Core (.NET 8)**, **SQL Server**, and **Angular 19**.
 
 ---
 
-## 🌐 Live Production Deployments
+## 🌐 Quick Start & Local Execution
 
 | Component | Target URL | Notes |
 | :--- | :--- | :--- |
-| **Official Live Production URL (HTTPS)** | **[https://trustvault-snovasys.vercel.app](https://trustvault-snovasys.vercel.app)** | Complete Angular 19 SPA + Edge API Proxy over TLS/HTTPS (Green Padlock). |
-| **AWS Cloud Infrastructure (ALB)** | `http://localhost:5000` | AWS Application Load Balancer, EC2 Linux Docker backend, RDS SQL Server. |
-| **GitHub Repository** | [https://github.com/Sairaviteja6/trustvault-snovasys](https://github.com/Sairaviteja6/trustvault-snovasys) | Clean commit history spanning full sprint week. |
+| **Frontend Web Application** | **`http://localhost`** (Port 80) | Complete Angular 19 SPA with One-Click Evaluation Persona buttons. |
+| **Backend REST API** | **`http://localhost:5000`** | ASP.NET Core 8 with dual `/api/v1` and `/api` routing. |
+| **Interactive API Documentation** | **`http://localhost:5000/swagger`** | Swagger OpenAPI with interactive JWT Bearer authorization. |
+| **GitHub Repository** | [https://github.com/Sairaviteja6/trustvault-snovasys](https://github.com/Sairaviteja6/trustvault-snovasys) | Full source code with adversarial test suite. |
 
-> **Evaluator Quick Start**: Open [https://trustvault-snovasys.vercel.app](https://trustvault-snovasys.vercel.app) in an incognito or private browser window. Click **Sign In** to log in using the Master Administrator credentials (`admin@trustvault.com` / `Admin@12345!`).
+> **Evaluator Quick Start**: Run `docker-compose up --build` and open **`http://localhost`** in your browser. On the sign-in screen, click any of the **Quick-Fill Evaluation Personas** (🛡️ Master Admin, 👑 Owner, 👁️ Alice, 🚫 Bob) to test each security role in one click with zero setup!
 
 ---
 
@@ -53,26 +54,25 @@ TrustVault enforces security at the protocol and storage layers, not just UI vis
 │   ├── TrustVault.Core/      # Domain Entities, Interfaces, Enums
 │   ├── TrustVault.Infrastructure/ # EF Core, SQL Server, Encryption, Audit
 │   └── TrustVault.Tests/     # Adversarial Security & Access Control Tests
-├── frontend/                 # Angular 17+ Enterprise SPA
+├── frontend/                 # Angular 19 Enterprise SPA
 ├── THREATS.md                # STRIDE Threat Model & Security Decisions
 ├── PROMPTS.md                # AI Interaction, Prompt Log & Critical Reviews
+├── docker-compose.yml        # Self-contained full-stack (DB, Backend, Frontend)
 └── README.md
 ```
 
 ---
 
-## 🔑 Production Authentication & Credentials
+## 🔑 Pre-Seeded Evaluation Credentials
 
-TrustVault operates on a zero-trust model with a pre-seeded Master Administrator account. All subsequent Document Owners and Viewers are provisioned dynamically through the Admin Governance Console or the Enterprise Inquiry Workflow:
+The database automatically seeds 4 primary personas out-of-the-box for instant testing:
 
-| Role | Email | Password | Permissions & Scope |
+| Role | Email | Password | Pre-Configured State & Evaluation Purpose |
 |---|---|---|---|
-| **Master Administrator** | `admin@trustvault.com` | `Admin@12345!` | Manages user accounts, provisions Document Owners, reviews immutable audit logs, and cryptographically verifies the SHA-256 chain integrity. **Cannot view or download confidential documents** unless explicitly granted. |
-
-> **Role Creation Workflow**:
-> - Log in as **Master Administrator** (`admin@trustvault.com`).
-> - Navigate to **User Management** in the Admin Dashboard to provision Document Owners and Viewers.
-> - Document Owners can then log in to upload confidential documents, define permissions, and grant/revoke access to named users.
+| **Master Administrator** | `admin@trustvault.com` | `Admin@12345!` | Manages user accounts, reviews full audit logs, and cryptographically verifies SHA-256 hash chain integrity. **Cannot read or download private files**. |
+| **Document Owner** | `owner@trustvault.com` | `Owner@12345!` | Owns *2026 Executive Compensation Matrix* (private) and *Enterprise Master Services Agreement*. Can grant/revoke access and inspect audit logs. |
+| **Viewer (Alice)** | `alice@trustvault.com` | `Viewer@12345!` | Finance Department viewer. Pre-granted `Read` & `Download` access to *Enterprise Master Services Agreement*. Cannot see private compensation matrix. |
+| **Viewer (Bob)** | `bob@trustvault.com` | `Viewer@12345!` | Engineering Department viewer. Zero access to private owner files. Used for adversarial testing (receives uniform 404). |
 
 ---
 
@@ -127,17 +127,31 @@ dotnet test
 
 ---
 
-## 🚀 Running Locally
+## 🚀 Running Locally (Zero Cloud Dependencies)
 
-### Option A: Via Docker Compose
+### Option A: Via Docker Compose (Recommended - Complete Full Stack)
+Brings up SQL Server 2022, ASP.NET Core Web API, and Angular 19 frontend:
 ```bash
 docker-compose up --build
 ```
-API will be live at `http://localhost:5000`.
+- **Frontend Web UI**: `http://localhost` (Port 80)
+- **Backend REST API**: `http://localhost:5000` (dual `/api/v1` and `/api` prefixes supported)
+- **Swagger / OpenAPI Documentation**: `http://localhost:5000/swagger`
 
-### Option B: Via .NET CLI
+### Option B: Running Services Manually
+
+**1. Start SQL Server & Backend**:
 ```bash
 cd backend/TrustVault.Api
 dotnet run
 ```
+Backend will be live at `http://localhost:5000`.
+
+**2. Start Frontend**:
+```bash
+cd frontend
+npm install
+npm start
+```
+Frontend will be live at `http://localhost:4200` (auto-proxies API calls to `http://localhost:5000`).
 

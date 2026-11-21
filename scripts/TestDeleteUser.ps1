@@ -1,4 +1,4 @@
-$baseUrl = "http://localhost:5000"
+$baseUrl = if ($env:API_BASE_URL) { $env:API_BASE_URL } else { "http://localhost:5000" }
 $adminLoginBody = @{
     email = "admin@trustvault.com"
     password = "Admin@12345!"

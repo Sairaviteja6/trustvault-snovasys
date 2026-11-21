@@ -12,6 +12,7 @@ namespace TrustVault.Api.Controllers;
 [Authorize]
 [ApiController]
 [Route("api/v1/[controller]")]
+[Route("api/[controller]")]
 public class TagsController : ControllerBase
 {
     private readonly TrustVaultDbContext _dbContext;
