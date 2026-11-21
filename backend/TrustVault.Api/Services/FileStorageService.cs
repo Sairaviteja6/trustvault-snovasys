@@ -22,7 +22,7 @@ public class LocalEncryptedFileStorageService : IFileStorageService
         var configuredPath = configuration["Storage:EncryptedBlobDirectory"];
         _storageDirectory = !string.IsNullOrWhiteSpace(configuredPath)
             ? configuredPath
-            : Path.Combine(environment.ContentRootPath, "..", "Storage", "encrypted_blobs");
+            : Path.Combine(environment.ContentRootPath, "Storage", "encrypted_blobs");
 
         if (!Directory.Exists(_storageDirectory))
         {

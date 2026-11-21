@@ -14,11 +14,18 @@ using TrustVault.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Database Configuration (SQL Server with In-Memory fallback for CI/tests)
+// Dynamic port binding for cloud platforms (Railway, Render, Koyeb, Docker)
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+builder.WebHost.UseUrls($"http://+:{port}");
+
+// 1. Database Configuration (SQL Server with In-Memory fallback for CI/tests/zero-config)
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<TrustVaultDbContext>(options =>
 {
-    if (!string.IsNullOrWhiteSpace(connectionString) && !builder.Environment.IsEnvironment("Testing"))
+    if (!string.IsNullOrWhiteSpace(connectionString) && 
+        !connectionString.Contains("localhost") && 
+        !connectionString.Contains("YOUR_") &&
+        !builder.Environment.IsEnvironment("Testing"))
     {
         options.UseSqlServer(connectionString, sqlOptions =>
         {
@@ -27,7 +34,7 @@ builder.Services.AddDbContext<TrustVaultDbContext>(options =>
     }
     else
     {
-        options.UseInMemoryDatabase("TrustVaultLocalDevDb");
+        options.UseInMemoryDatabase("TrustVaultLiveDb");
     }
 });
 
@@ -119,7 +126,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("TrustVaultCorsPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "http://localhost:3000")
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -210,8 +217,10 @@ using (var scope = app.Services.CreateScope())
         // Preserve existing data across restarts and updates
         await db.Database.EnsureCreatedAsync();
 
-        // Ensure newly added ClientInquiries table exists in SQL Server
-        await db.Database.ExecuteSqlRawAsync(@"
+        if (db.Database.IsRelational())
+        {
+            // Ensure newly added ClientInquiries table exists in SQL Server
+            await db.Database.ExecuteSqlRawAsync(@"
 IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'ClientInquiries')
 BEGIN
     CREATE TABLE [ClientInquiries] (
@@ -245,11 +254,19 @@ IF NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Users') AN
 BEGIN
     ALTER TABLE [Users] ADD [Organization] nvarchar(256) NULL;
 END");
+        }
 
         var auditService = services.GetRequiredService<IAuditService>();
         var encryptionService = services.GetRequiredService<IEncryptionService>();
         var env = services.GetRequiredService<IWebHostEnvironment>();
-        var storageDir = Path.Combine(env.ContentRootPath, "..", "Storage", "encrypted_blobs");
+        var configuredStorage = app.Configuration["Storage:EncryptedBlobDirectory"];
+        var storageDir = !string.IsNullOrWhiteSpace(configuredStorage)
+            ? configuredStorage
+            : Path.Combine(env.ContentRootPath, "Storage", "encrypted_blobs");
+        if (!Directory.Exists(storageDir))
+        {
+            Directory.CreateDirectory(storageDir);
+        }
         await DbSeeder.SeedAsync(db, auditService, encryptionService, storageDir);
     }
     catch (Exception ex)
